@@ -34,8 +34,8 @@ function normalizeHR(text) {
   return text.split('\n').map(line => {
     const trimmed = line.trim();
     if (!trimmed || trimmed.length < 3) return line;
-    // Only dashes, asterisks, underscores, slashes, and whitespace
-    if (!/^[-*_\/\s]+$/.test(trimmed)) return line;
+    // Only dashes, asterisks, underscores, slashes, backslashes, and whitespace
+    if (!/^[-*_\/\\\s]+$/.test(trimmed)) return line;
     // Must contain at least 2 separator characters (-, *, _)
     const sepCount = (trimmed.match(/[-*_]/g) || []).length;
     if (sepCount >= 2) return '---';

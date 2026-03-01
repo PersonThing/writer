@@ -58,6 +58,8 @@
     if (e.key === 'Escape' && ui.ctxVisible) hideContextMenu();
   }
 
+  let menuEl = $state(null);
+
   $effect(() => {
     if (ui.ctxVisible) {
       setTimeout(() => {
@@ -70,12 +72,38 @@
       window.removeEventListener('keydown', handleKeydown);
     };
   });
+
+  // Separate effect to adjust position — reads ctxX/ctxY synchronously
+  // so it re-runs when coordinates change (e.g. consecutive right-clicks)
+  $effect(() => {
+    const targetX = ui.ctxX;
+    const targetY = ui.ctxY;
+    if (!ui.ctxVisible) return;
+    setTimeout(() => {
+      if (!menuEl) return;
+      const rect = menuEl.getBoundingClientRect();
+      const pad = 8;
+      let x = targetX;
+      let y = targetY;
+      if (rect.bottom > window.innerHeight - pad) {
+        y = window.innerHeight - rect.height - pad;
+      }
+      if (rect.right > window.innerWidth - pad) {
+        x = window.innerWidth - rect.width - pad;
+      }
+      if (y < pad) y = pad;
+      if (x < pad) x = pad;
+      menuEl.style.left = x + 'px';
+      menuEl.style.top = y + 'px';
+    }, 0);
+  });
 </script>
 
 {#if ui.ctxVisible}
   {@const m = ui.ctxPath ? project.getMeta(ui.ctxPath) : { status: '', quality: 0 }}
   <div
     class="ctx-menu"
+    bind:this={menuEl}
     style="left: {ui.ctxX}px; top: {ui.ctxY}px"
     onclick={(e) => e.stopPropagation()}
   >
