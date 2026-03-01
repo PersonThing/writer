@@ -1,16 +1,20 @@
 /**
- * Project store — files, metadata, statuses, filters, sorting.
+ * Project store — files, metadata, statuses, grouped files.
  * Uses Svelte 5 class pattern: $state fields + $derived fields + methods.
  */
 import * as api from '../api.js';
 
 export const DEFAULT_STATUSES = [
-  { id: 'new',  label: 'New',   color: '#7c7c7c', description: 'Newly added, not yet started' },
-  { id: 'todo', label: 'To do', color: '#4a68b0', description: 'Ready to work on' },
-  { id: '30',   label: '30%',   color: '#e05c04', description: 'Early draft' },
-  { id: '70',   label: '70%',   color: '#a07c22', description: 'Nearly there' },
-  { id: 'done', label: 'Done',  color: '#1e8a48', description: 'Finished' },
+  { id: 'new',  label: 'New',   color: '#7c7c7c' },
+  { id: 'todo', label: 'To do', color: '#4a68b0' },
+  { id: '30',   label: '30%',   color: '#e05c04' },
+  { id: '70',   label: '70%',   color: '#a07c22' },
+  { id: 'done', label: 'Done',  color: '#1e8a48' },
 ];
+
+export function slugify(label) {
+  return label.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
 
 class ProjectStore {
   // ── State ────────────────────────────────────────────────────────────────
@@ -19,8 +23,6 @@ class ProjectStore {
   dirs = $state(new Set());
   meta = $state({});
   searchQuery = $state('');
-  activeFilter = $state('');
-  activeSort = $state('status');
   collapsed = $state(new Set());
 
   #showAppCallback = null;
@@ -30,67 +32,57 @@ class ProjectStore {
     return this.meta._statuses || DEFAULT_STATUSES;
   }
 
-  get doneOrder() {
-    return Array.isArray(this.meta._doneOrder) ? this.meta._doneOrder : [];
-  }
+  get groupedFiles() {
+    let allPaths = [...this.files.keys()];
 
-  get fileCounts() {
-    const counts = { '': 0, social: 0 };
-    for (const s of this.statuses) counts[s.id] = 0;
-    let total = 0;
-    for (const [path] of this.files) {
-      const m = this.getMeta(path);
-      total++;
-      const sid = m.status || '';
-      if (sid in counts) counts[sid]++;
-      else counts['']++;
-      if (m.social) counts.social++;
-    }
-    counts._total = total;
-    return counts;
-  }
-
-  get filteredFiles() {
-    let paths = [...this.files.keys()];
-
-    // Hide done files unless explicitly filtering by "done"
-    if (this.activeFilter !== 'done') {
-      paths = paths.filter(p => this.getMeta(p).status !== 'done');
-    }
-
-    // Search filter
+    // Apply search filter
     if (this.searchQuery) {
       const q = this.searchQuery.toLowerCase();
-      paths = paths.filter(p => this.displayName(p).toLowerCase().includes(q));
+      allPaths = allPaths.filter(p => this.displayName(p).toLowerCase().includes(q));
     }
 
-    // Status filter
-    if (this.activeFilter === 'social') {
-      paths = paths.filter(p => this.getMeta(p).social);
-    } else if (this.activeFilter) {
-      paths = paths.filter(p => this.getMeta(p).status === this.activeFilter);
-    }
+    const pathSet = new Set(allPaths);
+    const fileOrder = this.meta._fileOrder || {};
 
-    // Sort
-    paths.sort((a, b) => {
-      const ma = this.getMeta(a), mb = this.getMeta(b);
-      if (this.activeSort === 'quality') {
-        if (mb.quality !== ma.quality) return mb.quality - ma.quality;
-        return this.displayName(a).localeCompare(this.displayName(b));
-      }
-      if (this.activeSort === 'status') {
-        const order = this.statuses.map(s => s.id).concat(['']);
-        const diff = order.indexOf(ma.status || '') - order.indexOf(mb.status || '');
-        if (diff !== 0) return diff;
-        return this.displayName(a).localeCompare(this.displayName(b));
-      }
-      if (this.activeSort === 'modified') {
-        return (mb.modified || 0) - (ma.modified || 0);
-      }
-      return this.displayName(a).localeCompare(this.displayName(b));
+    // Build groups in status config order
+    const groups = this.statuses.map(s => {
+      const matching = allPaths.filter(p => (this.getMeta(p).status || '') === s.id);
+      const orderedList = fileOrder[s.id] || [];
+      const ordered = orderedList.filter(p => pathSet.has(p) && matching.includes(p));
+      const orderedSet = new Set(ordered);
+      const remaining = matching.filter(p => !orderedSet.has(p));
+      remaining.sort((a, b) => this.displayName(a).localeCompare(this.displayName(b)));
+
+      return {
+        id: s.id,
+        label: s.label,
+        color: s.color,
+        files: [...ordered, ...remaining],
+        count: matching.length,
+      };
     });
 
-    return paths;
+    // "No Status" group last
+    const knownIds = new Set(this.statuses.map(s => s.id));
+    const noStatus = allPaths.filter(p => {
+      const sid = this.getMeta(p).status || '';
+      return sid === '' || !knownIds.has(sid);
+    });
+    const noOrderedList = fileOrder[''] || [];
+    const noOrdered = noOrderedList.filter(p => pathSet.has(p) && noStatus.includes(p));
+    const noOrderedSet = new Set(noOrdered);
+    const noRemaining = noStatus.filter(p => !noOrderedSet.has(p));
+    noRemaining.sort((a, b) => this.displayName(a).localeCompare(this.displayName(b)));
+
+    groups.push({
+      id: '',
+      label: 'No Status',
+      color: '#444',
+      files: [...noOrdered, ...noRemaining],
+      count: noStatus.length,
+    });
+
+    return groups;
   }
 
   // ── Meta helpers ─────────────────────────────────────────────────────────
@@ -100,8 +92,12 @@ class ProjectStore {
   }
 
   async patchMeta(path, patch) {
-    if ('status' in patch && patch.status !== this.getMeta(path).status) {
-      this.#syncDoneOrder(path, patch.status);
+    if ('status' in patch) {
+      const oldStatus = this.getMeta(path).status || '';
+      const newStatus = patch.status || '';
+      if (oldStatus !== newStatus) {
+        this.#syncFileOrder(path, oldStatus, newStatus);
+      }
     }
     this.meta = { ...this.meta, [path]: { ...this.getMeta(path), ...patch } };
     await this.saveMeta();
@@ -124,10 +120,9 @@ class ProjectStore {
   }
 
   displayName(relPath) {
-    const top = this.topFolder(relPath);
     const stem = relPath.endsWith('.md') ? relPath.slice(0, -3) : relPath;
-    const sub = top === '(root)' ? stem : stem.slice(top.length + 1);
-    return sub.replace(/\//g, ' / ');
+    const parts = stem.split('/');
+    return parts[parts.length - 1];
   }
 
   // ── Actions ──────────────────────────────────────────────────────────────
@@ -160,34 +155,141 @@ class ProjectStore {
     } catch {
       this.meta = {};
     }
+
+    // Migrate _doneOrder → _fileOrder (one-time)
+    if (Array.isArray(this.meta._doneOrder) && !this.meta._fileOrder) {
+      const fileOrder = { done: [...this.meta._doneOrder] };
+      const newMeta = { ...this.meta, _fileOrder: fileOrder };
+      delete newMeta._doneOrder;
+      this.meta = newMeta;
+      await this.saveMeta();
+    } else if (Array.isArray(this.meta._doneOrder)) {
+      const newMeta = { ...this.meta };
+      delete newMeta._doneOrder;
+      this.meta = newMeta;
+      await this.saveMeta();
+    }
   }
 
   async saveMeta() {
     await api.writeFile(this.rootPath + '/poems-meta.json', JSON.stringify(this.meta, null, 2));
   }
 
-  // ── Done / Reading Order ───────────────────────────────────────────────
+  // ── File Order (per-group ordering) ───────────────────────────────────
 
-  #syncDoneOrder(path, newStatus) {
-    let order = Array.isArray(this.meta._doneOrder) ? [...this.meta._doneOrder] : [];
-    const inOrder = order.includes(path);
-    if (newStatus === 'done' && !inOrder) {
-      order.push(path);
-    } else if (newStatus !== 'done' && inOrder) {
-      order = order.filter(p => p !== path);
+  #syncFileOrder(path, oldStatus, newStatus) {
+    const fileOrder = { ...(this.meta._fileOrder || {}) };
+
+    // Remove from old group
+    const oldKey = oldStatus || '';
+    if (Array.isArray(fileOrder[oldKey])) {
+      fileOrder[oldKey] = fileOrder[oldKey].filter(p => p !== path);
     }
-    this.meta = { ...this.meta, _doneOrder: order };
+
+    // Add to end of new group
+    const newKey = newStatus || '';
+    if (!Array.isArray(fileOrder[newKey])) fileOrder[newKey] = [];
+    if (!fileOrder[newKey].includes(path)) {
+      fileOrder[newKey].push(path);
+    }
+
+    this.meta = { ...this.meta, _fileOrder: fileOrder };
   }
 
-  async reorderDone(fromPath, toPath) {
-    const order = [...this.doneOrder];
-    const fromIdx = order.indexOf(fromPath);
-    const toIdx = order.indexOf(toPath);
+  async reorderInGroup(statusId, fromPath, toPath) {
+    const key = statusId || '';
+    const fileOrder = { ...(this.meta._fileOrder || {}) };
+
+    // Snapshot current rendered order for this group
+    const group = this.groupedFiles.find(g => g.id === statusId);
+    let list = group ? [...group.files] : [];
+
+    const fromIdx = list.indexOf(fromPath);
+    const toIdx = list.indexOf(toPath);
     if (fromIdx === -1 || toIdx === -1) return;
-    order.splice(fromIdx, 1);
-    order.splice(toIdx, 0, fromPath);
-    this.meta = { ...this.meta, _doneOrder: order };
+
+    list.splice(fromIdx, 1);
+    list.splice(toIdx, 0, fromPath);
+
+    fileOrder[key] = list;
+    this.meta = { ...this.meta, _fileOrder: fileOrder };
     await this.saveMeta();
+  }
+
+  async moveToGroup(path, targetStatusId, beforePath) {
+    const oldStatus = this.getMeta(path).status || '';
+    const newStatus = targetStatusId ?? '';
+    const fileOrder = { ...(this.meta._fileOrder || {}) };
+
+    // Remove from old group's file order
+    const oldKey = oldStatus || '';
+    if (Array.isArray(fileOrder[oldKey])) {
+      fileOrder[oldKey] = fileOrder[oldKey].filter(p => p !== path);
+    }
+
+    // Get target group's current rendered list
+    const targetGroup = this.groupedFiles.find(g => g.id === targetStatusId);
+    let targetList = targetGroup ? [...targetGroup.files] : [];
+    // Remove in case it's somehow already there
+    targetList = targetList.filter(p => p !== path);
+
+    // Insert at position
+    if (beforePath) {
+      const idx = targetList.indexOf(beforePath);
+      if (idx !== -1) {
+        targetList.splice(idx, 0, path);
+      } else {
+        targetList.push(path);
+      }
+    } else {
+      targetList.push(path);
+    }
+
+    const newKey = newStatus || '';
+    fileOrder[newKey] = targetList;
+
+    // Update status + file order + save in one go
+    const updatedMeta = {
+      ...this.meta,
+      _fileOrder: fileOrder,
+      [path]: { ...this.getMeta(path), status: newStatus },
+    };
+    this.meta = updatedMeta;
+    await this.saveMeta();
+  }
+
+  migrateStatusIds(oldStatuses, newStatuses) {
+    const idMap = {};
+    for (let i = 0; i < oldStatuses.length; i++) {
+      const oldId = oldStatuses[i].id;
+      const newId = newStatuses[i]?.id;
+      if (oldId && newId && oldId !== newId) {
+        idMap[oldId] = newId;
+      }
+    }
+    if (Object.keys(idMap).length === 0) return;
+
+    const newMeta = { ...this.meta };
+
+    // Update file metadata status fields
+    for (const [path, data] of Object.entries(newMeta)) {
+      if (path.startsWith('_')) continue;
+      if (data.status && idMap[data.status]) {
+        newMeta[path] = { ...data, status: idMap[data.status] };
+      }
+    }
+
+    // Update _fileOrder keys
+    if (newMeta._fileOrder) {
+      const newFileOrder = {};
+      for (const [key, list] of Object.entries(newMeta._fileOrder)) {
+        const newKey = idMap[key] !== undefined ? idMap[key] : key;
+        newFileOrder[newKey] = list;
+      }
+      newMeta._fileOrder = newFileOrder;
+    }
+
+    this.meta = newMeta;
   }
 
   // ── App visibility ─────────────────────────────────────────────────────

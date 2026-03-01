@@ -57,3 +57,9 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font-ui); }
 .btn-small:disabled, .btn-primary.btn-small:disabled {
   opacity: .4; cursor: default; pointer-events: none;
 }
+
+/* ── Dark mode scrollbars ──────────────────────────────────────────── */
+:root.dark ::-webkit-scrollbar { width: 6px; height: 6px; }
+:root.dark ::-webkit-scrollbar-track { background: var(--surface); }
+:root.dark ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+:root.dark ::-webkit-scrollbar-thumb:hover { background: #4a4742; }

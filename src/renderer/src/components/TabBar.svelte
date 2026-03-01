@@ -1,15 +1,16 @@
 <script>
   import { ui, toggleDarkMode } from '../lib/stores/ui.svelte.js';
+  import { iconGear } from '../lib/icons.js';
 </script>
 
 <div class="tab-bar">
   <button class="tab-btn active" data-tab="poetry">Poetry</button>
   <div class="tab-spacer"></div>
   <button class="tab-icon" onclick={toggleDarkMode} title={ui.darkMode ? 'Light mode' : 'Dark mode'}>
-    {ui.darkMode ? '&#9788;' : '&#9789;'}
+    {ui.darkMode ? 'Light' : 'Dark'}
   </button>
   <button class="tab-icon" onclick={() => ui.helpOpen = true} title="Help & shortcuts">?</button>
-  <button class="tab-icon" onclick={() => ui.settingsOpen = true} title="Settings">&#9881;</button>
+  <button class="tab-icon" onclick={() => ui.settingsOpen = true} title="Settings">{@html iconGear(18)}</button>
 </div>
 
 <style>
@@ -34,6 +35,7 @@
     background: none; border: none; color: #666; cursor: pointer;
     font-size: .85rem; padding: 0 .6rem; transition: color .15s;
     -webkit-app-region: no-drag;
+    display: inline-flex; align-items: center;
   }
   .tab-icon:hover { color: #aaa; }
 </style>

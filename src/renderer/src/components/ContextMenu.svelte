@@ -3,6 +3,7 @@
   import { editor } from '../lib/stores/editor.svelte.js';
   import { ui, hideContextMenu } from '../lib/stores/ui.svelte.js';
   import * as api from '../lib/api.js';
+  import { iconPencil, iconTrash } from '../lib/icons.js';
 
   function handleStatus(statusId) {
     if (!ui.ctxPath) return;
@@ -109,19 +110,19 @@
   >
     <div class="ctx-section">Status</div>
     <div
-      class="ctx-item"
+      class="ctx-item ctx-no-status"
       class:active={!m.status}
       onclick={() => handleStatus('')}
     >
-      — No status
+      No status
     </div>
     {#each project.statuses as s}
       <div
         class="ctx-item"
         class:active={m.status === s.id}
-        title={s.description || ''}
         onclick={() => handleStatus(s.id)}
       >
+        <span class="ctx-status-dot" style="background: {s.color}"></span>
         {s.label}
       </div>
     {/each}
@@ -139,8 +140,8 @@
     </div>
 
     <hr class="ctx-sep">
-    <div class="ctx-item" onclick={handleRename}>&#9998; Rename</div>
-    <div class="ctx-item ctx-delete" onclick={handleDelete}>&#128465; Delete</div>
+    <div class="ctx-item" onclick={handleRename}><span class="ctx-icon">{@html iconPencil()}</span> Rename</div>
+    <div class="ctx-item ctx-delete" onclick={handleDelete}><span class="ctx-icon">{@html iconTrash()}</span> Delete</div>
   </div>
 {/if}
 
@@ -163,6 +164,10 @@
   }
   .ctx-item:hover { background: var(--accent-light); color: var(--accent); }
   .ctx-item.active { font-weight: bold; color: var(--accent); }
+  .ctx-no-status { font-style: italic; color: var(--muted); }
+  .ctx-no-status:hover { color: var(--accent); }
+  .ctx-no-status.active { font-weight: bold; color: var(--muted); font-style: italic; }
+  .ctx-status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
   .ctx-sep { border: none; border-top: 1px solid var(--border); margin: .3rem 0; }
   .ctx-stars { display: flex; gap: 3px; padding: .3rem .85rem; }
   .ctx-star {
@@ -171,4 +176,5 @@
   .ctx-star.on { color: var(--accent); }
   .ctx-delete { color: #c0392b !important; }
   .ctx-delete:hover { background: #fdeaea !important; color: #c0392b !important; }
+  .ctx-icon { display: inline-flex; align-items: center; }
 </style>

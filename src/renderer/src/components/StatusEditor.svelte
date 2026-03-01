@@ -1,8 +1,11 @@
 <script>
-  import { project } from '../lib/stores/project.svelte.js';
+  import { project, slugify } from '../lib/stores/project.svelte.js';
   import { ui } from '../lib/stores/ui.svelte.js';
+  import { iconGripDots } from '../lib/icons.js';
 
   let draft = $state([]);
+  let dragIdx = $state(null);
+  let dragOverIdx = $state(null);
 
   $effect(() => {
     if (ui.statusEditorOpen) {
@@ -10,41 +13,61 @@
     }
   });
 
-  function moveUp(idx) {
-    if (idx <= 0) return;
-    const next = [...draft];
-    [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-    draft = next;
-  }
-
-  function moveDown(idx) {
-    if (idx >= draft.length - 1) return;
-    const next = [...draft];
-    [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
-    draft = next;
-  }
-
   function remove(idx) {
     draft = draft.filter((_, i) => i !== idx);
   }
 
   function addStatus() {
-    draft = [...draft, { id: 'status' + (draft.length + 1), label: 'New Status', color: '#888888', description: '' }];
+    draft = [...draft, { label: 'New Status', color: '#888888' }];
+  }
+
+  // Drag & drop reorder
+  function handleDragStart(e, idx) {
+    dragIdx = idx;
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => { e.target.style.opacity = '.4'; }, 0);
+  }
+
+  function handleDragEnd(e) {
+    e.target.style.opacity = '';
+    dragIdx = null;
+    dragOverIdx = null;
+  }
+
+  function handleDragOver(e, idx) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    dragOverIdx = (idx !== dragIdx) ? idx : null;
+  }
+
+  function handleDrop(e, idx) {
+    e.preventDefault();
+    if (dragIdx === null || idx === dragIdx) return;
+    const next = [...draft];
+    const [item] = next.splice(dragIdx, 1);
+    next.splice(idx, 0, item);
+    draft = next;
+    dragIdx = null;
+    dragOverIdx = null;
   }
 
   async function save() {
-    // Validate unique non-empty ids
-    const ids = draft.map(s => s.id.trim()).filter(Boolean);
-    if (ids.length !== draft.length || new Set(ids).size !== ids.length) {
-      alert('Each status needs a unique non-empty ID.');
-      return;
-    }
+    const oldStatuses = JSON.parse(JSON.stringify(project.statuses));
+
     const cleaned = draft.map(s => ({
-      id: s.id.trim(),
+      id: slugify(s.label),
       label: s.label.trim(),
       color: s.color,
-      description: (s.description || '').trim(),
     }));
+
+    // Validate non-empty IDs and uniqueness
+    const ids = cleaned.map(s => s.id).filter(Boolean);
+    if (ids.length !== cleaned.length || new Set(ids).size !== ids.length) {
+      alert('Each status needs a unique non-empty label.');
+      return;
+    }
+
+    project.migrateStatusIds(oldStatuses, cleaned);
     project.meta = { ...project.meta, _statuses: cleaned };
     await project.saveMeta();
     ui.statusEditorOpen = false;
@@ -69,13 +92,18 @@
 
       <div class="status-list">
         {#each draft as s, i}
-          <div class="status-edit-row">
-            <span class="move-btn" onclick={() => moveUp(i)} title="Move up">{i > 0 ? '▲' : ''}</span>
-            <span class="move-btn" onclick={() => moveDown(i)} title="Move down">{i < draft.length - 1 ? '▼' : ''}</span>
-            <input type="text" class="label-input" bind:value={s.label} placeholder="Label">
-            <input type="text" class="id-input" bind:value={s.id} placeholder="id">
+          <div
+            class="status-edit-row"
+            class:drag-over={dragOverIdx === i}
+            draggable="true"
+            ondragstart={(e) => handleDragStart(e, i)}
+            ondragend={handleDragEnd}
+            ondragover={(e) => handleDragOver(e, i)}
+            ondrop={(e) => handleDrop(e, i)}
+          >
+            <span class="grip-handle">{@html iconGripDots(12)}</span>
             <input type="color" bind:value={s.color}>
-            <input type="text" class="desc-input" bind:value={s.description} placeholder="Description (tooltip)">
+            <input type="text" class="label-input" bind:value={s.label} placeholder="Label">
             <button class="rm-btn" onclick={() => remove(i)} title="Remove">&times;</button>
           </div>
         {/each}
@@ -97,7 +125,7 @@
   }
   .modal-box {
     background: var(--surface); border-radius: 10px; padding: 1.2rem;
-    min-width: 420px; max-width: 560px; max-height: 80vh; overflow-y: auto;
+    min-width: 360px; max-width: 480px; max-height: 80vh; overflow-y: auto;
     box-shadow: 0 8px 30px rgba(0,0,0,.25);
   }
   .modal-header {
@@ -113,7 +141,10 @@
 
   .status-edit-row {
     display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem;
+    padding: .25rem .3rem; border-radius: 5px;
+    border: 1px solid transparent;
   }
+  .status-edit-row.drag-over { border-top: 2px solid var(--accent); }
   .status-edit-row input[type="text"] {
     font-size: .8rem; padding: .3rem .5rem; border: 1px solid var(--border);
     border-radius: 5px; background: var(--surface); color: var(--text);
@@ -123,14 +154,12 @@
     border-radius: 5px; padding: 1px; cursor: pointer; background: none;
   }
   .label-input { flex: 1; }
-  .id-input { width: 70px; font-family: var(--font-mono); font-size: .72rem; }
-  .desc-input { flex: 1; font-size: .75rem; }
+  .grip-handle {
+    color: var(--muted); cursor: grab; flex-shrink: 0; display: inline-flex;
+  }
+  .grip-handle:active { cursor: grabbing; }
   .rm-btn {
     background: none; border: none; color: #c0392b; cursor: pointer;
     font-size: .9rem; padding: 2px 4px;
-  }
-  .move-btn {
-    background: none; border: none; color: var(--muted); cursor: pointer;
-    font-size: .75rem; padding: 0 2px; user-select: none;
   }
 </style>

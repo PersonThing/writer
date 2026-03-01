@@ -3,6 +3,7 @@
   import { project } from '../lib/stores/project.svelte.js';
   import { editor } from '../lib/stores/editor.svelte.js';
   import { ui, showToast } from '../lib/stores/ui.svelte.js';
+  import { iconLink, iconBroom, iconShare } from '../lib/icons.js';
 
   let { pane, isActive = false } = $props();
 
@@ -43,7 +44,7 @@
     { fmt: 'h2', label: 'H2', tip: 'Heading 2 (Ctrl+2)' },
     { fmt: 'h3', label: 'H3', tip: 'Heading 3 (Ctrl+3)' },
     null,
-    { fmt: 'link', label: '&#128279;', tip: 'Link (Ctrl+K)' },
+    { fmt: 'link', label: iconLink(), tip: 'Link (Ctrl+K)' },
     { fmt: 'hr', label: '&#9135;', tip: 'Section break (Ctrl+\\)' },
     { fmt: 'bullet', label: '&#8226; List', tip: 'Bullet list (Ctrl+Shift+L)' },
     null,
@@ -358,7 +359,7 @@
     </div>
 
     <button class="social-btn" class:on={m.social} onclick={handleSocial} title="Social media">
-      &#128241;
+      {@html iconShare()}
     </button>
 
     <button
@@ -387,7 +388,7 @@
       {/each}
       <span class="fmt-sep"></span>
       <button class="fmt-btn" onclick={() => ui.cleanupOpen = true} data-tip="Clean up formatting">
-        &#128295; Clean
+        {@html iconBroom()} Clean
       </button>
       {#if isSinglePane}
         <div style="flex:1"></div>
