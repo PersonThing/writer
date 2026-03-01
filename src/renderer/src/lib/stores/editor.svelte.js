@@ -4,6 +4,7 @@
  */
 import * as api from '../api.js';
 import { project } from './project.svelte.js';
+import { modalConfirm, modalPrompt, modalAlert } from './ui.svelte.js';
 
 const MAX_UNDO = 200;
 
@@ -59,6 +60,8 @@ class EditorStore {
       const pane = this.#createPane(path, content);
       this.panes = [...this.panes, pane];
       this.activePaneId = pane.id;
+      // Split view not supported in multi-pane mode
+      if (this.panes.length > 1 && this.viewMode === 'split') this.viewMode = 'edit';
     } else if (this.panes.length === 0) {
       const pane = this.#createPane(path, content);
       this.panes = [pane];
@@ -68,7 +71,7 @@ class EditorStore {
       const active = this.panes.find(p => p.id === this.activePaneId);
       if (active && active.dirty) {
         const name = project.displayName(active.filePath);
-        if (!confirm(`Discard unsaved changes to "${name}"?`)) return;
+        if (!await modalConfirm(`Discard unsaved changes to "${name}"?`)) return;
       }
       const pane = this.#createPane(path, content);
       this.panes = this.panes.map(p => p.id === this.activePaneId ? pane : p);
@@ -76,12 +79,12 @@ class EditorStore {
     }
   }
 
-  closePane(paneId) {
+  async closePane(paneId) {
     const pane = this.panes.find(p => p.id === paneId);
     if (!pane) return;
     if (pane.dirty) {
       const name = project.displayName(pane.filePath);
-      if (!confirm(`Discard unsaved changes to "${name}"?`)) return;
+      if (!await modalConfirm(`Discard unsaved changes to "${name}"?`)) return;
     }
     this.panes = this.panes.filter(p => p.id !== paneId);
     if (this.activePaneId === paneId) {
@@ -145,7 +148,7 @@ class EditorStore {
 
         await project.scanAll();
       } catch (e) {
-        alert('Rename failed: ' + e.message);
+        modalAlert('Rename failed: ' + e.message);
         return;
       }
     } else {
@@ -211,7 +214,7 @@ class EditorStore {
   // ── New file ──────────────────────────────────────────────────────────
 
   async newFile() {
-    const name = prompt('New poem title:');
+    const name = await modalPrompt('New poem title:', { placeholder: 'Untitled' });
     if (!name || !name.trim()) return;
 
     const filename = name.trim().replace(/[<>:"/\\|?*]/g, '') + '.md';

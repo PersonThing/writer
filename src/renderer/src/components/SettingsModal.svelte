@@ -1,5 +1,5 @@
 <script>
-  import { ui } from '../lib/stores/ui.svelte.js';
+  import { ui, modalAlert } from '../lib/stores/ui.svelte.js';
   import * as api from '../lib/api.js';
 
   let claudeKey = $state('');
@@ -42,7 +42,7 @@
       instagramStatus = 'connected';
     } catch (e) {
       instagramStatus = 'error';
-      alert('Instagram auth failed: ' + e.message);
+      modalAlert('Instagram auth failed: ' + e.message);
     }
   }
 

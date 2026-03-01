@@ -23,7 +23,7 @@ class ProjectStore {
   dirs = $state(new Set());
   meta = $state({});
   searchQuery = $state('');
-  collapsed = $state(new Set());
+  activeFilter = $state('');
 
   #showAppCallback = null;
 
@@ -83,6 +83,63 @@ class ProjectStore {
     });
 
     return groups;
+  }
+
+  get filteredFiles() {
+    const groups = this.groupedFiles;
+    let result = [];
+
+    if (this.activeFilter === 'social') {
+      // Show social files across all groups, preserving status order
+      for (const g of groups) {
+        for (const path of g.files) {
+          if (this.getMeta(path).social) {
+            result.push({ path, color: g.color, statusId: g.id });
+          }
+        }
+      }
+    } else if (this.activeFilter === '_none') {
+      // Show only no-status group
+      const g = groups.find(g => g.id === '');
+      if (g) {
+        for (const path of g.files) {
+          result.push({ path, color: g.color, statusId: g.id });
+        }
+      }
+    } else if (this.activeFilter) {
+      // Show only matching status group
+      const g = groups.find(g => g.id === this.activeFilter);
+      if (g) {
+        for (const path of g.files) {
+          result.push({ path, color: g.color, statusId: g.id });
+        }
+      }
+    } else {
+      // All files, flattened in status order
+      for (const g of groups) {
+        for (const path of g.files) {
+          result.push({ path, color: g.color, statusId: g.id });
+        }
+      }
+    }
+
+    return result;
+  }
+
+  get fileCounts() {
+    const counts = { '': 0, social: 0 };
+    for (const s of this.statuses) counts[s.id] = 0;
+    let total = 0;
+    for (const [path] of this.files) {
+      const m = this.getMeta(path);
+      total++;
+      const sid = m.status || '';
+      if (sid in counts) counts[sid]++;
+      else counts['']++;
+      if (m.social) counts.social++;
+    }
+    counts._total = total;
+    return counts;
   }
 
   // ── Meta helpers ─────────────────────────────────────────────────────────

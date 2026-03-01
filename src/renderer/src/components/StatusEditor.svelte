@@ -1,6 +1,6 @@
 <script>
   import { project, slugify } from '../lib/stores/project.svelte.js';
-  import { ui } from '../lib/stores/ui.svelte.js';
+  import { ui, modalAlert } from '../lib/stores/ui.svelte.js';
   import { iconGripDots } from '../lib/icons.js';
 
   let draft = $state([]);
@@ -63,7 +63,7 @@
     // Validate non-empty IDs and uniqueness
     const ids = cleaned.map(s => s.id).filter(Boolean);
     if (ids.length !== cleaned.length || new Set(ids).size !== ids.length) {
-      alert('Each status needs a unique non-empty label.');
+      await modalAlert('Each status needs a unique non-empty label.');
       return;
     }
 

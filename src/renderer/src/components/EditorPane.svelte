@@ -2,21 +2,24 @@
   import { parseMarkdown } from '../lib/markdown.js';
   import { project } from '../lib/stores/project.svelte.js';
   import { editor } from '../lib/stores/editor.svelte.js';
-  import { ui, showToast } from '../lib/stores/ui.svelte.js';
-  import { iconLink, iconBroom, iconShare } from '../lib/icons.js';
+  import { showToast } from '../lib/stores/ui.svelte.js';
+  import { iconShare } from '../lib/icons.js';
 
   let { pane, isActive = false } = $props();
 
   let textarea = $state(null);
+  let previewPaneEl = $state(null);
   let headingEl = $state(null);
   let headingValue = $state('');
   let _undoTimer = 0;
   let _caseTimer = 0;
   let _caseCount = 0;
+  let _syncRaf = 0;
 
   // ── Derived ────────────────────────────────────────────────────────────
-  let isSinglePane = $derived(editor.isSinglePane);
-  let effectiveView = $derived(isSinglePane ? editor.viewMode : 'edit');
+  let effectiveView = $derived(
+    editor.isMultiPane && editor.viewMode === 'split' ? 'edit' : editor.viewMode
+  );
   let showEdit = $derived(effectiveView !== 'preview');
   let showPreview = $derived(effectiveView !== 'edit');
   let previewHtml = $derived(parseMarkdown(pane.content));
@@ -35,25 +38,14 @@
     return () => window.removeEventListener('focus-heading', focusHeading);
   });
 
-  // ── Formatting bar buttons ─────────────────────────────────────────────
-  const fmtButtons = [
-    { fmt: 'bold', label: '<b>B</b>', tip: 'Bold (Ctrl+B)' },
-    { fmt: 'italic', label: '<i>I</i>', tip: 'Italic (Ctrl+I)' },
-    null,
-    { fmt: 'h1', label: 'H1', tip: 'Heading 1 (Ctrl+1)' },
-    { fmt: 'h2', label: 'H2', tip: 'Heading 2 (Ctrl+2)' },
-    { fmt: 'h3', label: 'H3', tip: 'Heading 3 (Ctrl+3)' },
-    null,
-    { fmt: 'link', label: iconLink(), tip: 'Link (Ctrl+K)' },
-    { fmt: 'hr', label: '&#9135;', tip: 'Section break (Ctrl+\\)' },
-    { fmt: 'bullet', label: '&#8226; List', tip: 'Bullet list (Ctrl+Shift+L)' },
-    null,
-    { fmt: 'poetry-br', label: '&#8629;\\', tip: 'Poetry line break (Ctrl+Enter)' },
-    { fmt: 'em-dash', label: '&#8212;', tip: 'Em dash (Ctrl+Shift+.)' },
-    { fmt: 'dup-line', label: '&#10697;', tip: 'Duplicate line (Ctrl+D)' },
-    null,
-    { fmt: 'case', label: 'Aa', tip: 'Cycle case (Shift+F3)' },
-  ];
+  // Listen for format commands from the shared toolbar
+  $effect(() => {
+    function handleFormat(e) {
+      if (isActive) applyFmt(e.detail);
+    }
+    window.addEventListener('apply-format', handleFormat);
+    return () => window.removeEventListener('apply-format', handleFormat);
+  });
 
   // ── Header actions ─────────────────────────────────────────────────────
   function handleHeadingInput() {
@@ -69,8 +61,9 @@
     }
   }
 
-  async function handleStatusChange(e) {
-    await project.patchMeta(pane.filePath, { status: e.target.value });
+  async function handleStatus(statusId) {
+    const cur = m.status || '';
+    await project.patchMeta(pane.filePath, { status: cur === statusId ? '' : statusId });
   }
 
   async function handleStar(p) {
@@ -196,9 +189,17 @@
     const r = getLineRange();
     if (!r) return;
     const trimmed = r.line.trimEnd();
-    const newLine = trimmed.endsWith('\\') ? trimmed.slice(0, -1).trimEnd() : trimmed + '\\';
-    ta.value = ta.value.slice(0, r.lineStart) + newLine + ta.value.slice(r.end);
-    ta.selectionStart = ta.selectionEnd = r.lineStart + newLine.length;
+    if (trimmed.endsWith('\\')) {
+      // Toggle off: remove the backslash
+      const newLine = trimmed.slice(0, -1).trimEnd();
+      ta.value = ta.value.slice(0, r.lineStart) + newLine + ta.value.slice(r.end);
+      ta.selectionStart = ta.selectionEnd = r.lineStart + newLine.length;
+    } else {
+      // Append backslash and insert a new line
+      const replacement = trimmed + '\\\n';
+      ta.value = ta.value.slice(0, r.lineStart) + replacement + ta.value.slice(r.end);
+      ta.selectionStart = ta.selectionEnd = r.lineStart + replacement.length;
+    }
     ta.focus();
     editor.updateContent(pane.id, ta.value);
   }
@@ -330,6 +331,71 @@
     ta.selectionStart = ta.selectionEnd = s + rep.length;
     editor.updateContent(pane.id, ta.value);
   }
+
+  // ── Scroll sync (editor → preview) ──────────────────────────────────
+  function syncPreviewScroll() {
+    const ta = textarea;
+    const preview = previewPaneEl;
+    if (!ta || !preview || !showEdit || !showPreview) return;
+
+    // At the extremes, pin to top/bottom
+    if (ta.scrollTop <= 0) {
+      preview.scrollTop = 0;
+      return;
+    }
+    if (ta.scrollTop + ta.clientHeight >= ta.scrollHeight - 2) {
+      preview.scrollTop = preview.scrollHeight - preview.clientHeight;
+      return;
+    }
+
+    // Figure out which source line is at the top of the visible textarea.
+    // We compute this from the scroll fraction and the total line count.
+    const text = ta.value;
+    const totalLines = text.split('\n').length;
+    const lineHeight = ta.scrollHeight / totalLines;
+    const topLine = Math.floor(ta.scrollTop / lineHeight);
+
+    // Find the two bracketing elements in the preview
+    const els = preview.querySelectorAll('[data-source-line]');
+    if (!els.length) return;
+
+    let before = null;
+    let after = null;
+    for (const el of els) {
+      const ln = parseInt(el.dataset.sourceLine, 10);
+      if (ln <= topLine) before = el;
+      if (ln > topLine && !after) { after = el; break; }
+    }
+
+    if (!before) {
+      // topLine is before the first element — stay at top
+      preview.scrollTop = 0;
+      return;
+    }
+
+    const beforeLine = parseInt(before.dataset.sourceLine, 10);
+    const beforeTop = before.offsetTop - preview.offsetTop;
+
+    if (!after) {
+      // Past the last element — scroll to it
+      preview.scrollTop = beforeTop;
+      return;
+    }
+
+    // Interpolate between the two bracketing elements
+    const afterLine = parseInt(after.dataset.sourceLine, 10);
+    const afterTop = after.offsetTop - preview.offsetTop;
+    const frac = (afterLine > beforeLine)
+      ? (topLine - beforeLine) / (afterLine - beforeLine)
+      : 0;
+    preview.scrollTop = beforeTop + frac * (afterTop - beforeTop);
+  }
+
+  function handleEditorScroll() {
+    if (!showPreview) return;
+    cancelAnimationFrame(_syncRaf);
+    _syncRaf = requestAnimationFrame(syncPreviewScroll);
+  }
 </script>
 
 <div class="pane-wrapper" class:active={isActive} onclick={handleFocus} role="group">
@@ -345,12 +411,17 @@
       spellcheck="false"
     >
 
-    <select class="status-sel" value={m.status || ''} onchange={handleStatusChange}>
-      <option value="">—</option>
+    <div class="status-dots">
       {#each project.statuses as s}
-        <option value={s.id}>{s.label}</option>
+        <button
+          class="status-dot"
+          class:active={m.status === s.id}
+          style="--dot-color: {s.color}"
+          title={s.label}
+          onclick={() => handleStatus(s.id)}
+        ></button>
       {/each}
-    </select>
+    </div>
 
     <div class="stars">
       {#each Array(5) as _, i}
@@ -374,33 +445,6 @@
     <button class="pane-close" title="Close file" onclick={handleClose}>&times;</button>
   </div>
 
-  <!-- Toolbar: only when pane is active -->
-  {#if isActive && showEdit}
-    <div class="pane-toolbar">
-      {#each fmtButtons as btn}
-        {#if btn === null}
-          <span class="fmt-sep"></span>
-        {:else}
-          <button class="fmt-btn" data-tip={btn.tip} onclick={() => applyFmt(btn.fmt)}>
-            {@html btn.label}
-          </button>
-        {/if}
-      {/each}
-      <span class="fmt-sep"></span>
-      <button class="fmt-btn" onclick={() => ui.cleanupOpen = true} data-tip="Clean up formatting">
-        {@html iconBroom()} Clean
-      </button>
-      {#if isSinglePane}
-        <div style="flex:1"></div>
-        <div class="view-toggle">
-          <button class="vbtn" class:active={editor.viewMode === 'edit'} onclick={() => editor.viewMode = 'edit'}>Edit</button>
-          <button class="vbtn" class:active={editor.viewMode === 'preview'} onclick={() => editor.viewMode = 'preview'}>Preview</button>
-          <button class="vbtn" class:active={editor.viewMode === 'split'} onclick={() => editor.viewMode = 'split'}>Split</button>
-        </div>
-      {/if}
-    </div>
-  {/if}
-
   <!-- Editor body -->
   <div class="editor-body" class:split={showEdit && showPreview}>
     {#if showEdit}
@@ -413,13 +457,14 @@
           onkeydown={handleKeydown}
           onpaste={handlePaste}
           onfocus={handleFocus}
+          onscroll={handleEditorScroll}
           spellcheck="true"
           placeholder="Start writing..."
         ></textarea>
       </div>
     {/if}
     {#if showPreview}
-      <div class="preview-pane">
+      <div class="preview-pane" bind:this={previewPaneEl}>
         <div class="preview-content">{@html previewHtml}</div>
       </div>
     {/if}
@@ -444,24 +489,27 @@
   }
   .file-heading {
     font-family: var(--font-serif); font-size: .88rem; font-weight: bold;
-    max-width: 180px; overflow: hidden; text-overflow: ellipsis;
+    overflow: hidden; text-overflow: ellipsis;
     white-space: nowrap; color: var(--text);
     border: 1px solid transparent; border-radius: 4px;
     padding: 1px 4px; background: transparent; outline: none;
-    flex-shrink: 1; min-width: 60px;
+    flex: 1; min-width: 60px;
   }
   .file-heading:hover { border-color: var(--border); }
   .file-heading:focus { border-color: var(--accent); background: var(--surface); }
 
-  .status-sel {
-    font-size: .73rem; border: 1px solid var(--border); border-radius: 5px;
-    padding: .2rem .4rem; background: var(--surface); cursor: pointer;
-    color: var(--text); outline: none; flex-shrink: 0;
+  .status-dots { display: flex; gap: 3px; flex-shrink: 0; align-items: center; }
+  .status-dot {
+    width: 10px; height: 10px; border-radius: 50%; border: 2px solid transparent;
+    background: var(--dot-color); cursor: pointer; padding: 0;
+    opacity: .4; transition: opacity .15s, border-color .15s;
   }
+  .status-dot:hover { opacity: .8; }
+  .status-dot.active { opacity: 1; border-color: var(--dot-color); background: var(--dot-color); box-shadow: 0 0 0 1px var(--surface); }
 
   .stars { display: flex; gap: 1px; flex-shrink: 0; }
   .star {
-    font-size: .85rem; cursor: pointer; color: #d0ccc6;
+    font-size: .85rem; cursor: pointer; color: var(--muted);
     transition: color .1s; line-height: 1; user-select: none;
   }
   .star.on { color: var(--accent); }
@@ -478,7 +526,6 @@
   :global(.dark) .social-btn.on { background: #2a1f3a; }
 
   .save-btn {
-    margin-left: auto;
     background: var(--accent); color: #fff;
     border: none; border-radius: 5px; padding: .2rem .65rem;
     font-size: .73rem; cursor: pointer; transition: all .15s;
@@ -493,48 +540,6 @@
     flex-shrink: 0;
   }
   .pane-close:hover { color: var(--text); background: var(--accent-light); }
-
-  /* ── Toolbar (formatting) ──────────────────────────────────────────── */
-  .pane-toolbar {
-    display: flex; align-items: center; gap: 2px; flex-wrap: wrap;
-    padding: .25rem .55rem; border-bottom: 1px solid var(--border);
-    background: var(--bg); flex-shrink: 0;
-  }
-  .fmt-btn {
-    font-size: .72rem; padding: .22rem .42rem; border-radius: 4px;
-    border: 1px solid transparent; background: transparent;
-    cursor: pointer; color: var(--text); font-family: var(--font-ui);
-    transition: background .1s, border-color .1s, color .1s;
-    white-space: nowrap; position: relative;
-  }
-  .fmt-btn:hover {
-    background: var(--accent-light); border-color: var(--border); color: var(--accent);
-  }
-  .fmt-btn[data-tip]:hover::after {
-    content: attr(data-tip);
-    position: absolute; bottom: calc(100% + 5px); left: 50%;
-    transform: translateX(-50%);
-    background: #2a2a2a; color: #f0f0f0; font-size: .65rem;
-    padding: 3px 8px; border-radius: 4px; white-space: nowrap;
-    pointer-events: none; z-index: 9999;
-    box-shadow: 0 2px 6px rgba(0,0,0,.25);
-  }
-  .fmt-sep {
-    width: 1px; height: 16px; background: var(--border); margin: 0 3px; flex-shrink: 0;
-  }
-
-  /* ── View toggle ───────────────────────────────────────────────────── */
-  .view-toggle {
-    display: flex; border: 1px solid var(--border); border-radius: 5px;
-    overflow: hidden; flex-shrink: 0;
-  }
-  .vbtn {
-    font-size: .68rem; padding: .2rem .5rem;
-    border: none; background: transparent; cursor: pointer;
-    color: var(--muted); transition: all .1s;
-  }
-  .vbtn:not(:last-child) { border-right: 1px solid var(--border); }
-  .vbtn.active { background: var(--accent-light); color: var(--accent); }
 
   /* ── Editor body ───────────────────────────────────────────────────── */
   .editor-body {

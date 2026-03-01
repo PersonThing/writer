@@ -40,6 +40,45 @@
     </div>
   </div>
 
+  <div class="filter-chips">
+    <button
+      class="chip"
+      class:active={project.activeFilter === ''}
+      onclick={() => project.activeFilter = ''}
+    >
+      All <span class="chip-count">{project.fileCounts._total}</span>
+    </button>
+    {#each project.statuses as s}
+      <button
+        class="chip"
+        class:active={project.activeFilter === s.id}
+        onclick={() => project.activeFilter = project.activeFilter === s.id ? '' : s.id}
+      >
+        <span class="chip-dot" style="background: {s.color}"></span>
+        {s.label}
+        <span class="chip-count">{project.fileCounts[s.id] || 0}</span>
+      </button>
+    {/each}
+    {#if project.fileCounts[''] > 0}
+      <button
+        class="chip"
+        class:active={project.activeFilter === '_none'}
+        onclick={() => project.activeFilter = project.activeFilter === '_none' ? '' : '_none'}
+      >
+        <span class="chip-dot" style="background: #444"></span>
+        No Status
+        <span class="chip-count">{project.fileCounts['']}</span>
+      </button>
+    {/if}
+    <button
+      class="chip"
+      class:active={project.activeFilter === 'social'}
+      onclick={() => project.activeFilter = project.activeFilter === 'social' ? '' : 'social'}
+    >
+      Social <span class="chip-count">{project.fileCounts.social || 0}</span>
+    </button>
+  </div>
+
   <FileList />
 </aside>
 
@@ -82,4 +121,24 @@
   .search::placeholder { color: #555; }
 
   .gear-btn { flex-shrink: 0; padding: 2px; }
+
+  .filter-chips {
+    display: flex; flex-wrap: wrap; gap: 4px;
+    padding: .5rem .75rem; border-bottom: 1px solid var(--sb-border);
+    flex-shrink: 0;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: .2rem .55rem; border-radius: 12px;
+    font-size: .7rem; cursor: pointer;
+    background: transparent; border: 1px solid var(--sb-border);
+    color: var(--sb-text); transition: all .15s;
+  }
+  .chip:hover { background: var(--sb-hover); border-color: #555; }
+  .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .chip-dot {
+    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  }
+  .chip.active .chip-dot { opacity: .8; }
+  .chip-count { color: inherit; opacity: .6; font-size: .65rem; }
 </style>

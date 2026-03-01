@@ -1,7 +1,7 @@
 <script>
   import { project } from '../lib/stores/project.svelte.js';
   import { editor } from '../lib/stores/editor.svelte.js';
-  import { ui, hideContextMenu } from '../lib/stores/ui.svelte.js';
+  import { ui, hideContextMenu, modalConfirm, modalAlert } from '../lib/stores/ui.svelte.js';
   import * as api from '../lib/api.js';
   import { iconPencil, iconTrash } from '../lib/icons.js';
 
@@ -31,25 +31,25 @@
 
   async function handleDelete() {
     if (!ui.ctxPath) return;
-    const name = project.displayName(ui.ctxPath);
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) {
-      hideContextMenu();
+    const path = ui.ctxPath;
+    const name = project.displayName(path);
+    hideContextMenu();
+    if (!await modalConfirm(`Delete "${name}"? This cannot be undone.`)) {
       return;
     }
     try {
-      await api.deleteFile(project.rootPath + '/' + ui.ctxPath);
+      await api.deleteFile(project.rootPath + '/' + path);
     } catch (e) {
-      alert('Could not delete: ' + e.message);
+      await modalAlert('Could not delete: ' + e.message);
     }
-    const pane = editor.panes.find(p => p.filePath === ui.ctxPath);
+    const pane = editor.panes.find(p => p.filePath === path);
     if (pane) editor.closePane(pane.id);
 
     const newMeta = { ...project.meta };
-    delete newMeta[ui.ctxPath];
+    delete newMeta[path];
     project.meta = newMeta;
     await project.saveMeta();
     await project.scanAll();
-    hideContextMenu();
   }
 
   function handleWindowClick(e) {
@@ -171,7 +171,7 @@
   .ctx-sep { border: none; border-top: 1px solid var(--border); margin: .3rem 0; }
   .ctx-stars { display: flex; gap: 3px; padding: .3rem .85rem; }
   .ctx-star {
-    font-size: 1rem; cursor: pointer; color: #ccc; transition: color .1s;
+    font-size: 1rem; cursor: pointer; color: var(--muted); transition: color .1s;
   }
   .ctx-star.on { color: var(--accent); }
   .ctx-delete { color: #c0392b !important; }

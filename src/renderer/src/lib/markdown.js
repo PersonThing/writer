@@ -27,7 +27,7 @@ export function parseMarkdown(md) {
 
     if (/^(-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
       if (inPara) { out.push('</p>'); inPara = false; }
-      out.push('<hr>');
+      out.push(`<hr data-source-line="${i}">`);
       continue;
     }
 
@@ -35,7 +35,7 @@ export function parseMarkdown(md) {
     if (hm) {
       if (inPara) { out.push('</p>'); inPara = false; }
       const lvl = hm[1].length;
-      out.push(`<h${lvl}>${hm[2]}</h${lvl}>`);
+      out.push(`<h${lvl} data-source-line="${i}">${hm[2]}</h${lvl}>`);
       continue;
     }
 
@@ -46,7 +46,7 @@ export function parseMarkdown(md) {
 
     const hardBreak = trimmed.slice(-1) === '\\';
     const text = hardBreak ? trimmed.slice(0, -1).trimEnd() : trimmed;
-    if (!inPara) { out.push('<p>'); inPara = true; }
+    if (!inPara) { out.push(`<p data-source-line="${i}">`); inPara = true; }
     out.push(text + (hardBreak ? '<br>' : ' '));
   }
 

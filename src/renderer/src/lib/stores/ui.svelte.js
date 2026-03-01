@@ -20,6 +20,9 @@ export const ui = $state({
   cleanupOpen: false,
   helpOpen: false,
 
+  // Modal dialog (confirm / prompt / alert)
+  modal: null,
+
   // App view
   appReady: false,
 
@@ -57,4 +60,36 @@ export function showToast(msg = 'Saved') {
 export function toggleDarkMode() {
   ui.darkMode = !ui.darkMode;
   localStorage.setItem('darkMode', String(ui.darkMode));
+}
+
+// ── Modal dialogs (replaces confirm / prompt / alert) ────────────────────
+// Modal state lives on `ui` so the ModalDialog component can react to it.
+// Each function returns a Promise that resolves when the user responds.
+let _modalResolve = null;
+
+function _openModal(type, message, { placeholder = '', defaultValue = '', confirmLabel = 'OK', cancelLabel = 'Cancel' } = {}) {
+  return new Promise(resolve => {
+    _modalResolve = resolve;
+    ui.modal = { type, message, placeholder, defaultValue, inputValue: defaultValue, confirmLabel, cancelLabel };
+  });
+}
+
+export function modalResolve(value) {
+  if (_modalResolve) { _modalResolve(value); _modalResolve = null; }
+  ui.modal = null;
+}
+
+/** Like confirm() — resolves true/false */
+export function modalConfirm(message, opts) {
+  return _openModal('confirm', message, opts);
+}
+
+/** Like prompt() — resolves string or null */
+export function modalPrompt(message, opts) {
+  return _openModal('prompt', message, opts);
+}
+
+/** Like alert() — resolves undefined when dismissed */
+export function modalAlert(message, opts) {
+  return _openModal('alert', message, { confirmLabel: 'OK', ...opts });
 }

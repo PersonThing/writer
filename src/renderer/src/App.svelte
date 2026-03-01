@@ -15,6 +15,7 @@
   import CleanupPreview from './components/CleanupPreview.svelte';
   import SettingsModal from './components/SettingsModal.svelte';
   import HelpPanel from './components/HelpPanel.svelte';
+  import ModalDialog from './components/ModalDialog.svelte';
 
   // When project store signals app is ready (folder opened)
   project.onShowApp(() => { ui.appReady = true; });
@@ -57,6 +58,7 @@
 <CleanupPreview />
 <SettingsModal />
 <HelpPanel />
+<ModalDialog />
 
 <style>
   .app-root {
