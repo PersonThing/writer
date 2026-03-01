@@ -21,9 +21,9 @@
   --sb-active:     #322e29;
   --sb-border:     #2e2b27;
   --s-active:      #e05c04;
-  --s-next:        #1e8a48;
+  --s-next:        #4a68b0;
   --s-halfbaked:   #a07c22;
-  --s-done:        #4a68b0;
+  --s-done:        #1e8a48;
   --s-published:   #7c35d4;
   --font-mono:     'Menlo', 'Monaco', 'Courier New', monospace;
   --font-serif:    'Georgia', 'Times New Roman', serif;
@@ -185,6 +185,13 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font-ui); }
   white-space: nowrap; color: var(--text);
 }
 
+#close-btn {
+  background: none; border: none; font-size: 1.1rem; color: var(--muted);
+  cursor: pointer; padding: 0 .3rem; line-height: 1; border-radius: 4px;
+  transition: color .1s, background .1s;
+}
+#close-btn:hover { color: var(--text); background: var(--accent-light); }
+
 .toolbar-sep {
   width: 1px; height: 20px; background: var(--border); flex-shrink: 0;
 }
@@ -236,7 +243,7 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font-ui); }
   flex-shrink: 0;
 }
 #save-btn:disabled { background: var(--border); color: var(--muted); cursor: default; }
-#save-btn.saved    { background: #1e8a48; }
+#save-btn.saved    { background: #1e8a48; color: #fff; }
 
 /* ── Editor body ──────────────────────────────────────────────────────── */
 #editor-body {
@@ -364,6 +371,8 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font-ui); }
   font-size: 1rem; cursor: pointer; color: #ccc; transition: color .1s;
 }
 .ctx-star.on { color: var(--accent); }
+.ctx-delete { color: #c0392b !important; }
+.ctx-delete:hover { background: #fdeaea !important; color: #c0392b !important; }
 
 .hidden { display: none !important; }
 /* ── Formatting bar ───────────────────────────────────────────────────── */
@@ -437,9 +446,9 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font-ui); }
       <div class="sort-row">
         <span>Sort by</span>
         <select id="sort-sel">
+          <option value="status">Status</option>
           <option value="quality">Quality</option>
           <option value="name">Name</option>
-          <option value="status">Status</option>
           <option value="modified">Last modified</option>
         </select>
       </div>
@@ -457,6 +466,7 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font-ui); }
     <!-- Toolbar (hidden until file open) -->
     <div id="toolbar">
       <span class="file-heading" id="file-heading"></span>
+      <button id="close-btn" title="Close file">×</button>
       <div class="toolbar-sep"></div>
 
       <select id="status-sel">
@@ -550,6 +560,8 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font-ui); }
     <span class="ctx-star" data-q="4">★</span>
     <span class="ctx-star" data-q="5">★</span>
   </div>
+  <hr class="ctx-sep">
+  <div class="ctx-item ctx-delete" data-action="delete">🗑 Delete</div>
 </div>
 
 <div id="toast">Saved ✓</div>
@@ -567,7 +579,8 @@ window.marked = {
       .replace(/__(.+?)__/g, '<strong>$1</strong>')
       .replace(/\*(.+?)\*/g, '<em>$1</em>')
       .replace(/_(.+?)_/g, '<em>$1</em>')
-      .replace(/`(.+?)`/g, '<code>$1</code>');
+      .replace(/`(.+?)`/g, '<code>$1</code>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
 
     var lines = escaped.split('\n');
     var out = [];
@@ -618,7 +631,7 @@ let meta        = {};    // relPath → { status, priority, social, modified }
 let current     = null;  // current open relPath
 let dirty       = false; // unsaved changes
 let activeFilter = '';
-let activeSort   = 'priority';
+let activeSort   = 'status';
 const collapsed  = new Set();
 
 // Status → dot colour
@@ -707,6 +720,17 @@ async function openRoot(handle) {
   await idbSet('rootHandle', handle);
   await scanAll();
   await loadMeta();
+
+  // Auto-assign "next" status to files in "To Do Next" folder that have no status
+  let changed = false;
+  for (const path of Object.keys(fileMap)) {
+    if (topFolder(path) === 'To Do Next' && !getMeta(path).status) {
+      meta[path] = { ...getMeta(path), status: 'next' };
+      changed = true;
+    }
+  }
+  if (changed) await saveMeta();
+
   showApp();
   renderList();
   renderDonePanel();
@@ -807,17 +831,7 @@ function renderList() {
     return true;
   });
 
-  // Group by top folder
-  const groups = {};
-  const FOLDER_ORDER = ['APRIL', 'POEMs', 'To Do Next'];
-
-  for (const p of paths) {
-    const f = topFolder(p);
-    if (!groups[f]) groups[f] = [];
-    groups[f].push(p);
-  }
-
-  // Sort within each group
+  // Sort
   const sortFn = (a, b) => {
     const ma = getMeta(a), mb = getMeta(b);
     if (activeSort === 'quality') {
@@ -836,63 +850,38 @@ function renderList() {
     return displayName(a).localeCompare(displayName(b));
   };
 
-  const folderKeys = Object.keys(groups).sort((a, b) => {
-    const ia = FOLDER_ORDER.indexOf(a), ib = FOLDER_ORDER.indexOf(b);
-    if (ia > -1 && ib > -1) return ia - ib;
-    if (ia > -1) return -1;
-    if (ib > -1) return 1;
-    return a.localeCompare(b);
-  });
+  const sorted = paths.sort(sortFn);
 
-  if (!folderKeys.length) {
+  if (!sorted.length) {
     list.innerHTML = '<div style="padding:1rem 1.2rem;color:#555;font-size:.82rem;font-style:italic">No poems match.</div>';
     return;
   }
 
   let html = '';
-  for (const folder of folderKeys) {
-    const files = groups[folder].sort(sortFn);
-    const isOpen = !collapsed.has(folder);
+  for (const path of sorted) {
+    const m     = getMeta(path);
+    const dname = displayName(path);
+    const isCur = path === current;
+    const isDirty = isCur && dirty;
+    const dotColor = STATUS_COLOR[m.status] || STATUS_COLOR[''];
+    const pDots = Array.from({length:5}, (_,i) =>
+      `<span class="p-dot${i < m.quality ? ' on' : ''}"></span>`
+    ).join('');
 
-    html += `<div>
-      <div class="folder-hdr" data-folder="${folder.replace(/"/g,'&quot;')}">
-        <span class="fold-arrow ${isOpen ? 'open' : 'closed'}">▾</span>
-        ${folder}
-        <span style="margin-left:auto;color:#444;font-size:.62rem">${files.length}</span>
-      </div>`;
-
-    if (isOpen) {
-      for (const path of files) {
-        const m     = getMeta(path);
-        const dname = displayName(path);
-        const isCur = path === current;
-        const isDirty = isCur && dirty;
-        const dotColor = STATUS_COLOR[m.status] || STATUS_COLOR[''];
-        const pDots = Array.from({length:5}, (_,i) =>
-          `<span class="p-dot${i < m.quality ? ' on' : ''}"></span>`
-        ).join('');
-
-        html += `<div class="file-item${isCur ? ' current' : ''}"
-                      data-path="${path.replace(/"/g,'&quot;')}">
-          <span class="s-dot" style="background:${dotColor}"></span>
-          <span class="file-name" title="${dname}">${dname}${isDirty ? ' <span class="dirty-mark">•</span>' : ''}</span>
-          <span class="item-badges">
-            ${m.social ? '<span class="social-pip">📱</span>' : ''}
-            <span class="p-dots">${pDots}</span>
-          </span>
-        </div>`;
-      }
-    }
-    html += '</div>';
+    html += `<div class="file-item${isCur ? ' current' : ''}"
+                  data-path="${path.replace(/"/g,'&quot;')}">
+      <span class="s-dot" style="background:${dotColor}"></span>
+      <span class="file-name" title="${dname}">${dname}${isDirty ? ' <span class="dirty-mark">•</span>' : ''}</span>
+      <span class="item-badges">
+        ${m.social ? '<span class="social-pip">📱</span>' : ''}
+        <span class="p-dots">${pDots}</span>
+      </span>
+    </div>`;
   }
 
   list.innerHTML = html;
 }
 
-function toggleFolder(name) {
-  collapsed.has(name) ? collapsed.delete(name) : collapsed.add(name);
-  renderList();
-}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // OPEN / SAVE FILE
@@ -1231,10 +1220,7 @@ document.getElementById('new-btn').addEventListener('click', newFile);
 // Event delegation for file list clicks (avoids inline onclick quoting bugs)
 document.getElementById('file-list').addEventListener('click', e => {
   const fileItem = e.target.closest('.file-item');
-  if (fileItem) { openFile(fileItem.dataset.path); return; }
-
-  const folderHdr = e.target.closest('.folder-hdr');
-  if (folderHdr) { toggleFolder(folderHdr.dataset.folder); }
+  if (fileItem) { openFile(fileItem.dataset.path); }
 });
 
 document.getElementById('search').addEventListener('input', renderList);
@@ -1261,8 +1247,8 @@ document.getElementById('stars').addEventListener('click', async e => {
   const star = e.target.closest('.star');
   if (!star || !current) return;
   const p = parseInt(star.dataset.p);
-  const cur = getMeta(current).priority;
-  await patchMeta(current, { priority: cur === p ? 0 : p });
+  const cur = getMeta(current).quality || 0;
+  await patchMeta(current, { quality: cur === p ? 0 : p });
 });
 
 document.getElementById('social-btn').addEventListener('click', async () => {
@@ -1272,6 +1258,19 @@ document.getElementById('social-btn').addEventListener('click', async () => {
 });
 
 document.getElementById('save-btn').addEventListener('click', saveFile);
+
+document.getElementById('close-btn').addEventListener('click', () => {
+  if (dirty && current) {
+    if (!confirm(`Discard unsaved changes to "${displayName(current)}"?`)) return;
+  }
+  current = null;
+  dirty = false;
+  document.getElementById('toolbar').style.display = 'none';
+  document.getElementById('fmt-bar').style.display = 'none';
+  document.getElementById('editor-body').style.display = 'none';
+  document.getElementById('no-file').classList.remove('hidden');
+  renderList();
+});
 
 document.getElementById('md-textarea').addEventListener('input', e => {
   dirty = true;
@@ -1310,6 +1309,22 @@ document.getElementById('md-textarea').addEventListener('keydown', e => {
 
   // Shift+F3 → cycle case
   if (e.shiftKey && e.key === 'F3') { e.preventDefault(); applyFmt('case'); return; }
+});
+
+// Paste URL → auto-create markdown link
+document.getElementById('md-textarea').addEventListener('paste', e => {
+  const text = (e.clipboardData || window.clipboardData).getData('text');
+  if (!text || !/^https?:\/\/\S+$/.test(text.trim())) return;
+  const url = text.trim();
+  const ta = e.target;
+  const s = ta.selectionStart, end = ta.selectionEnd;
+  const sel = ta.value.slice(s, end);
+  e.preventDefault();
+  const label = sel.trim() || url;
+  const rep = '[' + label + '](' + url + ')';
+  ta.value = ta.value.slice(0, s) + rep + ta.value.slice(end);
+  ta.selectionStart = ta.selectionEnd = s + rep.length;
+  ta.dispatchEvent(new Event('input'));
 });
 
 // Formatting bar click delegation
@@ -1481,6 +1496,31 @@ ctxMenu.addEventListener('click', async e => {
   const starEl   = e.target.closest('.ctx-star');
 
   if (actionEl && ctxPath) {
+    if (actionEl.dataset.action === 'delete') {
+      const name = displayName(ctxPath);
+      if (!confirm(`Delete "${name}"? This cannot be undone.`)) { hideCtxMenu(); return; }
+      // Remove file from disk
+      const parts = ctxPath.split('/');
+      const fileName = parts.pop();
+      const parentKey = parts.length ? parts.join('/') : 'root';
+      const parentHandle = dirMap[parentKey] || rootHandle;
+      try { await parentHandle.removeEntry(fileName); } catch(e) { alert('Could not delete: ' + e.message); }
+      // Clean up state
+      delete fileMap[ctxPath];
+      delete meta[ctxPath];
+      if (current === ctxPath) {
+        current = null; dirty = false;
+        document.getElementById('toolbar').style.display = 'none';
+        document.getElementById('fmt-bar').style.display = 'none';
+        document.getElementById('editor-body').style.display = 'none';
+        document.getElementById('no-file').classList.remove('hidden');
+      }
+      await saveMeta();
+      renderList();
+      renderDonePanel();
+      hideCtxMenu();
+      return;
+    }
     const newStatus = actionEl.dataset.val;
     syncDoneOrder(ctxPath, newStatus);
     await patchMeta(ctxPath, { status: newStatus });
