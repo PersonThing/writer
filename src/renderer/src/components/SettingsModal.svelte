@@ -1,15 +1,21 @@
 <script>
-  import { ui, modalAlert } from '../lib/stores/ui.svelte.js'
+  import { ui } from '../lib/stores/ui.svelte.js'
   import * as api from '../lib/api.js'
 
   let claudeKey = $state('')
   let claudeStatus = $state('checking')
-  let instagramStatus = $state('not_connected')
+  let openaiKey = $state('')
+  let openaiStatus = $state('checking')
+  let claudeModels = $state([])
+  let selectedModel = $state('claude-haiku-4-5-20251001')
+  let loadingModels = $state(false)
 
   // Load state when modal opens
   $effect(() => {
     if (ui.settingsOpen) {
       loadClaudeStatus()
+      loadOpenAIStatus()
+      loadSelectedModel()
     }
   })
 
@@ -33,17 +39,50 @@
   async function clearClaude() {
     await api.setClaudeKey('')
     claudeStatus = 'not_configured'
+    claudeModels = []
   }
 
-  async function connectInstagram() {
+  async function loadSelectedModel() {
+    const saved = await api.configGet('claudeModel', 'claude-haiku-4-5-20251001')
+    selectedModel = saved
+  }
+
+  async function loadModels() {
+    loadingModels = true
     try {
-      instagramStatus = 'connecting'
-      const result = await api.startInstagramAuth()
-      instagramStatus = 'connected'
+      claudeModels = await api.aiListModels()
     } catch (e) {
-      instagramStatus = 'error'
-      modalAlert('Instagram auth failed: ' + e.message)
+      claudeModels = []
+    } finally {
+      loadingModels = false
     }
+  }
+
+  async function selectModel(modelId) {
+    selectedModel = modelId
+    await api.configSet('claudeModel', modelId)
+  }
+
+  async function loadOpenAIStatus() {
+    openaiStatus = 'checking'
+    try {
+      const key = await api.getOpenAIKey()
+      openaiStatus = key ? 'configured' : 'not_configured'
+    } catch {
+      openaiStatus = 'not_configured'
+    }
+  }
+
+  async function saveOpenAI() {
+    if (!openaiKey.trim()) return
+    await api.setOpenAIKey(openaiKey.trim())
+    openaiKey = ''
+    openaiStatus = 'configured'
+  }
+
+  async function clearOpenAI() {
+    await api.setOpenAIKey('')
+    openaiStatus = 'not_configured'
   }
 
   function close() {
@@ -89,26 +128,64 @@
             >Clear API Key</button
           >
         {/if}
+
+        {#if claudeStatus === 'configured'}
+          <div class="model-section">
+            <label class="model-label">Model</label>
+            {#if claudeModels.length > 0}
+              <select
+                class="model-select"
+                value={selectedModel}
+                onchange={(e) => selectModel(e.target.value)}
+              >
+                {#each claudeModels as model}
+                  <option value={model.id}>{model.name}</option>
+                {/each}
+              </select>
+            {:else}
+              <div class="model-row">
+                <span class="model-current">{selectedModel}</span>
+                <button
+                  class="btn-small"
+                  onclick={loadModels}
+                  disabled={loadingModels}
+                >
+                  {loadingModels ? 'Loading...' : 'Load Models'}
+                </button>
+              </div>
+            {/if}
+          </div>
+        {/if}
       </div>
 
       <hr class="section-sep" />
 
       <div class="section">
-        <h3 class="section-title">Instagram</h3>
-        <div class="status-badge" class:ok={instagramStatus === 'connected'}>
-          {#if instagramStatus === 'connected'}Connected
-          {:else if instagramStatus === 'connecting'}Connecting...
-          {:else if instagramStatus === 'error'}Error
-          {:else}Not connected
+        <h3 class="section-title">OpenAI API Key</h3>
+        <div class="status-badge" class:ok={openaiStatus === 'configured'}>
+          {#if openaiStatus === 'checking'}Checking...
+          {:else if openaiStatus === 'configured'}Configured
+          {:else}Not set
           {/if}
         </div>
-        <button
-          class="btn-small"
-          onclick={connectInstagram}
-          disabled={instagramStatus === 'connecting'}
-        >
-          {instagramStatus === 'connected' ? 'Reconnect' : 'Connect Instagram'}
-        </button>
+
+        {#if openaiStatus !== 'configured'}
+          <div class="key-form">
+            <input
+              type="password"
+              class="key-input"
+              bind:value={openaiKey}
+              placeholder="sk-..."
+            />
+            <button class="btn-primary btn-small" onclick={saveOpenAI}
+              >Save</button
+            >
+          </div>
+        {:else}
+          <button class="btn-small danger" onclick={clearOpenAI}
+            >Clear API Key</button
+          >
+        {/if}
       </div>
     </div>
   </div>
@@ -195,6 +272,40 @@
     background: var(--surface);
     color: var(--text);
     font-family: var(--font-mono);
+  }
+
+  .model-section {
+    margin-top: 0.6rem;
+  }
+  .model-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 0.3rem;
+  }
+  .model-select {
+    width: 100%;
+    font-size: 0.78rem;
+    padding: 0.3rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--text);
+  }
+  .model-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .model-current {
+    font-size: 0.75rem;
+    color: var(--text);
+    font-family: var(--font-mono);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .danger {

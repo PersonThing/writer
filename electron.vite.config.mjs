@@ -5,7 +5,14 @@ export default defineConfig({
   main: {
     build: {
       rollupOptions: {
-        external: ['electron-store', 'electron-updater'],
+        external: [
+          'electron-store',
+          'electron-updater',
+          '@anthropic-ai/sdk',
+          'openai',
+          'ffmpeg-static',
+          'fluent-ffmpeg',
+        ],
       },
     },
   },

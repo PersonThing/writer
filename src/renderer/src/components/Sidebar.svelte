@@ -3,7 +3,13 @@
   import { project } from '../lib/stores/project.svelte.js'
   import { editor } from '../lib/stores/editor.svelte.js'
   import { ui } from '../lib/stores/ui.svelte.js'
-  import { iconPlus, iconRefresh, iconFolder, iconGear, iconShare } from '../lib/icons.js'
+  import {
+    iconPlus,
+    iconRefresh,
+    iconFolder,
+    iconGear,
+    iconShare,
+  } from '../lib/icons.js'
   import FileList from './FileList.svelte'
 
   async function changeDir() {
@@ -21,7 +27,6 @@
 
 <aside class="sidebar">
   <div class="sb-header">
-    <span class="sb-title">Writing Projects</span>
     <button
       class="sb-icon-btn"
       title="New poem"

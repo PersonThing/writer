@@ -4,6 +4,7 @@
   import { editor } from '../lib/stores/editor.svelte.js'
   import { showToast } from '../lib/stores/ui.svelte.js'
   import { iconShare } from '../lib/icons.js'
+  import { social } from '../lib/stores/social.svelte.js'
 
   let { pane, isActive = false } = $props()
 
@@ -593,6 +594,15 @@
       {@html iconShare()}
     </button>
 
+    {#if m.social}
+      <button
+        class="compose-btn"
+        onclick={() => social.open(pane.filePath, pane.content)}
+      >
+        Compose
+      </button>
+    {/if}
+
     <button
       class="save-btn"
       class:saved={!pane.dirty}
@@ -754,6 +764,31 @@
   }
   :global(.dark) .social-btn.on {
     background: #2a1f3a;
+  }
+
+  .compose-btn {
+    font-size: 0.68rem;
+    padding: 0.18rem 0.5rem;
+    height: 1.45rem;
+    border-radius: 5px;
+    border: 1px solid #7c35d4;
+    background: #f5eeff;
+    color: #7c35d4;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    font-weight: 600;
+    transition: all 0.13s;
+  }
+  .compose-btn:hover {
+    background: #ede0ff;
+  }
+  :global(.dark) .compose-btn {
+    background: #2a1f3a;
+  }
+  :global(.dark) .compose-btn:hover {
+    background: #3a2d4f;
   }
 
   .save-btn {
