@@ -463,69 +463,81 @@
   }
 
   // ── Scroll sync (editor → preview) ──────────────────────────────────
+  function getCursorLine(ta) {
+    const text = ta.value.slice(0, ta.selectionStart)
+    return text.split('\n').length - 1
+  }
+
   function syncPreviewScroll() {
     const ta = textarea
     const preview = previewPaneEl
     if (!ta || !preview || !showEdit || !showPreview) return
 
-    // At the extremes, pin to top/bottom
-    if (ta.scrollTop <= 0) {
+    const maxScroll = ta.scrollHeight - ta.clientHeight
+    if (maxScroll <= 0) {
       preview.scrollTop = 0
       return
     }
-    if (ta.scrollTop + ta.clientHeight >= ta.scrollHeight - 2) {
-      preview.scrollTop = preview.scrollHeight - preview.clientHeight
-      return
-    }
 
-    // Figure out which source line is at the top of the visible textarea.
-    // We compute this from the scroll fraction and the total line count.
-    const text = ta.value
-    const totalLines = text.split('\n').length
+    // Base position: proportional scroll
+    const frac = ta.scrollTop / maxScroll
+    const previewMax = preview.scrollHeight - preview.clientHeight
+    let targetScroll = frac * previewMax
+
+    // Check if cursor is visible in the textarea viewport
+    const cursorLine = getCursorLine(ta)
+    const totalLines = ta.value.split('\n').length
     const lineHeight = ta.scrollHeight / totalLines
-    const topLine = Math.floor(ta.scrollTop / lineHeight)
+    const cursorY = cursorLine * lineHeight
+    const cursorVisible =
+      cursorY >= ta.scrollTop && cursorY <= ta.scrollTop + ta.clientHeight
 
-    // Find the two bracketing elements in the preview
-    const els = preview.querySelectorAll('[data-source-line]')
-    if (!els.length) return
+    // If so, ensure the cursor's corresponding preview position is visible
+    if (cursorVisible) {
+      const els = preview.querySelectorAll('[data-source-line]')
+      let cursorEl = null
+      let nextEl = null
+      for (const el of els) {
+        const ln = parseInt(el.dataset.sourceLine, 10)
+        if (ln <= cursorLine) cursorEl = el
+        else { nextEl = el; break }
+      }
 
-    let before = null
-    let after = null
-    for (const el of els) {
-      const ln = parseInt(el.dataset.sourceLine, 10)
-      if (ln <= topLine) before = el
-      if (ln > topLine && !after) {
-        after = el
-        break
+      if (cursorEl) {
+        const elStartLine = parseInt(cursorEl.dataset.sourceLine, 10)
+        const elTop = cursorEl.offsetTop - preview.offsetTop
+
+        // Interpolate within the element to find the cursor's approximate Y
+        let cursorPreviewY
+        if (nextEl) {
+          const nextTop = nextEl.offsetTop - preview.offsetTop
+          const nextLine = parseInt(nextEl.dataset.sourceLine, 10)
+          const span = nextLine - elStartLine
+          const frac2 = span > 0 ? (cursorLine - elStartLine) / span : 0
+          cursorPreviewY = elTop + frac2 * (nextTop - elTop)
+        } else {
+          const elHeight = cursorEl.offsetHeight
+          const endLine = totalLines - 1
+          const span = endLine - elStartLine
+          const frac2 = span > 0 ? (cursorLine - elStartLine) / span : 0
+          cursorPreviewY = elTop + frac2 * elHeight
+        }
+
+        const viewTop = targetScroll
+        const viewBottom = targetScroll + preview.clientHeight
+
+        if (cursorPreviewY > viewBottom - 40) {
+          targetScroll = cursorPreviewY - preview.clientHeight + 40
+        } else if (cursorPreviewY < viewTop) {
+          targetScroll = cursorPreviewY
+        }
       }
     }
 
-    if (!before) {
-      // topLine is before the first element — stay at top
-      preview.scrollTop = 0
-      return
-    }
-
-    const beforeLine = parseInt(before.dataset.sourceLine, 10)
-    const beforeTop = before.offsetTop - preview.offsetTop
-
-    if (!after) {
-      // Past the last element — scroll to it
-      preview.scrollTop = beforeTop
-      return
-    }
-
-    // Interpolate between the two bracketing elements
-    const afterLine = parseInt(after.dataset.sourceLine, 10)
-    const afterTop = after.offsetTop - preview.offsetTop
-    const frac =
-      afterLine > beforeLine
-        ? (topLine - beforeLine) / (afterLine - beforeLine)
-        : 0
-    preview.scrollTop = beforeTop + frac * (afterTop - beforeTop)
+    preview.scrollTop = Math.max(0, Math.min(targetScroll, previewMax))
   }
 
-  function handleEditorScroll() {
+  function scheduleSync() {
     if (!showPreview) return
     cancelAnimationFrame(_syncRaf)
     _syncRaf = requestAnimationFrame(syncPreviewScroll)
@@ -556,7 +568,7 @@
           class="status-dot"
           class:active={m.status === s.id}
           style="--dot-color: {s.color}"
-          title={s.label}
+          data-tip={s.label}
           onclick={() => handleStatus(s.id)}
         ></button>
       {/each}
@@ -607,7 +619,9 @@
           onkeydown={handleKeydown}
           onpaste={handlePaste}
           onfocus={handleFocus}
-          onscroll={handleEditorScroll}
+          onscroll={scheduleSync}
+          onkeyup={scheduleSync}
+          onclick={scheduleSync}
           spellcheck="true"
           placeholder="Start writing..."
         ></textarea>
@@ -674,31 +688,31 @@
 
   .status-dots {
     display: flex;
-    gap: 3px;
+    gap: 0;
     flex-shrink: 0;
     align-items: center;
   }
   .status-dot {
-    width: 10px;
-    height: 10px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
-    border: 2px solid transparent;
+    border: none;
     background: var(--dot-color);
+    background-clip: content-box;
     cursor: pointer;
-    padding: 0;
+    padding: 4px;
+    box-sizing: content-box;
     opacity: 0.4;
     transition:
       opacity 0.15s,
-      border-color 0.15s;
+      box-shadow 0.15s;
   }
   .status-dot:hover {
     opacity: 0.8;
   }
   .status-dot.active {
     opacity: 1;
-    border-color: var(--dot-color);
-    background: var(--dot-color);
-    box-shadow: 0 0 0 1px var(--surface);
+    box-shadow: 0 0 0 2px var(--dot-color);
   }
 
   .stars {
@@ -709,7 +723,7 @@
   .star {
     font-size: 0.85rem;
     cursor: pointer;
-    color: var(--muted);
+    color: var(--star-off);
     transition: color 0.1s;
     line-height: 1;
     user-select: none;
@@ -721,6 +735,7 @@
   .social-btn {
     font-size: 0.7rem;
     padding: 0.18rem 0.4rem;
+    height: 1.45rem;
     border-radius: 5px;
     border: 1px solid var(--border);
     background: var(--surface);
@@ -729,6 +744,8 @@
     transition: all 0.13s;
     flex-shrink: 0;
     line-height: 1;
+    display: inline-flex;
+    align-items: center;
   }
   .social-btn.on {
     border-color: #7c35d4;
@@ -744,11 +761,14 @@
     color: #fff;
     border: none;
     border-radius: 5px;
-    padding: 0.2rem 0.65rem;
+    padding: 0.18rem 0.65rem;
+    height: 1.45rem;
     font-size: 0.73rem;
     cursor: pointer;
     transition: all 0.15s;
     flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
   }
   .save-btn:disabled {
     background: var(--border);
@@ -763,10 +783,10 @@
   .pane-close {
     background: none;
     border: none;
-    font-size: 1rem;
+    font-size: 1.25rem;
     color: var(--muted);
     cursor: pointer;
-    padding: 0 0.2rem;
+    padding: 0 0.3rem;
     line-height: 1;
     border-radius: 4px;
     flex-shrink: 0;

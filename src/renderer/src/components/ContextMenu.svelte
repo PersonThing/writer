@@ -224,7 +224,7 @@
   .ctx-star {
     font-size: 1rem;
     cursor: pointer;
-    color: var(--muted);
+    color: var(--star-off);
     transition: color 0.1s;
   }
   .ctx-star.on {

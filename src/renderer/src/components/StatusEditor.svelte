@@ -7,9 +7,20 @@
   let dragIdx = $state(null)
   let dragOverIdx = $state(null)
 
+  const NO_STATUS_ENTRY = {
+    id: '_none',
+    label: 'No Status',
+    color: '#444',
+    isNoStatus: true,
+  }
+
   $effect(() => {
     if (ui.statusEditorOpen) {
-      draft = JSON.parse(JSON.stringify(project.statuses))
+      const statuses = JSON.parse(JSON.stringify(project.statuses))
+      const pos = project.meta._noStatusPosition ?? statuses.length
+      const clamped = Math.max(0, Math.min(pos, statuses.length))
+      statuses.splice(clamped, 0, { ...NO_STATUS_ENTRY })
+      draft = statuses
     }
   })
 
@@ -56,7 +67,11 @@
   async function save() {
     const oldStatuses = JSON.parse(JSON.stringify(project.statuses))
 
-    const cleaned = draft.map((s) => ({
+    // Find position of "No Status" and extract it from the list
+    const noStatusIdx = draft.findIndex((s) => s.isNoStatus)
+    const statusesOnly = draft.filter((s) => !s.isNoStatus)
+
+    const cleaned = statusesOnly.map((s) => ({
       id: slugify(s.label),
       label: s.label.trim(),
       color: s.color,
@@ -70,7 +85,11 @@
     }
 
     project.migrateStatusIds(oldStatuses, cleaned)
-    project.meta = { ...project.meta, _statuses: cleaned }
+    project.meta = {
+      ...project.meta,
+      _statuses: cleaned,
+      _noStatusPosition: noStatusIdx,
+    }
     await project.saveMeta()
     ui.statusEditorOpen = false
   }
@@ -104,16 +123,21 @@
             ondrop={(e) => handleDrop(e, i)}
           >
             <span class="grip-handle">{@html iconGripDots(12)}</span>
-            <input type="color" bind:value={s.color} />
-            <input
-              type="text"
-              class="label-input"
-              bind:value={s.label}
-              placeholder="Label"
-            />
-            <button class="rm-btn" onclick={() => remove(i)} title="Remove"
-              >&times;</button
-            >
+            {#if s.isNoStatus}
+              <span class="no-status-dot"></span>
+              <span class="no-status-label">No Status</span>
+            {:else}
+              <input type="color" bind:value={s.color} />
+              <input
+                type="text"
+                class="label-input"
+                bind:value={s.label}
+                placeholder="Label"
+              />
+              <button class="rm-btn" onclick={() => remove(i)} title="Remove"
+                >&times;</button
+              >
+            {/if}
           </div>
         {/each}
       </div>
@@ -217,5 +241,17 @@
     cursor: pointer;
     font-size: 0.9rem;
     padding: 2px 4px;
+  }
+  .no-status-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 5px;
+    border: 1px dashed var(--border);
+    flex-shrink: 0;
+  }
+  .no-status-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-style: italic;
   }
 </style>

@@ -3,7 +3,7 @@
   import { project } from '../lib/stores/project.svelte.js'
   import { editor } from '../lib/stores/editor.svelte.js'
   import { ui } from '../lib/stores/ui.svelte.js'
-  import { iconPlus, iconRefresh, iconFolder, iconGear } from '../lib/icons.js'
+  import { iconPlus, iconRefresh, iconFolder, iconGear, iconShare } from '../lib/icons.js'
   import FileList from './FileList.svelte'
 
   async function changeDir() {
@@ -93,6 +93,7 @@
         (project.activeFilter =
           project.activeFilter === 'social' ? '' : 'social')}
     >
+      <span class="chip-social-icon">{@html iconShare(10)}</span>
       Social <span class="chip-count">{project.fileCounts.social || 0}</span>
     </button>
   </div>
@@ -219,5 +220,12 @@
     color: inherit;
     opacity: 0.6;
     font-size: 0.65rem;
+  }
+  .chip-social-icon {
+    display: inline-flex;
+    color: #7c35d4;
+  }
+  .chip.active .chip-social-icon {
+    color: inherit;
   }
 </style>

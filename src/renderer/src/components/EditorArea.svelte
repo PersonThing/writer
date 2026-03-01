@@ -187,28 +187,11 @@
       border-color 0.1s,
       color 0.1s;
     white-space: nowrap;
-    position: relative;
   }
   .fmt-btn:hover {
     background: var(--accent-light);
     border-color: var(--border);
     color: var(--accent);
-  }
-  .fmt-btn[data-tip]:hover::after {
-    content: attr(data-tip);
-    position: absolute;
-    top: calc(100% + 5px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: #2a2a2a;
-    color: #f0f0f0;
-    font-size: 0.65rem;
-    padding: 3px 8px;
-    border-radius: 4px;
-    white-space: nowrap;
-    pointer-events: none;
-    z-index: 9999;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
   }
   .fmt-sep {
     width: 1px;

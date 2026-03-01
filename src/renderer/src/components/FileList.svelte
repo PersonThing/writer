@@ -125,10 +125,10 @@
     padding: 0;
   }
   .file-list::-webkit-scrollbar {
-    width: 4px;
+    width: 6px;
   }
   .file-list::-webkit-scrollbar-thumb {
-    background: #333;
+    background: #555;
     border-radius: 2px;
   }
 

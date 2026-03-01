@@ -74,7 +74,7 @@ class ProjectStore {
       }
     })
 
-    // "No Status" group last
+    // "No Status" group — insert at configured position
     const knownIds = new Set(this.statuses.map((s) => s.id))
     const noStatus = allPaths.filter((p) => {
       const sid = this.getMeta(p).status || ''
@@ -90,13 +90,17 @@ class ProjectStore {
       this.displayName(a).localeCompare(this.displayName(b)),
     )
 
-    groups.push({
+    const noStatusGroup = {
       id: '',
       label: 'No Status',
       color: '#444',
       files: [...noOrdered, ...noRemaining],
       count: noStatus.length,
-    })
+    }
+
+    const pos = this.meta._noStatusPosition ?? groups.length
+    const clamped = Math.max(0, Math.min(pos, groups.length))
+    groups.splice(clamped, 0, noStatusGroup)
 
     return groups
   }

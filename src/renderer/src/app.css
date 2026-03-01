@@ -14,6 +14,7 @@
   --muted: #90867c;
   --accent: #b85c1a;
   --accent-light: #fdf0e6;
+  --star-off: #d0ccc6;
   --sb-bg: #1a1815;
   --sb-text: #c8c2bb;
   --sb-hover: #26231f;
@@ -33,6 +34,7 @@
   --muted: #8a8278;
   --accent: #d4863a;
   --accent-light: #2e2418;
+  --star-off: #4a4640;
   --sb-bg: #111010;
   --sb-text: #c8c2bb;
   --sb-hover: #1e1c18;
@@ -94,6 +96,27 @@ body {
   opacity: 0.4;
   cursor: default;
   pointer-events: none;
+}
+
+/* ── Tooltips ─────────────────────────────────────────────────────── */
+[data-tip] {
+  position: relative;
+}
+[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2a2a2a;
+  color: #f0f0f0;
+  font-size: 0.65rem;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 9999;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 /* ── Dark mode scrollbars ──────────────────────────────────────────── */
