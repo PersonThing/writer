@@ -1,40 +1,40 @@
 <script>
-  import { CLEANUP_RULES, applyCleanup, computeDiff } from "../lib/cleanup.js";
-  import { ui, showToast } from "../lib/stores/ui.svelte.js";
-  import { editor } from "../lib/stores/editor.svelte.js";
+  import { CLEANUP_RULES, applyCleanup, computeDiff } from '../lib/cleanup.js'
+  import { ui, showToast } from '../lib/stores/ui.svelte.js'
+  import { editor } from '../lib/stores/editor.svelte.js'
 
-  let rules = $state({});
+  let rules = $state({})
 
   // Initialize all rules as enabled when opening
   $effect(() => {
     if (ui.cleanupOpen) {
-      const r = {};
-      for (const rule of CLEANUP_RULES) r[rule.id] = true;
-      rules = r;
+      const r = {}
+      for (const rule of CLEANUP_RULES) r[rule.id] = true
+      rules = r
     }
-  });
+  })
 
   let originalContent = $derived(
-    editor.activePane ? editor.activePane.content : "",
-  );
-  let cleanedContent = $derived(applyCleanup(originalContent, rules));
-  let diff = $derived(computeDiff(originalContent, cleanedContent));
-  let hasChanges = $derived(originalContent !== cleanedContent);
-  let changedCount = $derived(diff.filter((d) => d.type === "changed").length);
+    editor.activePane ? editor.activePane.content : '',
+  )
+  let cleanedContent = $derived(applyCleanup(originalContent, rules))
+  let diff = $derived(computeDiff(originalContent, cleanedContent))
+  let hasChanges = $derived(originalContent !== cleanedContent)
+  let changedCount = $derived(diff.filter((d) => d.type === 'changed').length)
 
   function apply() {
-    if (!editor.activePane || !hasChanges) return;
-    editor.updateContent(editor.activePane.id, cleanedContent);
-    showToast("Cleaned up");
-    ui.cleanupOpen = false;
+    if (!editor.activePane || !hasChanges) return
+    editor.updateContent(editor.activePane.id, cleanedContent)
+    showToast('Cleaned up')
+    ui.cleanupOpen = false
   }
 
   function close() {
-    ui.cleanupOpen = false;
+    ui.cleanupOpen = false
   }
 
   function handleOverlayClick(e) {
-    if (e.target === e.currentTarget) close();
+    if (e.target === e.currentTarget) close()
   }
 </script>
 
@@ -61,24 +61,24 @@
         <div class="no-changes">No changes needed with current rules.</div>
       {:else}
         <div class="changes-summary">
-          {changedCount} line{changedCount !== 1 ? "s" : ""} will change
+          {changedCount} line{changedCount !== 1 ? 's' : ''} will change
         </div>
         <div class="diff-container">
           <div class="diff-col">
             <div class="diff-header">Original</div>
             {#each diff as d}
-              <div class="diff-line" class:changed={d.type === "changed"}>
+              <div class="diff-line" class:changed={d.type === 'changed'}>
                 <span class="line-num">{d.lineNum}</span>
-                <span class="line-text">{d.original || " "}</span>
+                <span class="line-text">{d.original || ' '}</span>
               </div>
             {/each}
           </div>
           <div class="diff-col">
             <div class="diff-header">Cleaned</div>
             {#each diff as d}
-              <div class="diff-line" class:changed={d.type === "changed"}>
+              <div class="diff-line" class:changed={d.type === 'changed'}>
                 <span class="line-num">{d.lineNum}</span>
-                <span class="line-text">{d.cleaned || " "}</span>
+                <span class="line-text">{d.cleaned || ' '}</span>
               </div>
             {/each}
           </div>

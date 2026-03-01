@@ -9,17 +9,20 @@
     "preview": "electron-vite preview",
     "dist": "electron-vite build && electron-builder",
     "dist:mac": "electron-vite build && electron-builder --mac",
-    "dist:win": "electron-vite build && electron-builder --win"
+    "dist:win": "electron-vite build && electron-builder --win",
+    "format": "prettier --write \"src/**/*.{js,svelte,css,html}\""
   },
   "dependencies": {
     "electron-store": "^8.2.0",
     "electron-updater": "^6.3.0"
   },
   "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.0",
     "electron": "^33.0.0",
     "electron-builder": "^25.0.0",
     "electron-vite": "^5.0.0",
-    "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "prettier": "^3.8.1",
+    "prettier-plugin-svelte": "^3.5.0",
     "svelte": "^5.0.0"
   },
   "build": {

@@ -1,11 +1,11 @@
 <script>
-  import { editor } from '../lib/stores/editor.svelte.js';
-  import { ui } from '../lib/stores/ui.svelte.js';
-  import { iconLink, iconBroom } from '../lib/icons.js';
-  import EditorPane from './EditorPane.svelte';
+  import { editor } from '../lib/stores/editor.svelte.js'
+  import { ui } from '../lib/stores/ui.svelte.js'
+  import { iconLink, iconBroom } from '../lib/icons.js'
+  import EditorPane from './EditorPane.svelte'
 
   // ── Derived ────────────────────────────────────────────────────────────
-  let showEdit = $derived(editor.viewMode !== 'preview');
+  let showEdit = $derived(editor.viewMode !== 'preview')
 
   // ── Formatting bar buttons ─────────────────────────────────────────────
   const fmtButtons = [
@@ -20,34 +20,38 @@
     { fmt: 'hr', label: '&#9135;', tip: 'Section break (Ctrl+\\)' },
     { fmt: 'bullet', label: '&#8226; List', tip: 'Bullet list (Ctrl+Shift+L)' },
     null,
-    { fmt: 'poetry-br', label: '&#8629;\\', tip: 'Poetry line break (Ctrl+Enter)' },
+    {
+      fmt: 'poetry-br',
+      label: '&#8629;\\',
+      tip: 'Poetry line break (Ctrl+Enter)',
+    },
     { fmt: 'em-dash', label: '&#8212;', tip: 'Em dash (Ctrl+Shift+.)' },
     { fmt: 'dup-line', label: '&#10697;', tip: 'Duplicate line (Ctrl+D)' },
     null,
     { fmt: 'case', label: 'Aa', tip: 'Cycle case (Shift+F3)' },
-  ];
+  ]
 
   function dispatchFormat(fmt) {
-    window.dispatchEvent(new CustomEvent('apply-format', { detail: fmt }));
+    window.dispatchEvent(new CustomEvent('apply-format', { detail: fmt }))
   }
 
   function setViewMode(mode) {
     // Don't allow split in multi-pane mode
-    if (mode === 'split' && editor.isMultiPane) return;
-    editor.viewMode = mode;
+    if (mode === 'split' && editor.isMultiPane) return
+    editor.viewMode = mode
   }
 
   // beforeunload warning
   $effect(() => {
     function handleBeforeUnload(e) {
       if (editor.anyDirty) {
-        e.preventDefault();
-        e.returnValue = '';
+        e.preventDefault()
+        e.returnValue = ''
       }
     }
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  });
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  })
 </script>
 
 <div class="editor-area">
@@ -61,20 +65,41 @@
           {#if btn === null}
             <span class="fmt-sep"></span>
           {:else}
-            <button class="fmt-btn" data-tip={btn.tip} onclick={() => dispatchFormat(btn.fmt)}>
+            <button
+              class="fmt-btn"
+              data-tip={btn.tip}
+              onclick={() => dispatchFormat(btn.fmt)}
+            >
               {@html btn.label}
             </button>
           {/if}
         {/each}
         <span class="fmt-sep"></span>
-        <button class="fmt-btn" onclick={() => ui.cleanupOpen = true} data-tip="Clean up formatting">
+        <button
+          class="fmt-btn"
+          onclick={() => (ui.cleanupOpen = true)}
+          data-tip="Clean up formatting"
+        >
           {@html iconBroom()} Clean
         </button>
         <div style="flex:1"></div>
         <div class="view-toggle">
-          <button class="vbtn" class:active={editor.viewMode === 'edit'} onclick={() => setViewMode('edit')}>Edit</button>
-          <button class="vbtn" class:active={editor.viewMode === 'preview'} onclick={() => setViewMode('preview')}>Preview</button>
-          <button class="vbtn" class:active={editor.viewMode === 'split'} disabled={editor.isMultiPane} onclick={() => setViewMode('split')}>Split</button>
+          <button
+            class="vbtn"
+            class:active={editor.viewMode === 'edit'}
+            onclick={() => setViewMode('edit')}>Edit</button
+          >
+          <button
+            class="vbtn"
+            class:active={editor.viewMode === 'preview'}
+            onclick={() => setViewMode('preview')}>Preview</button
+          >
+          <button
+            class="vbtn"
+            class:active={editor.viewMode === 'split'}
+            disabled={editor.isMultiPane}
+            onclick={() => setViewMode('split')}>Split</button
+          >
         </div>
       </div>
     {:else}
@@ -82,19 +107,29 @@
       <div class="shared-toolbar preview-only">
         <div style="flex:1"></div>
         <div class="view-toggle">
-          <button class="vbtn" class:active={editor.viewMode === 'edit'} onclick={() => setViewMode('edit')}>Edit</button>
-          <button class="vbtn" class:active={editor.viewMode === 'preview'} onclick={() => setViewMode('preview')}>Preview</button>
-          <button class="vbtn" class:active={editor.viewMode === 'split'} disabled={editor.isMultiPane} onclick={() => setViewMode('split')}>Split</button>
+          <button
+            class="vbtn"
+            class:active={editor.viewMode === 'edit'}
+            onclick={() => setViewMode('edit')}>Edit</button
+          >
+          <button
+            class="vbtn"
+            class:active={editor.viewMode === 'preview'}
+            onclick={() => setViewMode('preview')}>Preview</button
+          >
+          <button
+            class="vbtn"
+            class:active={editor.viewMode === 'split'}
+            disabled={editor.isMultiPane}
+            onclick={() => setViewMode('split')}>Split</button
+          >
         </div>
       </div>
     {/if}
 
     <div class="panes-container">
       {#each editor.panes as pane (pane.id)}
-        <EditorPane
-          {pane}
-          isActive={pane.id === editor.activePaneId}
-        />
+        <EditorPane {pane} isActive={pane.id === editor.activePaneId} />
       {/each}
     </div>
   {/if}
@@ -102,61 +137,113 @@
 
 <style>
   .editor-area {
-    flex: 1; display: flex; flex-direction: column;
-    overflow: hidden; background: var(--surface);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--surface);
   }
   .no-file {
-    flex: 1; display: flex; align-items: center; justify-content: center;
-    color: var(--muted); font-family: var(--font-serif);
-    font-style: italic; font-size: 1.05rem;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1.05rem;
   }
   .panes-container {
-    flex: 1; display: flex; overflow: hidden;
+    flex: 1;
+    display: flex;
+    overflow: hidden;
   }
 
   /* ── Shared toolbar ─────────────────────────────────────────────────── */
   .shared-toolbar {
-    display: flex; align-items: center; gap: 2px; flex-wrap: wrap;
-    padding: .25rem .55rem; border-bottom: 1px solid var(--border);
-    background: var(--bg); flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-wrap: wrap;
+    padding: 0.25rem 0.55rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    flex-shrink: 0;
   }
   .shared-toolbar.preview-only {
-    padding: .2rem .55rem;
+    padding: 0.2rem 0.55rem;
   }
   .fmt-btn {
-    font-size: .72rem; padding: .22rem .42rem; border-radius: 4px;
-    border: 1px solid transparent; background: transparent;
-    cursor: pointer; color: var(--text); font-family: var(--font-ui);
-    transition: background .1s, border-color .1s, color .1s;
-    white-space: nowrap; position: relative;
+    font-size: 0.72rem;
+    padding: 0.22rem 0.42rem;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text);
+    font-family: var(--font-ui);
+    transition:
+      background 0.1s,
+      border-color 0.1s,
+      color 0.1s;
+    white-space: nowrap;
+    position: relative;
   }
   .fmt-btn:hover {
-    background: var(--accent-light); border-color: var(--border); color: var(--accent);
+    background: var(--accent-light);
+    border-color: var(--border);
+    color: var(--accent);
   }
   .fmt-btn[data-tip]:hover::after {
     content: attr(data-tip);
-    position: absolute; top: calc(100% + 5px); left: 50%;
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 50%;
     transform: translateX(-50%);
-    background: #2a2a2a; color: #f0f0f0; font-size: .65rem;
-    padding: 3px 8px; border-radius: 4px; white-space: nowrap;
-    pointer-events: none; z-index: 9999;
-    box-shadow: 0 2px 6px rgba(0,0,0,.25);
+    background: #2a2a2a;
+    color: #f0f0f0;
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 9999;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
   }
   .fmt-sep {
-    width: 1px; height: 16px; background: var(--border); margin: 0 3px; flex-shrink: 0;
+    width: 1px;
+    height: 16px;
+    background: var(--border);
+    margin: 0 3px;
+    flex-shrink: 0;
   }
 
   /* ── View toggle ───────────────────────────────────────────────────── */
   .view-toggle {
-    display: flex; border: 1px solid var(--border); border-radius: 5px;
-    overflow: hidden; flex-shrink: 0;
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    overflow: hidden;
+    flex-shrink: 0;
   }
   .vbtn {
-    font-size: .68rem; padding: .2rem .5rem;
-    border: none; background: transparent; cursor: pointer;
-    color: var(--muted); transition: all .1s;
+    font-size: 0.68rem;
+    padding: 0.2rem 0.5rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.1s;
   }
-  .vbtn:not(:last-child) { border-right: 1px solid var(--border); }
-  .vbtn.active { background: var(--accent-light); color: var(--accent); }
-  .vbtn:disabled { opacity: .4; cursor: not-allowed; }
+  .vbtn:not(:last-child) {
+    border-right: 1px solid var(--border);
+  }
+  .vbtn.active {
+    background: var(--accent-light);
+    color: var(--accent);
+  }
+  .vbtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 </style>

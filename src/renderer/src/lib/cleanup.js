@@ -24,23 +24,26 @@ export const CLEANUP_RULES = [
     label: 'Remove trailing whitespace',
     apply: (text) => text.replace(/[ \t]+$/gm, ''),
   },
-];
+]
 
 /**
  * Detect lines that are only made up of dashes, asterisks, underscores,
  * slashes, and whitespace (like -/-/-/-/-/ from Word) and replace with ---.
  */
 function normalizeHR(text) {
-  return text.split('\n').map(line => {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.length < 3) return line;
-    // Only dashes, asterisks, underscores, slashes, backslashes, and whitespace
-    if (!/^[-*_\/\\\s]+$/.test(trimmed)) return line;
-    // Must contain at least 2 separator characters (-, *, _)
-    const sepCount = (trimmed.match(/[-*_]/g) || []).length;
-    if (sepCount >= 2) return '---';
-    return line;
-  }).join('\n');
+  return text
+    .split('\n')
+    .map((line) => {
+      const trimmed = line.trim()
+      if (!trimmed || trimmed.length < 3) return line
+      // Only dashes, asterisks, underscores, slashes, backslashes, and whitespace
+      if (!/^[-*_\/\\\s]+$/.test(trimmed)) return line
+      // Must contain at least 2 separator characters (-, *, _)
+      const sepCount = (trimmed.match(/[-*_]/g) || []).length
+      if (sepCount >= 2) return '---'
+      return line
+    })
+    .join('\n')
 }
 
 /**
@@ -50,13 +53,13 @@ function normalizeHR(text) {
  * @returns {string} Cleaned text
  */
 export function applyCleanup(text, enabledRules) {
-  let result = text;
+  let result = text
   for (const rule of CLEANUP_RULES) {
     if (enabledRules[rule.id]) {
-      result = rule.apply(result);
+      result = rule.apply(result)
     }
   }
-  return result;
+  return result
 }
 
 /**
@@ -64,21 +67,21 @@ export function applyCleanup(text, enabledRules) {
  * Returns array of { type: 'same' | 'changed', original, cleaned, lineNum }
  */
 export function computeDiff(original, cleaned) {
-  const origLines = original.split('\n');
-  const cleanLines = cleaned.split('\n');
-  const maxLen = Math.max(origLines.length, cleanLines.length);
-  const diff = [];
+  const origLines = original.split('\n')
+  const cleanLines = cleaned.split('\n')
+  const maxLen = Math.max(origLines.length, cleanLines.length)
+  const diff = []
 
   for (let i = 0; i < maxLen; i++) {
-    const orig = origLines[i] ?? '';
-    const clean = cleanLines[i] ?? '';
+    const orig = origLines[i] ?? ''
+    const clean = cleanLines[i] ?? ''
     diff.push({
       type: orig === clean ? 'same' : 'changed',
       original: orig,
       cleaned: clean,
       lineNum: i + 1,
-    });
+    })
   }
 
-  return diff;
+  return diff
 }

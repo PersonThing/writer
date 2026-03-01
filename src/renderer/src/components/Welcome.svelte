@@ -1,10 +1,10 @@
 <script>
-  import * as api from '../lib/api.js';
-  import { project } from '../lib/stores/project.svelte.js';
+  import * as api from '../lib/api.js'
+  import { project } from '../lib/stores/project.svelte.js'
 
   async function handleOpen() {
-    const dirPath = await api.openDirectory();
-    if (dirPath) await project.openRoot(dirPath);
+    const dirPath = await api.openDirectory()
+    if (dirPath) await project.openRoot(dirPath)
   }
 </script>
 
@@ -18,12 +18,30 @@
 
 <style>
   .welcome {
-    height: 100%; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    background: var(--bg); gap: 1.2rem; text-align: center;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    gap: 1.2rem;
+    text-align: center;
   }
-  .logo { font-size: 3rem; line-height: 1; }
-  h1 { font-family: var(--font-serif); font-size: 2rem; color: var(--accent); }
-  p { color: var(--muted); font-size: 0.95rem; }
-  small { color: #bbb; font-size: 0.78rem; }
+  .logo {
+    font-size: 3rem;
+    line-height: 1;
+  }
+  h1 {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    color: var(--accent);
+  }
+  p {
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+  small {
+    color: #bbb;
+    font-size: 0.78rem;
+  }
 </style>

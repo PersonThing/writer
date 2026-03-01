@@ -4,7 +4,7 @@
  * horizontal rules, paragraphs, and hard line breaks (trailing backslash).
  */
 export function parseMarkdown(md) {
-  if (!md) return '';
+  if (!md) return ''
 
   const escaped = md
     .replace(/&/g, '&amp;')
@@ -15,41 +15,56 @@ export function parseMarkdown(md) {
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
     .replace(/_(.+?)_/g, '<em>$1</em>')
     .replace(/`(.+?)`/g, '<code>$1</code>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    .replace(
+      /\[([^\]]+)\]\(([^)]+)\)/g,
+      '<a href="$2" target="_blank" rel="noopener">$1</a>',
+    )
 
-  const lines = escaped.split('\n');
-  const out = [];
-  let inPara = false;
+  const lines = escaped.split('\n')
+  const out = []
+  let inPara = false
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const trimmed = line.trim();
+    const line = lines[i]
+    const trimmed = line.trim()
 
     if (/^(-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
-      if (inPara) { out.push('</p>'); inPara = false; }
-      out.push(`<hr data-source-line="${i}">`);
-      continue;
+      if (inPara) {
+        out.push('</p>')
+        inPara = false
+      }
+      out.push(`<hr data-source-line="${i}">`)
+      continue
     }
 
-    const hm = trimmed.match(/^(#{1,3})\s+(.+)/);
+    const hm = trimmed.match(/^(#{1,3})\s+(.+)/)
     if (hm) {
-      if (inPara) { out.push('</p>'); inPara = false; }
-      const lvl = hm[1].length;
-      out.push(`<h${lvl} data-source-line="${i}">${hm[2]}</h${lvl}>`);
-      continue;
+      if (inPara) {
+        out.push('</p>')
+        inPara = false
+      }
+      const lvl = hm[1].length
+      out.push(`<h${lvl} data-source-line="${i}">${hm[2]}</h${lvl}>`)
+      continue
     }
 
     if (!trimmed) {
-      if (inPara) { out.push('</p>'); inPara = false; }
-      continue;
+      if (inPara) {
+        out.push('</p>')
+        inPara = false
+      }
+      continue
     }
 
-    const hardBreak = trimmed.slice(-1) === '\\';
-    const text = hardBreak ? trimmed.slice(0, -1).trimEnd() : trimmed;
-    if (!inPara) { out.push(`<p data-source-line="${i}">`); inPara = true; }
-    out.push(text + (hardBreak ? '<br>' : ' '));
+    const hardBreak = trimmed.slice(-1) === '\\'
+    const text = hardBreak ? trimmed.slice(0, -1).trimEnd() : trimmed
+    if (!inPara) {
+      out.push(`<p data-source-line="${i}">`)
+      inPara = true
+    }
+    out.push(text + (hardBreak ? '<br>' : ' '))
   }
 
-  if (inPara) out.push('</p>');
-  return out.join('\n');
+  if (inPara) out.push('</p>')
+  return out.join('\n')
 }

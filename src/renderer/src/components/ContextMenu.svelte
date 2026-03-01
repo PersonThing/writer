@@ -1,107 +1,114 @@
 <script>
-  import { project } from '../lib/stores/project.svelte.js';
-  import { editor } from '../lib/stores/editor.svelte.js';
-  import { ui, hideContextMenu, modalConfirm, modalAlert } from '../lib/stores/ui.svelte.js';
-  import * as api from '../lib/api.js';
-  import { iconPencil, iconTrash } from '../lib/icons.js';
+  import { project } from '../lib/stores/project.svelte.js'
+  import { editor } from '../lib/stores/editor.svelte.js'
+  import {
+    ui,
+    hideContextMenu,
+    modalConfirm,
+    modalAlert,
+  } from '../lib/stores/ui.svelte.js'
+  import * as api from '../lib/api.js'
+  import { iconPencil, iconTrash } from '../lib/icons.js'
 
   function handleStatus(statusId) {
-    if (!ui.ctxPath) return;
-    project.patchMeta(ui.ctxPath, { status: statusId });
-    hideContextMenu();
+    if (!ui.ctxPath) return
+    project.patchMeta(ui.ctxPath, { status: statusId })
+    hideContextMenu()
   }
 
   function handleQuality(q) {
-    if (!ui.ctxPath) return;
-    const cur = project.getMeta(ui.ctxPath).quality || 0;
-    project.patchMeta(ui.ctxPath, { quality: cur === q ? 0 : q });
+    if (!ui.ctxPath) return
+    const cur = project.getMeta(ui.ctxPath).quality || 0
+    project.patchMeta(ui.ctxPath, { quality: cur === q ? 0 : q })
   }
 
   async function handleRename() {
-    if (!ui.ctxPath) return;
-    hideContextMenu();
-    const pane = editor.panes.find(p => p.filePath === ui.ctxPath);
+    if (!ui.ctxPath) return
+    hideContextMenu()
+    const pane = editor.panes.find((p) => p.filePath === ui.ctxPath)
     if (!pane) {
-      await editor.openFile(ui.ctxPath);
+      await editor.openFile(ui.ctxPath)
     }
     setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('focus-heading'));
-    }, 50);
+      window.dispatchEvent(new CustomEvent('focus-heading'))
+    }, 50)
   }
 
   async function handleDelete() {
-    if (!ui.ctxPath) return;
-    const path = ui.ctxPath;
-    const name = project.displayName(path);
-    hideContextMenu();
-    if (!await modalConfirm(`Delete "${name}"? This cannot be undone.`)) {
-      return;
+    if (!ui.ctxPath) return
+    const path = ui.ctxPath
+    const name = project.displayName(path)
+    hideContextMenu()
+    if (!(await modalConfirm(`Delete "${name}"? This cannot be undone.`))) {
+      return
     }
     try {
-      await api.deleteFile(project.rootPath + '/' + path);
+      await api.deleteFile(project.rootPath + '/' + path)
     } catch (e) {
-      await modalAlert('Could not delete: ' + e.message);
+      await modalAlert('Could not delete: ' + e.message)
     }
-    const pane = editor.panes.find(p => p.filePath === path);
-    if (pane) editor.closePane(pane.id);
+    const pane = editor.panes.find((p) => p.filePath === path)
+    if (pane) editor.closePane(pane.id)
 
-    const newMeta = { ...project.meta };
-    delete newMeta[path];
-    project.meta = newMeta;
-    await project.saveMeta();
-    await project.scanAll();
+    const newMeta = { ...project.meta }
+    delete newMeta[path]
+    project.meta = newMeta
+    await project.saveMeta()
+    await project.scanAll()
   }
 
   function handleWindowClick(e) {
-    if (ui.ctxVisible) hideContextMenu();
+    if (ui.ctxVisible) hideContextMenu()
   }
   function handleKeydown(e) {
-    if (e.key === 'Escape' && ui.ctxVisible) hideContextMenu();
+    if (e.key === 'Escape' && ui.ctxVisible) hideContextMenu()
   }
 
-  let menuEl = $state(null);
+  let menuEl = $state(null)
 
   $effect(() => {
     if (ui.ctxVisible) {
       setTimeout(() => {
-        window.addEventListener('click', handleWindowClick);
-        window.addEventListener('keydown', handleKeydown);
-      }, 0);
+        window.addEventListener('click', handleWindowClick)
+        window.addEventListener('keydown', handleKeydown)
+      }, 0)
     }
     return () => {
-      window.removeEventListener('click', handleWindowClick);
-      window.removeEventListener('keydown', handleKeydown);
-    };
-  });
+      window.removeEventListener('click', handleWindowClick)
+      window.removeEventListener('keydown', handleKeydown)
+    }
+  })
 
   // Separate effect to adjust position — reads ctxX/ctxY synchronously
   // so it re-runs when coordinates change (e.g. consecutive right-clicks)
   $effect(() => {
-    const targetX = ui.ctxX;
-    const targetY = ui.ctxY;
-    if (!ui.ctxVisible) return;
+    const targetX = ui.ctxX
+    const targetY = ui.ctxY
+    if (!ui.ctxVisible) return
     setTimeout(() => {
-      if (!menuEl) return;
-      const rect = menuEl.getBoundingClientRect();
-      const pad = 8;
-      let x = targetX;
-      let y = targetY;
+      if (!menuEl) return
+      const rect = menuEl.getBoundingClientRect()
+      const pad = 8
+      let x = targetX
+      let y = targetY
       if (rect.bottom > window.innerHeight - pad) {
-        y = window.innerHeight - rect.height - pad;
+        y = window.innerHeight - rect.height - pad
       }
       if (rect.right > window.innerWidth - pad) {
-        x = window.innerWidth - rect.width - pad;
+        x = window.innerWidth - rect.width - pad
       }
-      if (y < pad) y = pad;
-      if (x < pad) x = pad;
-      menuEl.style.left = x + 'px';
-      menuEl.style.top = y + 'px';
-    }, 0);
-  });
+      if (y < pad) y = pad
+      if (x < pad) x = pad
+      menuEl.style.left = x + 'px'
+      menuEl.style.top = y + 'px'
+    }, 0)
+  })
 </script>
 
 {#if ui.ctxVisible}
-  {@const m = ui.ctxPath ? project.getMeta(ui.ctxPath) : { status: '', quality: 0 }}
+  {@const m = ui.ctxPath
+    ? project.getMeta(ui.ctxPath)
+    : { status: '', quality: 0 }}
   <div
     class="ctx-menu"
     bind:this={menuEl}
@@ -127,54 +134,111 @@
       </div>
     {/each}
 
-    <hr class="ctx-sep">
+    <hr class="ctx-sep" />
     <div class="ctx-section">Quality</div>
     <div class="ctx-stars">
       {#each Array(5) as _, i}
         <span
           class="ctx-star"
           class:on={i < (m.quality || 0)}
-          onclick={() => handleQuality(i + 1)}
-        >&#9733;</span>
+          onclick={() => handleQuality(i + 1)}>&#9733;</span
+        >
       {/each}
     </div>
 
-    <hr class="ctx-sep">
-    <div class="ctx-item" onclick={handleRename}><span class="ctx-icon">{@html iconPencil()}</span> Rename</div>
-    <div class="ctx-item ctx-delete" onclick={handleDelete}><span class="ctx-icon">{@html iconTrash()}</span> Delete</div>
+    <hr class="ctx-sep" />
+    <div class="ctx-item" onclick={handleRename}>
+      <span class="ctx-icon">{@html iconPencil()}</span> Rename
+    </div>
+    <div class="ctx-item ctx-delete" onclick={handleDelete}>
+      <span class="ctx-icon">{@html iconTrash()}</span> Delete
+    </div>
   </div>
 {/if}
 
 <style>
   .ctx-menu {
-    position: fixed; z-index: 9999;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,.15);
-    padding: .35rem 0; min-width: 190px; font-size: .82rem;
+    position: fixed;
+    z-index: 9999;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    padding: 0.35rem 0;
+    min-width: 190px;
+    font-size: 0.82rem;
   }
   .ctx-section {
-    padding: .2rem .75rem; font-size: .67rem;
-    text-transform: uppercase; letter-spacing: .07em;
-    color: var(--muted); margin-top: .25rem;
+    padding: 0.2rem 0.75rem;
+    font-size: 0.67rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+    margin-top: 0.25rem;
   }
   .ctx-item {
-    display: flex; align-items: center; gap: .5rem;
-    padding: .38rem .85rem; cursor: pointer; transition: background .1s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.38rem 0.85rem;
+    cursor: pointer;
+    transition: background 0.1s;
     color: var(--text);
   }
-  .ctx-item:hover { background: var(--accent-light); color: var(--accent); }
-  .ctx-item.active { font-weight: bold; color: var(--accent); }
-  .ctx-no-status { font-style: italic; color: var(--muted); }
-  .ctx-no-status:hover { color: var(--accent); }
-  .ctx-no-status.active { font-weight: bold; color: var(--muted); font-style: italic; }
-  .ctx-status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-  .ctx-sep { border: none; border-top: 1px solid var(--border); margin: .3rem 0; }
-  .ctx-stars { display: flex; gap: 3px; padding: .3rem .85rem; }
-  .ctx-star {
-    font-size: 1rem; cursor: pointer; color: var(--muted); transition: color .1s;
+  .ctx-item:hover {
+    background: var(--accent-light);
+    color: var(--accent);
   }
-  .ctx-star.on { color: var(--accent); }
-  .ctx-delete { color: #c0392b !important; }
-  .ctx-delete:hover { background: #fdeaea !important; color: #c0392b !important; }
-  .ctx-icon { display: inline-flex; align-items: center; }
+  .ctx-item.active {
+    font-weight: bold;
+    color: var(--accent);
+  }
+  .ctx-no-status {
+    font-style: italic;
+    color: var(--muted);
+  }
+  .ctx-no-status:hover {
+    color: var(--accent);
+  }
+  .ctx-no-status.active {
+    font-weight: bold;
+    color: var(--muted);
+    font-style: italic;
+  }
+  .ctx-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .ctx-sep {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0.3rem 0;
+  }
+  .ctx-stars {
+    display: flex;
+    gap: 3px;
+    padding: 0.3rem 0.85rem;
+  }
+  .ctx-star {
+    font-size: 1rem;
+    cursor: pointer;
+    color: var(--muted);
+    transition: color 0.1s;
+  }
+  .ctx-star.on {
+    color: var(--accent);
+  }
+  .ctx-delete {
+    color: #c0392b !important;
+  }
+  .ctx-delete:hover {
+    background: #fdeaea !important;
+    color: #c0392b !important;
+  }
+  .ctx-icon {
+    display: inline-flex;
+    align-items: center;
+  }
 </style>
