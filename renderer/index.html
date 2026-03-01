@@ -20,11 +20,6 @@
   --sb-hover:      #26231f;
   --sb-active:     #322e29;
   --sb-border:     #2e2b27;
-  --s-active:      #e05c04;
-  --s-next:        #4a68b0;
-  --s-halfbaked:   #a07c22;
-  --s-done:        #1e8a48;
-  --s-published:   #7c35d4;
   --font-mono:     'Menlo', 'Monaco', 'Courier New', monospace;
   --font-serif:    'Georgia', 'Times New Roman', serif;
   --font-ui:       -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -50,8 +45,27 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font-ui); }
 }
 .btn-primary:hover { opacity: .85; }
 
+/* ── Tab bar ──────────────────────────────────────────────────────────── */
+#tab-bar {
+  display: flex; align-items: stretch;
+  background: var(--sb-bg); border-bottom: 1px solid #000;
+  flex-shrink: 0; height: 36px;
+  -webkit-app-region: drag; /* make tab bar draggable as title bar */
+  padding-left: 80px; /* space for macOS traffic lights */
+}
+.tab-btn {
+  background: transparent; border: none; color: #777;
+  padding: 0 1.2rem; font-size: .78rem; cursor: pointer;
+  border-bottom: 2px solid transparent; transition: all .12s;
+  -webkit-app-region: no-drag;
+  font-family: var(--font-ui); letter-spacing: .02em;
+}
+.tab-btn:hover { color: #aaa; }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
 /* ── Layout ───────────────────────────────────────────────────────────── */
-#app { height: 100%; display: flex; }
+#app { height: 100%; display: flex; flex-direction: column; }
+#app-content { flex: 1; display: flex; overflow: hidden; }
 
 #sidebar {
   width: 265px; flex-shrink: 0;
@@ -183,7 +197,11 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font-ui); }
   font-family: var(--font-serif); font-size: .95rem; font-weight: bold;
   max-width: 200px; overflow: hidden; text-overflow: ellipsis;
   white-space: nowrap; color: var(--text);
+  border: 1px solid transparent; border-radius: 4px;
+  padding: 1px 4px; background: transparent; outline: none;
 }
+.file-heading:hover { border-color: var(--border); }
+.file-heading:focus { border-color: var(--accent); background: var(--surface); }
 
 #close-btn {
   background: none; border: none; font-size: 1.1rem; color: var(--muted);
@@ -375,6 +393,55 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font-ui); }
 .ctx-delete:hover { background: #fdeaea !important; color: #c0392b !important; }
 
 .hidden { display: none !important; }
+
+/* ── Modal ────────────────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+}
+.modal-box {
+  background: var(--surface); border-radius: 10px; padding: 1.2rem;
+  min-width: 340px; max-width: 440px; max-height: 80vh; overflow-y: auto;
+  box-shadow: 0 8px 30px rgba(0,0,0,.25);
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  font-weight: 600; font-size: .9rem; margin-bottom: .8rem;
+}
+.modal-close {
+  background: none; border: none; font-size: 1.2rem; cursor: pointer;
+  color: var(--muted); padding: 0 4px;
+}
+.modal-footer { margin-top: .8rem; display: flex; justify-content: flex-end; }
+.btn-small { font-size: .78rem; padding: .35rem .8rem; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); background: var(--surface); }
+.btn-small:hover { background: var(--accent-light); }
+.btn-primary.btn-small { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary.btn-small:hover { opacity: .85; }
+
+.status-edit-row {
+  display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem;
+}
+.status-edit-row input[type="text"] {
+  font-size: .8rem; padding: .3rem .5rem; border: 1px solid var(--border);
+  border-radius: 5px; background: var(--surface); color: var(--text);
+}
+.status-edit-row input[type="color"] {
+  width: 28px; height: 28px; border: 1px solid var(--border);
+  border-radius: 5px; padding: 1px; cursor: pointer; background: none;
+}
+.status-edit-row .emoji-input { width: 36px; text-align: center; }
+.status-edit-row .label-input { flex: 1; }
+.status-edit-row .id-input { width: 70px; font-family: var(--font-mono); font-size: .72rem; }
+.status-rm-btn {
+  background: none; border: none; color: #c0392b; cursor: pointer;
+  font-size: .9rem; padding: 2px 4px;
+}
+.status-move-btn {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font-size: .75rem; padding: 0 2px;
+}
+
 /* ── Formatting bar ───────────────────────────────────────────────────── */
 .fmt-bar {
   display: flex; align-items: center; gap: 2px; flex-wrap: wrap;
@@ -415,11 +482,19 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font-ui); }
   <h1>Writing Projects</h1>
   <p>Your poems, short stories, and ideas — all in one place.</p>
   <button class="btn-primary" id="open-btn">Open Poems Folder</button>
-  <small>Works in Chrome or Edge · Your files stay on your computer</small>
+  <small>Your files stay on your computer</small>
 </div>
 
 <!-- ── Main app ─────────────────────────────────────────────────────────── -->
 <div id="app" class="hidden">
+
+  <!-- Tab bar -->
+  <div id="tab-bar">
+    <button class="tab-btn active" data-tab="poetry">Poetry</button>
+  </div>
+
+  <!-- Tab content: Poetry -->
+  <div id="app-content" data-tab-content="poetry">
 
   <!-- Sidebar -->
   <aside id="sidebar">
@@ -433,14 +508,11 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font-ui); }
     <div class="sb-controls">
       <input id="search" type="search" placeholder="Search poems…" autocomplete="off">
 
-      <div class="filter-row" id="filter-row">
-        <button class="chip active" data-f="">All</button>
-        <button class="chip" data-f="active">🔥 Active</button>
-        <button class="chip" data-f="next">➡️ Up Next</button>
-        <button class="chip" data-f="halfbaked">💡 Ideas</button>
-        <button class="chip" data-f="done">✅ Done</button>
-        <button class="chip" data-f="published">📤 Published</button>
-        <button class="chip" data-f="social">📱 Social</button>
+      <div style="display:flex;align-items:center;gap:4px">
+        <div class="filter-row" id="filter-row" style="flex:1">
+          <!-- populated by renderStatusUI() -->
+        </div>
+        <button class="sb-icon-btn" id="edit-statuses-btn" title="Edit statuses" style="font-size:.7rem;flex-shrink:0">⚙</button>
       </div>
 
       <div class="sort-row">
@@ -465,17 +537,12 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font-ui); }
 
     <!-- Toolbar (hidden until file open) -->
     <div id="toolbar">
-      <span class="file-heading" id="file-heading"></span>
+      <input type="text" class="file-heading" id="file-heading" spellcheck="false">
       <button id="close-btn" title="Close file">×</button>
       <div class="toolbar-sep"></div>
 
       <select id="status-sel">
-        <option value="">— No status</option>
-        <option value="active">🔥 Active</option>
-        <option value="next">➡️ Up Next</option>
-        <option value="halfbaked">💡 Half-baked</option>
-        <option value="done">✅ Done</option>
-        <option value="published">📤 Published</option>
+        <!-- populated by renderStatusUI() -->
       </select>
 
       <span style="font-size:.72rem;color:var(--muted)">Quality</span><div class="stars" id="stars">
@@ -509,10 +576,10 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font-ui); }
       <button class="fmt-btn" data-fmt="h3"        data-tip="Heading 3 (Ctrl+3)">H3</button>
       <span class="fmt-sep"></span>
       <button class="fmt-btn" data-fmt="link"      data-tip="Link (Ctrl+K)">&#128279;</button>
-      <button class="fmt-btn" data-fmt="hr"        data-tip="Section break (Ctrl+Enter)">&#9135;</button>
+      <button class="fmt-btn" data-fmt="hr"        data-tip="Section break (Ctrl+\)">&#9135;</button>
       <button class="fmt-btn" data-fmt="bullet"    data-tip="Bullet list (Ctrl+Shift+L)">&#8226; List</button>
       <span class="fmt-sep"></span>
-      <button class="fmt-btn" data-fmt="poetry-br" data-tip="Poetry line break (Ctrl+\)">&#8629;\</button>
+      <button class="fmt-btn" data-fmt="poetry-br" data-tip="Poetry line break (Ctrl+Enter)">&#8629;\</button>
       <button class="fmt-btn" data-fmt="em-dash"   data-tip="Em dash &#8212; (Ctrl+Shift+.)">&#8212;</button>
       <button class="fmt-btn" data-fmt="dup-line"  data-tip="Duplicate line (Ctrl+D)">&#10697;</button>
       <span class="fmt-sep"></span>
@@ -540,17 +607,13 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font-ui); }
     <div id="done-list"></div>
   </div>
 
+  </div><!-- /app-content -->
 </div><!-- /app -->
 
 <!-- Context menu -->
 <div id="ctx-menu">
   <div class="ctx-section">Status</div>
-  <div class="ctx-item" data-action="status" data-val="">— No status</div>
-  <div class="ctx-item" data-action="status" data-val="active">🔥 Active</div>
-  <div class="ctx-item" data-action="status" data-val="next">➡️ Up Next</div>
-  <div class="ctx-item" data-action="status" data-val="halfbaked">💡 Half-baked</div>
-  <div class="ctx-item" data-action="status" data-val="done">✅ Done</div>
-  <div class="ctx-item" data-action="status" data-val="published">📤 Published</div>
+  <!-- status items populated by renderStatusUI() -->
   <hr class="ctx-sep">
   <div class="ctx-section">Quality</div>
   <div class="ctx-stars" id="ctx-stars">
@@ -561,10 +624,26 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font-ui); }
     <span class="ctx-star" data-q="5">★</span>
   </div>
   <hr class="ctx-sep">
+  <div class="ctx-item" data-action="rename">✏️ Rename</div>
   <div class="ctx-item ctx-delete" data-action="delete">🗑 Delete</div>
 </div>
 
 <div id="toast">Saved ✓</div>
+
+<!-- Edit Statuses modal -->
+<div id="status-modal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>Edit Statuses</span>
+      <button class="modal-close" id="status-modal-close">×</button>
+    </div>
+    <div id="status-editor-list"></div>
+    <button class="btn-small" id="add-status-btn">+ Add Status</button>
+    <div class="modal-footer">
+      <button class="btn-primary btn-small" id="save-statuses-btn">Save</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // Minimal markdown renderer -- no CDN needed
@@ -624,52 +703,105 @@ window.marked = {
 // ═══════════════════════════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════════════════════════
-let rootHandle  = null;
-const fileMap   = {};    // relPath → FileSystemFileHandle
-const dirMap    = {};    // relPath → FileSystemDirectoryHandle  ('root' = root)
-let meta        = {};    // relPath → { status, priority, social, modified }
+let rootPath    = null;  // absolute path to the poems directory
+const filePaths = new Set(); // relative .md file paths
+const dirPaths  = new Set(); // relative directory paths
+let fileMeta    = {};    // relPath → { modified } (from fs stat)
+let meta        = {};    // relPath → { status, quality, social, modified }
 let current     = null;  // current open relPath
 let dirty       = false; // unsaved changes
 let activeFilter = '';
 let activeSort   = 'status';
 const collapsed  = new Set();
+let pendingRename = null; // new filename if user edited the heading
 
-// Status → dot colour
-const STATUS_COLOR = {
-  active:    'var(--s-active)',
-  next:      'var(--s-next)',
-  halfbaked: 'var(--s-halfbaked)',
-  done:      'var(--s-done)',
-  published: 'var(--s-published)',
-  '':        '#444'
-};
+// Undo/Redo stack
+const undoStack = [];
+const redoStack = [];
+const MAX_UNDO = 200;
+let _undoTimer = 0;
 
-// ═══════════════════════════════════════════════════════════════════════════
-// INDEXEDDB  (persist directory handle across sessions)
-// ═══════════════════════════════════════════════════════════════════════════
-function idb() {
-  return new Promise((ok, fail) => {
-    const r = indexedDB.open('writing-projects-v1', 1);
-    r.onupgradeneeded = e => e.target.result.createObjectStore('kv');
-    r.onsuccess = e => ok(e.target.result);
-    r.onerror   = e => fail(e);
-  });
+function pushUndo() {
+  const ta = document.getElementById('md-textarea');
+  undoStack.push({ value: ta.value, s: ta.selectionStart, e: ta.selectionEnd });
+  if (undoStack.length > MAX_UNDO) undoStack.shift();
+  redoStack.length = 0; // clear redo on new change
 }
-async function idbGet(key) {
-  const db = await idb();
-  return new Promise((ok, fail) => {
-    const r = db.transaction('kv','readonly').objectStore('kv').get(key);
-    r.onsuccess = e => ok(e.target.result);
-    r.onerror   = e => fail(e);
-  });
+
+function doUndo() {
+  const ta = document.getElementById('md-textarea');
+  if (!undoStack.length) return;
+  redoStack.push({ value: ta.value, s: ta.selectionStart, e: ta.selectionEnd });
+  const snap = undoStack.pop();
+  ta.value = snap.value;
+  ta.selectionStart = snap.s;
+  ta.selectionEnd = snap.e;
+  ta.dispatchEvent(new Event('input'));
 }
-async function idbSet(key, val) {
-  const db = await idb();
-  return new Promise((ok, fail) => {
-    const r = db.transaction('kv','readwrite').objectStore('kv').put(val, key);
-    r.onsuccess = () => ok();
-    r.onerror   = e => fail(e);
+
+function doRedo() {
+  const ta = document.getElementById('md-textarea');
+  if (!redoStack.length) return;
+  undoStack.push({ value: ta.value, s: ta.selectionStart, e: ta.selectionEnd });
+  const snap = redoStack.pop();
+  ta.value = snap.value;
+  ta.selectionStart = snap.s;
+  ta.selectionEnd = snap.e;
+  ta.dispatchEvent(new Event('input'));
+}
+
+// Default status definitions
+const DEFAULT_STATUSES = [
+  { id: 'active',    label: 'Active',    emoji: '🔥', color: '#e05c04' },
+  { id: 'next',      label: 'Up Next',   emoji: '➡️', color: '#4a68b0' },
+  { id: 'halfbaked', label: 'Ideas',     emoji: '💡', color: '#a07c22' },
+  { id: 'done',      label: 'Done',      emoji: '✅', color: '#1e8a48' },
+  { id: 'published', label: 'Published', emoji: '📤', color: '#7c35d4' },
+];
+
+function getStatuses() { return meta._statuses || DEFAULT_STATUSES; }
+
+function statusColor(id) {
+  if (!id) return '#444';
+  const s = getStatuses().find(s => s.id === id);
+  return s ? s.color : '#444';
+}
+
+function renderStatusUI() {
+  const statuses = getStatuses();
+  // Filter chips
+  const filterRow = document.getElementById('filter-row');
+  filterRow.innerHTML = '<button class="chip' + (activeFilter === '' ? ' active' : '') + '" data-f="">All</button>'
+    + statuses.map(s => '<button class="chip' + (activeFilter === s.id ? ' active' : '') + '" data-f="' + s.id + '">' + s.emoji + ' ' + s.label + '</button>').join('')
+    + '<button class="chip' + (activeFilter === 'social' ? ' active' : '') + '" data-f="social">📱 Social</button>';
+  // Toolbar select
+  const sel = document.getElementById('status-sel');
+  sel.innerHTML = '<option value="">— No status</option>'
+    + statuses.map(s => '<option value="' + s.id + '">' + s.emoji + ' ' + s.label + '</option>').join('');
+  if (current) sel.value = getMeta(current).status || '';
+  // Context menu status items
+  const ctxMenu = document.getElementById('ctx-menu');
+  const ctxSection = ctxMenu.querySelector('.ctx-section');
+  const ctxSep = ctxMenu.querySelector('.ctx-sep');
+  // Remove old status items
+  ctxMenu.querySelectorAll('[data-action="status"]').forEach(el => el.remove());
+  // Insert new ones after the section header
+  const frag = document.createDocumentFragment();
+  const noStatus = document.createElement('div');
+  noStatus.className = 'ctx-item';
+  noStatus.dataset.action = 'status';
+  noStatus.dataset.val = '';
+  noStatus.textContent = '— No status';
+  frag.appendChild(noStatus);
+  statuses.forEach(s => {
+    const el = document.createElement('div');
+    el.className = 'ctx-item';
+    el.dataset.action = 'status';
+    el.dataset.val = s.id;
+    el.textContent = s.emoji + ' ' + s.label;
+    frag.appendChild(el);
   });
+  ctxSection.after(frag);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -680,24 +812,15 @@ async function init() {
     marked.setOptions({ breaks: true, gfm: true });
   }
 
-  // Try to restore a previously opened folder.
-  // NOTE: requestPermission() requires a user gesture, so we can only
-  // auto-restore if permission is already 'granted'. Otherwise we show
-  // the welcome screen and let the user click the button.
+  // Try to restore previously opened folder
   try {
-    const saved = await idbGet('rootHandle');
+    const saved = await window.api.getLastDirectory();
     if (saved) {
-      const perm = await saved.queryPermission({ mode: 'readwrite' });
-      if (perm === 'granted') {
-        await openRoot(saved);
-        return;
-      }
-      // Permission was prompt/denied — show welcome but pre-fill the handle
-      // so clicking "Open" re-uses it after the user grants permission.
-      window._savedHandle = saved;
+      await openRoot(saved);
+      return;
     }
   } catch (e) {
-    // IndexedDB unavailable or handle stale — just show welcome screen
+    console.error('Failed to restore folder:', e);
   }
 
   showWelcome();
@@ -715,15 +838,14 @@ function showApp() {
 // ═══════════════════════════════════════════════════════════════════════════
 // OPEN / SCAN
 // ═══════════════════════════════════════════════════════════════════════════
-async function openRoot(handle) {
-  rootHandle = handle;
-  await idbSet('rootHandle', handle);
+async function openRoot(dirPath) {
+  rootPath = dirPath;
   await scanAll();
   await loadMeta();
 
   // Auto-assign "next" status to files in "To Do Next" folder that have no status
   let changed = false;
-  for (const path of Object.keys(fileMap)) {
+  for (const path of filePaths) {
     if (topFolder(path) === 'To Do Next' && !getMeta(path).status) {
       meta[path] = { ...getMeta(path), status: 'next' };
       changed = true;
@@ -731,33 +853,23 @@ async function openRoot(handle) {
   }
   if (changed) await saveMeta();
 
+  renderStatusUI();
   showApp();
   renderList();
   renderDonePanel();
 }
 
 async function scanAll() {
-  Object.keys(fileMap).forEach(k => delete fileMap[k]);
-  Object.keys(dirMap).forEach(k => delete dirMap[k]);
-  dirMap['root'] = rootHandle;
-  await scanDir(rootHandle, '');
-}
-
-async function scanDir(handle, prefix) {
-  for await (const [name, entry] of handle.entries()) {
-    if (name.startsWith('.')) continue;
-    if (name === 'poems-meta.json') continue;
-    // Skip old helper files
-    if (['INDEX.html','watch_poems.ps1','start_watcher.vbs'].includes(name)) continue;
-
-    const rel = prefix ? `${prefix}/${name}` : name;
-
-    if (entry.kind === 'directory') {
-      dirMap[rel] = entry;
-      await scanDir(entry, rel);
-    } else if (name.endsWith('.md')) {
-      fileMap[rel] = entry;
-    }
+  filePaths.clear();
+  dirPaths.clear();
+  fileMeta = {};
+  const result = await window.api.scanDirectory(rootPath);
+  for (const rel of Object.keys(result.files)) {
+    filePaths.add(rel);
+    fileMeta[rel] = result.files[rel];
+  }
+  for (const rel of Object.keys(result.dirs)) {
+    dirPaths.add(rel);
   }
 }
 
@@ -766,18 +878,13 @@ async function scanDir(handle, prefix) {
 // ═══════════════════════════════════════════════════════════════════════════
 async function loadMeta() {
   try {
-    const fh   = await rootHandle.getFileHandle('poems-meta.json');
-    const file = await fh.getFile();
-    const text = (await file.text()).trim();
-    meta = text ? JSON.parse(text) : {};
+    const text = await window.api.readFile(rootPath + '/poems-meta.json');
+    meta = text.trim() ? JSON.parse(text) : {};
   } catch (e) { meta = {}; }
 }
 
 async function saveMeta() {
-  const fh = await rootHandle.getFileHandle('poems-meta.json', { create: true });
-  const w  = await fh.createWritable();
-  await w.write(JSON.stringify(meta, null, 2));
-  await w.close();
+  await window.api.writeFile(rootPath + '/poems-meta.json', JSON.stringify(meta, null, 2));
 }
 
 function getMeta(path) {
@@ -802,8 +909,7 @@ async function patchMeta(path, patch) {
 
 // Find which top-level folder a path belongs to
 function topFolder(relPath) {
-  // top-level dirs = dirMap entries that have no '/' in key
-  const tops = Object.keys(dirMap).filter(k => k !== 'root' && !k.includes('/'));
+  const tops = [...dirPaths].filter(k => !k.includes('/'));
   for (const t of tops) {
     if (relPath === t || relPath.startsWith(t + '/')) return t;
   }
@@ -823,7 +929,7 @@ function renderList() {
   const q       = document.getElementById('search').value.toLowerCase();
 
   // Filter paths
-  const paths = Object.keys(fileMap).filter(path => {
+  const paths = [...filePaths].filter(path => {
     const m = getMeta(path);
     if (q && !displayName(path).toLowerCase().includes(q)) return false;
     if (activeFilter === 'social') return !!m.social;
@@ -839,8 +945,8 @@ function renderList() {
       return displayName(a).localeCompare(displayName(b));
     }
     if (activeSort === 'status') {
-      const order = ['active','next','halfbaked','done','published',''];
-      const diff = order.indexOf(ma.status) - order.indexOf(mb.status);
+      const order = getStatuses().map(s => s.id).concat(['']);
+      const diff = order.indexOf(ma.status || '') - order.indexOf(mb.status || '');
       if (diff !== 0) return diff;
       return displayName(a).localeCompare(displayName(b));
     }
@@ -863,7 +969,7 @@ function renderList() {
     const dname = displayName(path);
     const isCur = path === current;
     const isDirty = isCur && dirty;
-    const dotColor = STATUS_COLOR[m.status] || STATUS_COLOR[''];
+    const dotColor = statusColor(m.status);
     const pDots = Array.from({length:5}, (_,i) =>
       `<span class="p-dot${i < m.quality ? ' on' : ''}"></span>`
     ).join('');
@@ -892,19 +998,21 @@ async function openFile(path) {
     if (!confirm(`Discard unsaved changes to "${name}"?`)) return;
   }
 
-  const fh      = fileMap[path];
-  const file    = await fh.getFile();
-  const content = await file.text();
+  const content = await window.api.readFile(rootPath + '/' + path);
 
   current = path;
   dirty   = false;
+  undoStack.length = 0;
+  redoStack.length = 0;
 
-  // Update meta with modified time
-  await patchMeta(path, { modified: file.lastModified });
+  // Update meta with modified time from scan
+  const fm = fileMeta[path];
+  if (fm) await patchMeta(path, { modified: fm.modified });
 
   document.getElementById('md-textarea').value = content;
   updatePreview(content);
-  document.getElementById('file-heading').textContent = displayName(path);
+  document.getElementById('file-heading').value = displayName(path);
+  pendingRename = null;
 
   document.getElementById('no-file').classList.add('hidden');
   document.getElementById('toolbar').style.display = 'flex';
@@ -920,16 +1028,47 @@ async function openFile(path) {
 async function saveFile() {
   if (!current) return;
   const content = document.getElementById('md-textarea').value;
-  const fh = fileMap[current];
-  const w  = await fh.createWritable();
-  await w.write(content);
-  await w.close();
 
-  await patchMeta(current, { modified: Date.now() });
+  if (pendingRename) {
+    // Rename: write content to new path, delete old, update state
+    const parts = current.split('/');
+    parts.pop(); // remove old filename
+    const folder = parts.length ? parts.join('/') : '';
+    const newFileName = pendingRename.endsWith('.md') ? pendingRename : pendingRename + '.md';
+    const newPath = folder ? folder + '/' + newFileName : newFileName;
+
+    try {
+      await window.api.writeFile(rootPath + '/' + newPath, content);
+      await window.api.deleteFile(rootPath + '/' + current);
+
+      // Update state
+      filePaths.delete(current);
+      filePaths.add(newPath);
+      if (meta[current]) {
+        meta[newPath] = meta[current];
+        delete meta[current];
+      }
+      if (meta._doneOrder) {
+        meta._doneOrder = meta._doneOrder.map(p => p === current ? newPath : p);
+      }
+      current = newPath;
+      pendingRename = null;
+
+      await patchMeta(current, { modified: Date.now() });
+      document.getElementById('file-heading').value = displayName(current);
+    } catch (e) {
+      alert('Rename failed: ' + e.message);
+      return;
+    }
+  } else {
+    await window.api.writeFile(rootPath + '/' + current, content);
+    await patchMeta(current, { modified: Date.now() });
+  }
 
   dirty = false;
   updateSaveBtn();
   renderList();
+  renderDonePanel();
   showToast();
 }
 
@@ -1009,18 +1148,12 @@ async function newFile() {
 
   const filename = name.trim().replace(/[<>:"/\\|?*]/g, '') + '.md';
 
-  // Create at root level
-  const fh = await rootHandle.getFileHandle(filename, { create: true });
-  const w  = await fh.createWritable();
-  await w.write(`# ${name.trim()}\n\n`);
-  await w.close();
+  await window.api.writeFile(rootPath + '/' + filename, `# ${name.trim()}\n\n`);
 
   await scanAll();
   renderList();
 
-  // Open the new file
-  const relPath = filename;
-  if (fileMap[relPath]) await openFile(relPath);
+  if (filePaths.has(filename)) await openFile(filename);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1167,6 +1300,7 @@ function cycleCase() {
 }
 
 function applyFmt(action) {
+  pushUndo();
   switch (action) {
     case 'bold':       taInsert('**', '**', 'bold text'); break;
     case 'italic':     taInsert('*', '*', 'italic text'); break;
@@ -1184,31 +1318,102 @@ function applyFmt(action) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// STATUS EDITOR MODAL
+// ═══════════════════════════════════════════════════════════════════════════
+function openStatusEditor(draft) {
+  const modal = document.getElementById('status-modal');
+  const list = document.getElementById('status-editor-list');
+  const statuses = draft || JSON.parse(JSON.stringify(getStatuses()));
+  modal._draft = statuses;
+
+  function render() {
+    list.innerHTML = statuses.map((s, i) => `
+      <div class="status-edit-row" data-idx="${i}">
+        <span class="status-move-btn" data-dir="up" title="Move up">${i > 0 ? '▲' : ''}</span>
+        <span class="status-move-btn" data-dir="down" title="Move down">${i < statuses.length - 1 ? '▼' : ''}</span>
+        <input type="text" class="emoji-input" value="${s.emoji}" data-field="emoji" maxlength="4">
+        <input type="text" class="label-input" value="${s.label}" data-field="label" placeholder="Label">
+        <input type="text" class="id-input" value="${s.id}" data-field="id" placeholder="id">
+        <input type="color" value="${s.color}" data-field="color">
+        <button class="status-rm-btn" title="Remove">×</button>
+      </div>
+    `).join('');
+  }
+  render();
+
+  list.onclick = (e) => {
+    const row = e.target.closest('.status-edit-row');
+    if (!row) return;
+    const idx = parseInt(row.dataset.idx);
+    if (e.target.classList.contains('status-rm-btn')) {
+      statuses.splice(idx, 1); render(); return;
+    }
+    const dir = e.target.dataset.dir;
+    if (dir === 'up' && idx > 0) {
+      [statuses[idx - 1], statuses[idx]] = [statuses[idx], statuses[idx - 1]]; render(); return;
+    }
+    if (dir === 'down' && idx < statuses.length - 1) {
+      [statuses[idx], statuses[idx + 1]] = [statuses[idx + 1], statuses[idx]]; render(); return;
+    }
+  };
+
+  list.oninput = (e) => {
+    const row = e.target.closest('.status-edit-row');
+    if (!row) return;
+    const idx = parseInt(row.dataset.idx);
+    const field = e.target.dataset.field;
+    if (field) statuses[idx][field] = e.target.value;
+  };
+
+  modal.classList.remove('hidden');
+}
+
+document.getElementById('add-status-btn').addEventListener('click', () => {
+  const modal = document.getElementById('status-modal');
+  const statuses = modal._draft;
+  statuses.push({ id: 'status' + (statuses.length + 1), label: 'New Status', emoji: '⭐', color: '#888888' });
+  openStatusEditor(statuses);
+});
+
+document.getElementById('save-statuses-btn').addEventListener('click', async () => {
+  const modal = document.getElementById('status-modal');
+  const statuses = modal._draft;
+  // Validate: unique non-empty ids
+  const ids = statuses.map(s => s.id.trim()).filter(Boolean);
+  if (ids.length !== statuses.length || new Set(ids).size !== ids.length) {
+    alert('Each status needs a unique non-empty ID.'); return;
+  }
+  statuses.forEach(s => { s.id = s.id.trim(); s.label = s.label.trim(); s.emoji = s.emoji.trim(); });
+  meta._statuses = statuses;
+  await saveMeta();
+  renderStatusUI();
+  renderList();
+  modal.classList.add('hidden');
+});
+
+document.getElementById('status-modal-close').addEventListener('click', () => {
+  document.getElementById('status-modal').classList.add('hidden');
+});
+
+document.getElementById('status-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'status-modal') e.target.classList.add('hidden');
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
 // EVENT WIRING
 // ═══════════════════════════════════════════════════════════════════════════
 
 document.getElementById('open-btn').addEventListener('click', async () => {
-  try {
-    // If we have a stale handle from a previous session, try re-using it first
-    if (window._savedHandle) {
-      try {
-        const perm = await window._savedHandle.requestPermission({ mode: 'readwrite' });
-        if (perm === 'granted') { await openRoot(window._savedHandle); return; }
-      } catch (e) { /* fall through to picker */ }
-    }
-    const h = await window.showDirectoryPicker({ mode: 'readwrite' });
-    await openRoot(h);
-  } catch (e) {
-    if (e.name !== 'AbortError') console.error('Could not open folder:', e);
-  }
+  const dirPath = await window.api.openDirectory();
+  if (dirPath) await openRoot(dirPath);
 });
 
 document.getElementById('change-dir-btn').addEventListener('click', async () => {
-  try {
-    const h = await window.showDirectoryPicker({ mode: 'readwrite' });
+  const dirPath = await window.api.openDirectory();
+  if (dirPath) {
     current = null; dirty = false;
-    await openRoot(h);
-  } catch {}
+    await openRoot(dirPath);
+  }
 });
 
 document.getElementById('rescan-btn').addEventListener('click', async () => {
@@ -1216,6 +1421,7 @@ document.getElementById('rescan-btn').addEventListener('click', async () => {
 });
 
 document.getElementById('new-btn').addEventListener('click', newFile);
+document.getElementById('edit-statuses-btn').addEventListener('click', () => openStatusEditor());
 
 // Event delegation for file list clicks (avoids inline onclick quoting bugs)
 document.getElementById('file-list').addEventListener('click', e => {
@@ -1259,6 +1465,28 @@ document.getElementById('social-btn').addEventListener('click', async () => {
 
 document.getElementById('save-btn').addEventListener('click', saveFile);
 
+document.getElementById('file-heading').addEventListener('input', () => {
+  if (!current) return;
+  const newName = document.getElementById('file-heading').value.trim();
+  const curName = displayName(current);
+  if (newName && newName !== curName) {
+    pendingRename = newName;
+    dirty = true;
+    updateSaveBtn();
+  } else {
+    pendingRename = null;
+  }
+});
+
+document.getElementById('file-heading').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+  if (e.key === 'Escape') {
+    e.target.value = displayName(current);
+    pendingRename = null;
+    e.target.blur();
+  }
+});
+
 document.getElementById('close-btn').addEventListener('click', () => {
   if (dirty && current) {
     if (!confirm(`Discard unsaved changes to "${displayName(current)}"?`)) return;
@@ -1282,9 +1510,23 @@ document.getElementById('md-textarea').addEventListener('input', e => {
 document.getElementById('md-textarea').addEventListener('keydown', e => {
   var ctrl = e.ctrlKey || e.metaKey;
 
+  // Auto-capture undo snapshot for regular typing (debounced)
+  if (!ctrl && !e.altKey && e.key.length === 1) {
+    var now = Date.now();
+    if (now - _undoTimer > 500) pushUndo();
+    _undoTimer = now;
+  }
+  // Also capture before backspace/delete
+  if (e.key === 'Backspace' || e.key === 'Delete') {
+    var now2 = Date.now();
+    if (now2 - _undoTimer > 500) pushUndo();
+    _undoTimer = now2;
+  }
+
   // Tab → two spaces
   if (e.key === 'Tab') {
     e.preventDefault();
+    pushUndo();
     var ta = e.target, s = ta.selectionStart;
     ta.value = ta.value.slice(0, s) + '  ' + ta.value.slice(ta.selectionEnd);
     ta.selectionStart = ta.selectionEnd = s + 2;
@@ -1293,6 +1535,9 @@ document.getElementById('md-textarea').addEventListener('keydown', e => {
 
   // Ctrl/Cmd shortcuts
   if (ctrl) {
+    if (e.key === 'z' && !e.shiftKey)           { e.preventDefault(); doUndo(); return; }
+    if (e.key === 'z' && e.shiftKey)            { e.preventDefault(); doRedo(); return; }
+    if (e.key === 'y')                          { e.preventDefault(); doRedo(); return; }
     if (e.key === 's')                          { e.preventDefault(); saveFile(); return; }
     if (e.key === 'b')                          { e.preventDefault(); applyFmt('bold'); return; }
     if (e.key === 'i')                          { e.preventDefault(); applyFmt('italic'); return; }
@@ -1300,9 +1545,9 @@ document.getElementById('md-textarea').addEventListener('keydown', e => {
     if (e.key === '2')                          { e.preventDefault(); applyFmt('h2'); return; }
     if (e.key === '3')                          { e.preventDefault(); applyFmt('h3'); return; }
     if (e.key === 'k')                          { e.preventDefault(); applyFmt('link'); return; }
-    if (e.key === 'Enter')                      { e.preventDefault(); applyFmt('hr'); return; }
+    if (e.key === 'Enter')                      { e.preventDefault(); applyFmt('poetry-br'); return; }
     if (e.key === 'd')                          { e.preventDefault(); applyFmt('dup-line'); return; }
-    if (e.key === '\\')                       { e.preventDefault(); applyFmt('poetry-br'); return; }
+    if (e.key === '\\')                       { e.preventDefault(); applyFmt('hr'); return; }
     if (e.shiftKey && e.key === 'L')            { e.preventDefault(); applyFmt('bullet'); return; }
     if (e.shiftKey && e.key === '.')            { e.preventDefault(); applyFmt('em-dash'); return; }
   }
@@ -1320,6 +1565,7 @@ document.getElementById('md-textarea').addEventListener('paste', e => {
   const s = ta.selectionStart, end = ta.selectionEnd;
   const sel = ta.value.slice(s, end);
   e.preventDefault();
+  pushUndo();
   const label = sel.trim() || url;
   const rep = '[' + label + '](' + url + ')';
   ta.value = ta.value.slice(0, s) + rep + ta.value.slice(end);
@@ -1496,17 +1742,22 @@ ctxMenu.addEventListener('click', async e => {
   const starEl   = e.target.closest('.ctx-star');
 
   if (actionEl && ctxPath) {
+    if (actionEl.dataset.action === 'rename') {
+      hideCtxMenu();
+      // Open the file and focus the heading input for editing
+      if (ctxPath !== current) await openFile(ctxPath);
+      const heading = document.getElementById('file-heading');
+      heading.focus();
+      heading.select();
+      return;
+    }
     if (actionEl.dataset.action === 'delete') {
       const name = displayName(ctxPath);
       if (!confirm(`Delete "${name}"? This cannot be undone.`)) { hideCtxMenu(); return; }
       // Remove file from disk
-      const parts = ctxPath.split('/');
-      const fileName = parts.pop();
-      const parentKey = parts.length ? parts.join('/') : 'root';
-      const parentHandle = dirMap[parentKey] || rootHandle;
-      try { await parentHandle.removeEntry(fileName); } catch(e) { alert('Could not delete: ' + e.message); }
+      try { await window.api.deleteFile(rootPath + '/' + ctxPath); } catch(e) { alert('Could not delete: ' + e.message); }
       // Clean up state
-      delete fileMap[ctxPath];
+      filePaths.delete(ctxPath);
       delete meta[ctxPath];
       if (current === ctxPath) {
         current = null; dirty = false;
