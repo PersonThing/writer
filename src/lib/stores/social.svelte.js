@@ -138,7 +138,7 @@ class SocialComposerStore {
       }
     }
 
-    // JSON round-trip to strip Svelte 5 $state proxies (IPC structured clone fails on Proxies)
+    // JSON round-trip to strip Svelte 5 $state proxies (fetch JSON.stringify fails on Proxies)
     const state = JSON.parse(
       JSON.stringify({
         imageSource: this.imageSource,

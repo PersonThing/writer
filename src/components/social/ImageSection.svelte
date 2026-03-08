@@ -3,6 +3,7 @@
   import * as api from '../../lib/api.js'
 
   let promptInput = $state(social.imagePrompt || '')
+  let fileInput
 
   // Sync local promptInput when store is restored
   $effect(() => {
@@ -11,12 +12,23 @@
     }
   })
 
-  async function uploadImage() {
-    const result = await api.openImage()
-    if (!result) return
-    social.imagePath = result.path
-    social.imageDataUrl = result.dataUrl
-    social.imageSource = 'upload'
+  function triggerUpload() {
+    fileInput?.click()
+  }
+
+  async function handleFileSelect(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const result = await api.uploadImage(file)
+      social.imagePath = null
+      social.imageDataUrl = result.dataUrl
+      social.imageSource = 'upload'
+    } catch (err) {
+      alert('Upload failed: ' + err.message)
+    }
+    // Reset input so re-selecting the same file triggers change
+    e.target.value = ''
   }
 
   async function askClaude() {
@@ -64,8 +76,15 @@
 </script>
 
 <div class="img-section">
+  <input
+    bind:this={fileInput}
+    type="file"
+    accept="image/jpeg,image/png,image/webp"
+    style="display:none"
+    onchange={handleFileSelect}
+  />
   <div class="img-actions">
-    <button class="btn-small" onclick={uploadImage}>Upload Image</button>
+    <button class="btn-small" onclick={triggerUpload}>Upload Image</button>
     {#if social.hasImage}
       <button class="btn-small danger" onclick={clearImage}>Clear</button>
     {/if}

@@ -1,10 +1,14 @@
 <script>
   import * as api from '../lib/api.js'
   import { project } from '../lib/stores/project.svelte.js'
+  import DirectoryBrowser from './DirectoryBrowser.svelte'
 
-  async function handleOpen() {
-    const dirPath = await api.openDirectory()
-    if (dirPath) await project.openRoot(dirPath)
+  let browsing = $state(false)
+
+  async function handleSelect(dirPath) {
+    browsing = false
+    await api.openDirectory(dirPath)
+    await project.openRoot(dirPath)
   }
 </script>
 
@@ -12,9 +16,16 @@
   <div class="logo">&#9997;&#65039;</div>
   <h1>Writing Projects</h1>
   <p>Your poems, short stories, and ideas — all in one place.</p>
-  <button class="btn-primary" onclick={handleOpen}>Open Poems Folder</button>
-  <small>Your files stay on your computer</small>
+  <button class="btn-primary" onclick={() => (browsing = true)}>Open Poems Folder</button>
+  <small>Files are managed on the server</small>
 </div>
+
+{#if browsing}
+  <DirectoryBrowser
+    onSelect={handleSelect}
+    onCancel={() => (browsing = false)}
+  />
+{/if}
 
 <style>
   .welcome {

@@ -11,13 +11,15 @@
     iconShare,
   } from '../lib/icons.js'
   import FileList from './FileList.svelte'
+  import DirectoryBrowser from './DirectoryBrowser.svelte'
 
-  async function changeDir() {
-    const dirPath = await api.openDirectory()
-    if (dirPath) {
-      editor.closeAllPanes()
-      await project.openRoot(dirPath)
-    }
+  let browsing = $state(false)
+
+  async function handleSelect(dirPath) {
+    browsing = false
+    await api.openDirectory(dirPath)
+    editor.closeAllPanes()
+    await project.openRoot(dirPath)
   }
 
   async function rescan() {
@@ -35,7 +37,7 @@
     <button class="sb-icon-btn" title="Refresh file list" onclick={rescan}
       >{@html iconRefresh()}</button
     >
-    <button class="sb-icon-btn" title="Change folder" onclick={changeDir}
+    <button class="sb-icon-btn" title="Change folder" onclick={() => (browsing = true)}
       >{@html iconFolder()}</button
     >
   </div>
@@ -105,6 +107,13 @@
 
   <FileList />
 </aside>
+
+{#if browsing}
+  <DirectoryBrowser
+    onSelect={handleSelect}
+    onCancel={() => (browsing = false)}
+  />
+{/if}
 
 <style>
   .sidebar {

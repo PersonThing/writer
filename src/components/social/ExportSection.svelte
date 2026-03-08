@@ -6,15 +6,10 @@
   let exporting = $state(false)
   let exportStatus = $state('')
 
-  async function saveImage() {
+  function saveImage() {
     if (!social.compositeDataUrl) return
-    const filePath = await api.saveFileDialog({
-      defaultName: 'social-post.jpg',
-      filters: [{ name: 'JPEG Image', extensions: ['jpg', 'jpeg'] }],
-    })
-    if (!filePath) return
-    await api.writeBase64(filePath, social.compositeDataUrl)
-    showToast('Image saved')
+    api.downloadDataUrl(social.compositeDataUrl, 'social-post.jpg')
+    showToast('Image downloaded')
   }
 
   async function createAndSaveVideo() {
@@ -22,24 +17,14 @@
     exporting = true
     exportStatus = 'Creating video...'
     try {
-      // Convert blob to ArrayBuffer for IPC transfer
-      const audioBuffer = await social.audioBlob.arrayBuffer()
-      const videoPath = await api.createReel(
+      const videoBlob = await api.createReel(
         social.compositeDataUrl,
-        audioBuffer,
+        social.audioBlob,
         social.audioDuration,
       )
 
-      exportStatus = 'Saving...'
-      const savePath = await api.saveFileDialog({
-        defaultName: 'social-reel.mp4',
-        filters: [{ name: 'MP4 Video', extensions: ['mp4'] }],
-      })
-
-      if (savePath) {
-        await api.copyFile(videoPath, savePath)
-        showToast('Video saved')
-      }
+      api.downloadBlob(videoBlob, 'social-reel.mp4')
+      showToast('Video downloaded')
       exportStatus = ''
     } catch (e) {
       exportStatus = 'Error: ' + e.message
