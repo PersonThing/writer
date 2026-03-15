@@ -1,26 +1,24 @@
 <script>
-  import * as api from '../lib/api.js'
   import { project } from '../lib/stores/project.svelte.js'
   import { editor } from '../lib/stores/editor.svelte.js'
   import { ui } from '../lib/stores/ui.svelte.js'
   import {
     iconPlus,
     iconRefresh,
-    iconFolder,
     iconGear,
+    iconFolder,
   } from '../lib/icons.js'
+  import { modalPrompt } from '../lib/stores/ui.svelte.js'
   import FileList from './FileList.svelte'
-
-  async function changeDir() {
-    const dirPath = await api.openDirectory()
-    if (dirPath) {
-      editor.closeAllPanes()
-      await project.openRoot(dirPath)
-    }
-  }
 
   async function rescan() {
     await project.scanAll()
+  }
+
+  async function newFolder() {
+    const name = await modalPrompt('Folder name:')
+    if (!name || !name.trim()) return
+    await project.createFolder(name.trim())
   }
 </script>
 
@@ -34,7 +32,7 @@
     <button class="sb-icon-btn" title="Refresh file list" onclick={rescan}
       >{@html iconRefresh()}</button
     >
-    <button class="sb-icon-btn" title="Change folder" onclick={changeDir}
+    <button class="sb-icon-btn" title="New folder" onclick={newFolder}
       >{@html iconFolder()}</button
     >
   </div>
@@ -47,6 +45,7 @@
         placeholder="Search poems..."
         autocomplete="off"
         bind:value={project.searchQuery}
+        oninput={() => project.triggerSearch(project.searchQuery)}
       />
       <button
         class="sb-icon-btn gear-btn"

@@ -4,6 +4,7 @@
   const buttons = [
     { fmt: 'bold', label: '<b>B</b>', tip: 'Bold (Ctrl+B)' },
     { fmt: 'italic', label: '<i>I</i>', tip: 'Italic (Ctrl+I)' },
+    { fmt: 'strikethrough', label: '<s>S</s>', tip: 'Strikethrough (Ctrl+Shift+X)' },
     null, // separator
     { fmt: 'h1', label: 'H1', tip: 'Heading 1 (Ctrl+1)' },
     { fmt: 'h2', label: 'H2', tip: 'Heading 2 (Ctrl+2)' },

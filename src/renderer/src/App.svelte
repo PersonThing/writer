@@ -1,10 +1,8 @@
 <script>
   import { onMount } from 'svelte'
-  import * as api from './lib/api.js'
   import { project } from './lib/stores/project.svelte.js'
   import { ui } from './lib/stores/ui.svelte.js'
 
-  import Welcome from './components/Welcome.svelte'
   import TabBar from './components/TabBar.svelte'
   import Sidebar from './components/Sidebar.svelte'
   import EditorArea from './components/EditorArea.svelte'
@@ -17,34 +15,26 @@
   import HelpPanel from './components/HelpPanel.svelte'
   import ModalDialog from './components/ModalDialog.svelte'
 
-  // When project store signals app is ready (folder opened)
   project.onShowApp(() => {
     ui.appReady = true
   })
 
-  // Apply dark mode class to root element
   $effect(() => {
     document.documentElement.classList.toggle('dark', ui.darkMode)
   })
 
   onMount(async () => {
-    // Try to restore previously opened folder
     try {
-      const saved = await api.getLastDirectory()
-      if (saved) {
-        await project.openRoot(saved)
-        return
-      }
+      await project.openRoot()
     } catch (e) {
-      console.error('Failed to restore folder:', e)
+      console.error('Failed to load project:', e)
     }
-    // If no saved folder, welcome screen shows (appReady stays false)
   })
 </script>
 
 <div class="app-root">
   {#if !ui.appReady}
-    <Welcome />
+    <div class="loading">Loading...</div>
   {:else}
     <TabBar />
     <div class="app-content">
@@ -72,5 +62,13 @@
     flex: 1;
     display: flex;
     overflow: hidden;
+  }
+  .loading {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 0.9rem;
   }
 </style>

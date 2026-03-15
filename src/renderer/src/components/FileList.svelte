@@ -1,15 +1,55 @@
 <script>
+  import * as api from '../lib/api.js'
   import { project } from '../lib/stores/project.svelte.js'
   import { editor } from '../lib/stores/editor.svelte.js'
-  import { showContextMenu } from '../lib/stores/ui.svelte.js'
+  import { showContextMenu, modalPrompt, modalAlert } from '../lib/stores/ui.svelte.js'
   import { iconGripDots } from '../lib/icons.js'
 
   let draggedPath = $state(null)
-  let dragSourceStatusId = $state(null)
   let dragOverPath = $state(null)
+  let dragOverFolder = $state(null)
+  let renamingPath = $state(null)
+  let renameValue = $state('')
+  let renamingFolder = $state(null)
+  let renameFolderValue = $state('')
+  let collapsedFolders = $state(new Set())
+
+  // Build tree from filteredFiles
+  let tree = $derived.by(() => {
+    const items = project.filteredFiles
+    const folders = new Map() // folderPath → [items]
+    const rootFiles = []
+
+    for (const item of items) {
+      const folder = project.folderOf(item.path)
+      if (folder) {
+        if (!folders.has(folder)) folders.set(folder, [])
+        folders.get(folder).push(item)
+      } else {
+        rootFiles.push(item)
+      }
+    }
+
+    // Add empty dirs (only when not searching)
+    if (!project.searchQuery && !project.activeFilter) {
+      for (const d of project.dirs) {
+        if (!d.includes('/') && !folders.has(d)) {
+          folders.set(d, [])
+        }
+      }
+    }
+
+    // Sort folder names
+    const sortedFolders = [...folders.entries()].sort((a, b) =>
+      a[0].localeCompare(b[0]),
+    )
+
+    return { folders: sortedFolders, rootFiles }
+  })
 
   function handleClick(e, path) {
     if (e.target.closest('.drag-grip')) return
+    if (e.target.closest('.rename-input')) return
     const newPane = e.ctrlKey || e.metaKey
     editor.openFile(path, { newPane })
   }
@@ -34,10 +74,10 @@
     return pane ? pane.dirty : false
   }
 
-  // Drag & drop — reorder within same status, or move across statuses
-  function handleDragStart(e, path, statusId) {
+  // ── Drag & drop for reordering and moving to folders ─────────────────
+
+  function handleDragStart(e, path) {
     draggedPath = path
-    dragSourceStatusId = statusId
     e.dataTransfer.effectAllowed = 'move'
     setTimeout(() => {
       e.target.style.opacity = '.4'
@@ -47,33 +87,259 @@
   function handleDragEnd(e) {
     e.target.style.opacity = ''
     draggedPath = null
-    dragSourceStatusId = null
     dragOverPath = null
+    dragOverFolder = null
   }
 
-  function handleDragOver(e, path) {
+  function handleDragOverFile(e, path) {
     e.preventDefault()
     e.dataTransfer.dropEffect = 'move'
     dragOverPath = path !== draggedPath ? path : null
+    dragOverFolder = null
   }
 
-  async function handleDrop(e, path, statusId) {
+  function handleDragOverFolder(e, folderPath) {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    dragOverFolder = folderPath
+    dragOverPath = null
+  }
+
+  async function handleDropOnFile(e, path) {
     e.preventDefault()
     if (!draggedPath || path === draggedPath) return
-    if (statusId === dragSourceStatusId) {
-      await project.reorderInGroup(statusId, draggedPath, path)
-    } else {
-      await project.moveToGroup(draggedPath, statusId, path)
-    }
+    await project.reorderFile(draggedPath, path)
     draggedPath = null
-    dragSourceStatusId = null
     dragOverPath = null
+  }
+
+  async function handleDropOnFolder(e, folderPath) {
+    e.preventDefault()
+    if (!draggedPath) return
+    // Move file into this folder
+    await project.moveFileToFolder(draggedPath, folderPath)
+    // Update any open pane references
+    const fileName = draggedPath.split('/').pop()
+    const newPath = folderPath ? folderPath + '/' + fileName : fileName
+    editor.panes = editor.panes.map((p) => {
+      if (p.filePath === draggedPath) {
+        return { ...p, filePath: newPath }
+      }
+      return p
+    })
+    draggedPath = null
+    dragOverFolder = null
+  }
+
+  async function handleDropOnRoot(e) {
+    e.preventDefault()
+    if (!draggedPath) return
+    // Move to root
+    await project.moveFileToFolder(draggedPath, '')
+    const fileName = draggedPath.split('/').pop()
+    editor.panes = editor.panes.map((p) => {
+      if (p.filePath === draggedPath) {
+        return { ...p, filePath: fileName }
+      }
+      return p
+    })
+    draggedPath = null
+    dragOverFolder = null
+  }
+
+  // ── Rename files inline ──────────────────────────────────────────────
+
+  function startRename(path) {
+    renamingPath = path
+    renameValue = project.displayName(path)
+  }
+
+  async function commitRename(path) {
+    const newName = renameValue.trim()
+    if (!newName || newName === project.displayName(path)) {
+      renamingPath = null
+      return
+    }
+
+    const folder = project.folderOf(path)
+    const newFileName = newName.endsWith('.md') ? newName : newName + '.md'
+    const newPath = folder ? folder + '/' + newFileName : newFileName
+
+    try {
+      await api.renameFile(
+        project.rootPath + '/' + path,
+        project.rootPath + '/' + newPath,
+      )
+      // Update metadata
+      const m = project.getMeta(path)
+      await project.patchMeta(newPath, { ...m, modified: Date.now() })
+      // Update open pane
+      editor.panes = editor.panes.map((p) => {
+        if (p.filePath === path) return { ...p, filePath: newPath, pendingRename: null }
+        return p
+      })
+      await project.scanAll()
+    } catch (e) {
+      modalAlert('Rename failed: ' + e.message)
+    }
+    renamingPath = null
+  }
+
+  function handleRenameKeydown(e, path) {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      commitRename(path)
+    }
+    if (e.key === 'Escape') {
+      renamingPath = null
+    }
+  }
+
+  // ── Rename folders inline ────────────────────────────────────────────
+
+  function startFolderRename(folderPath) {
+    renamingFolder = folderPath
+    renameFolderValue = folderPath.split('/').pop()
+  }
+
+  async function commitFolderRename(oldPath) {
+    const newName = renameFolderValue.trim()
+    const oldName = oldPath.split('/').pop()
+    if (!newName || newName === oldName) {
+      renamingFolder = null
+      return
+    }
+
+    const parts = oldPath.split('/')
+    parts[parts.length - 1] = newName
+    const newPath = parts.join('/')
+
+    try {
+      await project.renameFolderOnDisk(oldPath, newPath)
+      // Update open panes
+      editor.panes = editor.panes.map((p) => {
+        if (p.filePath.startsWith(oldPath + '/')) {
+          return { ...p, filePath: newPath + p.filePath.slice(oldPath.length) }
+        }
+        return p
+      })
+    } catch (e) {
+      modalAlert('Folder rename failed: ' + e.message)
+    }
+    renamingFolder = null
+  }
+
+  function handleFolderRenameKeydown(e, folderPath) {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      commitFolderRename(folderPath)
+    }
+    if (e.key === 'Escape') {
+      renamingFolder = null
+    }
+  }
+
+  // ── Collapse/expand ──────────────────────────────────────────────────
+
+  function toggleFolder(folderPath) {
+    const next = new Set(collapsedFolders)
+    if (next.has(folderPath)) next.delete(folderPath)
+    else next.add(folderPath)
+    collapsedFolders = next
   }
 </script>
 
-<div class="file-list">
-  {#each project.filteredFiles as item}
-    {@const m = project.getMeta(item.path)}
+<div
+  class="file-list"
+  ondragover={(e) => { e.preventDefault(); dragOverFolder = '_root' }}
+  ondrop={handleDropOnRoot}
+>
+  <!-- Folders -->
+  {#each tree.folders as [folderPath, folderItems]}
+    {@const folderName = folderPath.split('/').pop()}
+    {@const isCollapsed = collapsedFolders.has(folderPath)}
+    <div
+      class="folder-header"
+      class:drag-over-folder={dragOverFolder === folderPath}
+      ondragover={(e) => handleDragOverFolder(e, folderPath)}
+      ondrop={(e) => handleDropOnFolder(e, folderPath)}
+    >
+      <button class="folder-toggle" onclick={() => toggleFolder(folderPath)}>
+        {isCollapsed ? '▸' : '▾'}
+      </button>
+      {#if renamingFolder === folderPath}
+        <input
+          class="rename-input"
+          type="text"
+          bind:value={renameFolderValue}
+          onblur={() => commitFolderRename(folderPath)}
+          onkeydown={(e) => handleFolderRenameKeydown(e, folderPath)}
+          autofocus
+        />
+      {:else}
+        <span
+          class="folder-name"
+          ondblclick={() => startFolderRename(folderPath)}
+        >{folderName}</span>
+      {/if}
+      <span class="folder-count">{folderItems.length}</span>
+    </div>
+
+    {#if !isCollapsed}
+      {#each folderItems as item}
+        {@const dname = project.displayName(item.path)}
+        {@const isCur = isCurrentFile(item.path)}
+        {@const isOpen = isOpenInPane(item.path)}
+        {@const isDirty = isDirtyFile(item.path)}
+        <div
+          class="file-item indented"
+          class:current={isCur}
+          class:open={isOpen && !isCur}
+          class:drag-over={dragOverPath === item.path}
+          draggable="true"
+          role="button"
+          tabindex="0"
+          ondragstart={(e) => handleDragStart(e, item.path)}
+          ondragend={handleDragEnd}
+          ondragover={(e) => handleDragOverFile(e, item.path)}
+          ondrop={(e) => handleDropOnFile(e, item.path)}
+          onclick={(e) => handleClick(e, item.path)}
+          oncontextmenu={(e) => handleContext(e, item.path)}
+          onkeydown={(e) => { if (e.key === 'Enter') handleClick(e, item.path) }}
+        >
+          <span class="drag-grip">{@html iconGripDots(10)}</span>
+          <span class="s-dot" style="background: {item.color}"></span>
+          {#if renamingPath === item.path}
+            <input
+              class="rename-input"
+              type="text"
+              bind:value={renameValue}
+              onblur={() => commitRename(item.path)}
+              onkeydown={(e) => handleRenameKeydown(e, item.path)}
+              onclick={(e) => e.stopPropagation()}
+              autofocus
+            />
+          {:else}
+            <span class="file-name" title={dname} ondblclick={() => startRename(item.path)}>
+              {dname}
+              {#if isDirty}<span class="dirty-mark">&bull;</span>{/if}
+            </span>
+          {/if}
+          <span class="item-badges">
+            <span class="p-dots">
+              {#each Array(5) as _, i}
+                {@const m = project.getMeta(item.path)}
+                <span class="p-dot" class:on={i < m.quality}></span>
+              {/each}
+            </span>
+          </span>
+        </div>
+      {/each}
+    {/if}
+  {/each}
+
+  <!-- Root-level files -->
+  {#each tree.rootFiles as item}
     {@const dname = project.displayName(item.path)}
     {@const isCur = isCurrentFile(item.path)}
     {@const isOpen = isOpenInPane(item.path)}
@@ -86,25 +352,36 @@
       draggable="true"
       role="button"
       tabindex="0"
-      ondragstart={(e) => handleDragStart(e, item.path, item.statusId)}
+      ondragstart={(e) => handleDragStart(e, item.path)}
       ondragend={handleDragEnd}
-      ondragover={(e) => handleDragOver(e, item.path)}
-      ondrop={(e) => handleDrop(e, item.path, item.statusId)}
+      ondragover={(e) => handleDragOverFile(e, item.path)}
+      ondrop={(e) => handleDropOnFile(e, item.path)}
       onclick={(e) => handleClick(e, item.path)}
       oncontextmenu={(e) => handleContext(e, item.path)}
-      onkeydown={(e) => {
-        if (e.key === 'Enter') handleClick(e, item.path)
-      }}
+      onkeydown={(e) => { if (e.key === 'Enter') handleClick(e, item.path) }}
     >
       <span class="drag-grip">{@html iconGripDots(10)}</span>
       <span class="s-dot" style="background: {item.color}"></span>
-      <span class="file-name" title={dname}>
-        {dname}
-        {#if isDirty}<span class="dirty-mark">&bull;</span>{/if}
-      </span>
+      {#if renamingPath === item.path}
+        <input
+          class="rename-input"
+          type="text"
+          bind:value={renameValue}
+          onblur={() => commitRename(item.path)}
+          onkeydown={(e) => handleRenameKeydown(e, item.path)}
+          onclick={(e) => e.stopPropagation()}
+          autofocus
+        />
+      {:else}
+        <span class="file-name" title={dname} ondblclick={() => startRename(item.path)}>
+          {dname}
+          {#if isDirty}<span class="dirty-mark">&bull;</span>{/if}
+        </span>
+      {/if}
       <span class="item-badges">
         <span class="p-dots">
           {#each Array(5) as _, i}
+            {@const m = project.getMeta(item.path)}
             <span class="p-dot" class:on={i < m.quality}></span>
           {/each}
         </span>
@@ -138,6 +415,47 @@
     font-style: italic;
   }
 
+  /* ── Folder header ───────────────────────────────────────────────── */
+  .folder-header {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--sb-text);
+    opacity: 0.7;
+    border-bottom: 1px solid var(--sb-border);
+    cursor: default;
+  }
+  .folder-header.drag-over-folder {
+    background: var(--sb-active);
+    border-bottom-color: var(--accent);
+  }
+  .folder-toggle {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 0.7rem;
+    padding: 0;
+    width: 12px;
+    text-align: center;
+  }
+  .folder-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: default;
+  }
+  .folder-count {
+    font-size: 0.6rem;
+    opacity: 0.5;
+  }
+
+  /* ── File item ───────────────────────────────────────────────────── */
   .file-item {
     display: flex;
     align-items: center;
@@ -146,6 +464,9 @@
     gap: 0.45rem;
     transition: background 0.1s;
     border-left: 2px solid transparent;
+  }
+  .file-item.indented {
+    padding-left: 1.8rem;
   }
   .file-item:hover {
     background: var(--sb-hover);
@@ -208,5 +529,18 @@
   }
   .p-dot.on {
     background: var(--accent);
+  }
+
+  /* ── Rename input ────────────────────────────────────────────────── */
+  .rename-input {
+    flex: 1;
+    font-size: 0.8rem;
+    padding: 1px 4px;
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    background: var(--sb-bg);
+    color: var(--sb-text);
+    outline: none;
+    min-width: 0;
   }
 </style>

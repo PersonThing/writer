@@ -276,6 +276,9 @@
       case 'italic':
         taInsert('*', '*', 'italic text')
         break
+      case 'strikethrough':
+        taInsert('~~', '~~', 'struck text')
+        break
       case 'h1':
         toggleHeading(1)
         break
@@ -427,6 +430,11 @@
       if (e.shiftKey && e.key === '.') {
         e.preventDefault()
         applyFmt('em-dash')
+        return
+      }
+      if (e.shiftKey && e.key === 'X') {
+        e.preventDefault()
+        applyFmt('strikethrough')
         return
       }
     }
@@ -777,8 +785,8 @@
     flex: 1;
     width: 100%;
     padding: 1.75rem 2rem;
-    font-family: var(--font-mono);
-    font-size: 0.855rem;
+    font-family: var(--font-serif);
+    font-size: 0.92rem;
     line-height: 1.75;
     border: none;
     outline: none;
@@ -821,6 +829,10 @@
   }
   .preview-content :global(strong) {
     font-weight: bold;
+  }
+  .preview-content :global(del) {
+    text-decoration: line-through;
+    opacity: 0.6;
   }
   .preview-content :global(hr) {
     border: none;

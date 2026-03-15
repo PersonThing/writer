@@ -4,7 +4,7 @@
  */
 import * as api from '../api.js'
 import { project } from './project.svelte.js'
-import { modalConfirm, modalPrompt, modalAlert } from './ui.svelte.js'
+import { modalConfirm, modalAlert } from './ui.svelte.js'
 
 const MAX_UNDO = 200
 
@@ -228,14 +228,17 @@ class EditorStore {
   // ── New file ──────────────────────────────────────────────────────────
 
   async newFile() {
-    const name = await modalPrompt('New poem title:', {
-      placeholder: 'Untitled',
-    })
-    if (!name || !name.trim()) return
+    // Find a unique "Untitled" name
+    let name = 'Untitled'
+    let filename = name + '.md'
+    let i = 1
+    while (project.files.has(filename)) {
+      name = `Untitled ${i}`
+      filename = name + '.md'
+      i++
+    }
 
-    const filename = name.trim().replace(/[<>:"/\\|?*]/g, '') + '.md'
-    const content = `# ${name.trim()}\n\n`
-
+    const content = `# ${name}\n\n`
     await api.writeFile(project.rootPath + '/' + filename, content)
     await project.scanAll()
 

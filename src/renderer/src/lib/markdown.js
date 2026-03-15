@@ -14,6 +14,7 @@ export function parseMarkdown(md) {
     .replace(/__(.+?)__/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
     .replace(/_(.+?)_/g, '<em>$1</em>')
+    .replace(/~~(.+?)~~/g, '<del>$1</del>')
     .replace(/`(.+?)`/g, '<code>$1</code>')
     .replace(
       /\[([^\]]+)\]\(([^)]+)\)/g,

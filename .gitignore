@@ -5,3 +5,4 @@ out/
 *.exe
 *.AppImage
 .DS_Store
+.env

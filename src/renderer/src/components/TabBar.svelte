@@ -42,8 +42,7 @@
     border-bottom: 1px solid #000;
     flex-shrink: 0;
     height: 36px;
-    -webkit-app-region: drag;
-    padding-left: 80px;
+    padding-left: 1rem;
   }
   .tab-btn {
     background: transparent;
@@ -54,7 +53,7 @@
     cursor: pointer;
     border-bottom: 2px solid transparent;
     transition: all 0.12s;
-    -webkit-app-region: no-drag;
+
     font-family: var(--font-ui);
     letter-spacing: 0.02em;
   }
@@ -76,7 +75,7 @@
     font-size: 0.85rem;
     padding: 0 0.6rem;
     transition: color 0.15s;
-    -webkit-app-region: no-drag;
+
     display: inline-flex;
     align-items: center;
   }

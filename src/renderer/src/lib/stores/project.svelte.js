@@ -1,6 +1,6 @@
 /**
- * Project store — files, metadata, statuses, grouped files.
- * Uses Svelte 5 class pattern: $state fields + $derived fields + methods.
+ * Project store — files, metadata, statuses.
+ * File ordering is independent of status. Status is just a tag.
  */
 import * as api from '../api.js'
 
@@ -27,114 +27,99 @@ class ProjectStore {
   dirs = $state(new Set())
   meta = $state({})
   searchQuery = $state('')
+  searchMatches = $state(null)
   activeFilter = $state('')
 
   #showAppCallback = null
+  #searchTimer = 0
 
   // ── Derived ──────────────────────────────────────────────────────────────
   get statuses() {
     return this.meta._statuses || DEFAULT_STATUSES
   }
 
-  get groupedFiles() {
+  /**
+   * Returns a flat list of file items, optionally filtered by status and search.
+   * Files are ordered by _fileOrder (a single flat array), then alphabetically
+   * for any files not in the order list.
+   */
+  get filteredFiles() {
     let allPaths = [...this.files.keys()]
 
     // Apply search filter
-    if (this.searchQuery) {
+    if (this.searchQuery && this.searchMatches) {
+      allPaths = allPaths.filter((p) => this.searchMatches.has(p))
+    } else if (this.searchQuery) {
       const q = this.searchQuery.toLowerCase()
       allPaths = allPaths.filter((p) =>
         this.displayName(p).toLowerCase().includes(q),
       )
     }
 
+    // Apply status filter
+    if (this.activeFilter === '_none') {
+      const knownIds = new Set(this.statuses.map((s) => s.id))
+      allPaths = allPaths.filter((p) => {
+        const sid = this.getMeta(p).status || ''
+        return sid === '' || !knownIds.has(sid)
+      })
+    } else if (this.activeFilter) {
+      allPaths = allPaths.filter(
+        (p) => (this.getMeta(p).status || '') === this.activeFilter,
+      )
+    }
+
+    // Sort: custom order first, then alphabetical
+    const fileOrder = this.meta._fileOrder || []
+    const orderMap = new Map()
+    fileOrder.forEach((p, i) => orderMap.set(p, i))
+
     const pathSet = new Set(allPaths)
-    const fileOrder = this.meta._fileOrder || {}
-
-    // Build groups in status config order
-    const groups = this.statuses.map((s) => {
-      const matching = allPaths.filter(
-        (p) => (this.getMeta(p).status || '') === s.id,
-      )
-      const orderedList = fileOrder[s.id] || []
-      const ordered = orderedList.filter(
-        (p) => pathSet.has(p) && matching.includes(p),
-      )
-      const orderedSet = new Set(ordered)
-      const remaining = matching.filter((p) => !orderedSet.has(p))
-      remaining.sort((a, b) =>
-        this.displayName(a).localeCompare(this.displayName(b)),
-      )
-
-      return {
-        id: s.id,
-        label: s.label,
-        color: s.color,
-        files: [...ordered, ...remaining],
-        count: matching.length,
-      }
-    })
-
-    // "No Status" group — insert at configured position
-    const knownIds = new Set(this.statuses.map((s) => s.id))
-    const noStatus = allPaths.filter((p) => {
-      const sid = this.getMeta(p).status || ''
-      return sid === '' || !knownIds.has(sid)
-    })
-    const noOrderedList = fileOrder[''] || []
-    const noOrdered = noOrderedList.filter(
-      (p) => pathSet.has(p) && noStatus.includes(p),
-    )
-    const noOrderedSet = new Set(noOrdered)
-    const noRemaining = noStatus.filter((p) => !noOrderedSet.has(p))
-    noRemaining.sort((a, b) =>
+    const ordered = fileOrder.filter((p) => pathSet.has(p))
+    const orderedSet = new Set(ordered)
+    const remaining = allPaths.filter((p) => !orderedSet.has(p))
+    remaining.sort((a, b) =>
       this.displayName(a).localeCompare(this.displayName(b)),
     )
 
-    const noStatusGroup = {
-      id: '',
-      label: 'No Status',
-      color: '#444',
-      files: [...noOrdered, ...noRemaining],
-      count: noStatus.length,
-    }
-
-    const pos = this.meta._noStatusPosition ?? groups.length
-    const clamped = Math.max(0, Math.min(pos, groups.length))
-    groups.splice(clamped, 0, noStatusGroup)
-
-    return groups
+    const result = [...ordered, ...remaining]
+    return result.map((p) => ({
+      path: p,
+      color: this.statusColor(this.getMeta(p).status || ''),
+      statusId: this.getMeta(p).status || '',
+    }))
   }
 
-  get filteredFiles() {
-    const groups = this.groupedFiles
-    let result = []
+  /**
+   * Build a tree structure for folder-based display.
+   * Returns { folders: [{name, path, children}], files: [{path, ...}] }
+   */
+  get fileTree() {
+    const items = this.filteredFiles
+    const tree = { folders: {}, files: [] }
 
-    if (this.activeFilter === '_none') {
-      // Show only no-status group
-      const g = groups.find((g) => g.id === '')
-      if (g) {
-        for (const path of g.files) {
-          result.push({ path, color: g.color, statusId: g.id })
-        }
-      }
-    } else if (this.activeFilter) {
-      // Show only matching status group
-      const g = groups.find((g) => g.id === this.activeFilter)
-      if (g) {
-        for (const path of g.files) {
-          result.push({ path, color: g.color, statusId: g.id })
-        }
-      }
-    } else {
-      // All files, flattened in status order
-      for (const g of groups) {
-        for (const path of g.files) {
-          result.push({ path, color: g.color, statusId: g.id })
+    // Collect all dirs that should be shown
+    const visibleDirs = new Set()
+    for (const item of items) {
+      const parts = item.path.split('/')
+      if (parts.length > 1) {
+        let acc = ''
+        for (let i = 0; i < parts.length - 1; i++) {
+          acc = acc ? acc + '/' + parts[i] : parts[i]
+          visibleDirs.add(acc)
         }
       }
     }
 
-    return result
+    // Also add dirs that exist on disk even if empty (so user can see them)
+    for (const d of this.dirs) {
+      // Only add top-level empty dirs when not searching/filtering
+      if (!this.searchQuery && !this.activeFilter) {
+        visibleDirs.add(d)
+      }
+    }
+
+    return { items, visibleDirs: [...visibleDirs].sort() }
   }
 
   get fileCounts() {
@@ -159,13 +144,6 @@ class ProjectStore {
   }
 
   async patchMeta(path, patch) {
-    if ('status' in patch) {
-      const oldStatus = this.getMeta(path).status || ''
-      const newStatus = patch.status || ''
-      if (oldStatus !== newStatus) {
-        this.#syncFileOrder(path, oldStatus, newStatus)
-      }
-    }
     this.meta = { ...this.meta, [path]: { ...this.getMeta(path), ...patch } }
     await this.saveMeta()
   }
@@ -192,17 +170,23 @@ class ProjectStore {
     return parts[parts.length - 1]
   }
 
+  folderOf(relPath) {
+    const parts = relPath.split('/')
+    if (parts.length <= 1) return ''
+    return parts.slice(0, -1).join('/')
+  }
+
   // ── Actions ──────────────────────────────────────────────────────────────
 
-  async openRoot(dirPath) {
-    this.rootPath = dirPath
+  async openRoot() {
+    this.rootPath = await api.getRootPath()
     await this.scanAll()
     await this.loadMeta()
     this.#showApp()
   }
 
   async scanAll() {
-    const result = await api.scanDirectory(this.rootPath)
+    const result = await api.scanDirectory()
     const newFiles = new Map()
     for (const rel of Object.keys(result.files)) {
       newFiles.set(rel, result.files[rel])
@@ -223,16 +207,26 @@ class ProjectStore {
       this.meta = {}
     }
 
-    // Migrate _doneOrder → _fileOrder (one-time)
-    if (Array.isArray(this.meta._doneOrder) && !this.meta._fileOrder) {
-      const fileOrder = { done: [...this.meta._doneOrder] }
-      const newMeta = { ...this.meta, _fileOrder: fileOrder }
-      delete newMeta._doneOrder
-      this.meta = newMeta
+    // Migrate old per-status _fileOrder to flat array
+    if (this.meta._fileOrder && !Array.isArray(this.meta._fileOrder)) {
+      const oldOrder = this.meta._fileOrder
+      const flat = []
+      for (const list of Object.values(oldOrder)) {
+        if (Array.isArray(list)) {
+          for (const p of list) {
+            if (!flat.includes(p)) flat.push(p)
+          }
+        }
+      }
+      this.meta = { ...this.meta, _fileOrder: flat }
       await this.saveMeta()
-    } else if (Array.isArray(this.meta._doneOrder)) {
+    }
+
+    // Clean up old migration fields
+    if (this.meta._doneOrder || this.meta._noStatusPosition !== undefined) {
       const newMeta = { ...this.meta }
       delete newMeta._doneOrder
+      delete newMeta._noStatusPosition
       this.meta = newMeta
       await this.saveMeta()
     }
@@ -245,87 +239,87 @@ class ProjectStore {
     )
   }
 
-  // ── File Order (per-group ordering) ───────────────────────────────────
+  // ── File ordering (flat list, independent of status) ───────────────────
 
-  #syncFileOrder(path, oldStatus, newStatus) {
-    const fileOrder = { ...(this.meta._fileOrder || {}) }
+  async reorderFile(fromPath, toPath) {
+    const fileOrder = [...(this.meta._fileOrder || [])]
+    const allPaths = [...this.files.keys()]
 
-    // Remove from old group
-    const oldKey = oldStatus || ''
-    if (Array.isArray(fileOrder[oldKey])) {
-      fileOrder[oldKey] = fileOrder[oldKey].filter((p) => p !== path)
+    // Ensure both paths are in the order list
+    for (const p of allPaths) {
+      if (!fileOrder.includes(p)) fileOrder.push(p)
     }
 
-    // Add to end of new group
-    const newKey = newStatus || ''
-    if (!Array.isArray(fileOrder[newKey])) fileOrder[newKey] = []
-    if (!fileOrder[newKey].includes(path)) {
-      fileOrder[newKey].push(path)
-    }
-
-    this.meta = { ...this.meta, _fileOrder: fileOrder }
-  }
-
-  async reorderInGroup(statusId, fromPath, toPath) {
-    const key = statusId || ''
-    const fileOrder = { ...(this.meta._fileOrder || {}) }
-
-    // Snapshot current rendered order for this group
-    const group = this.groupedFiles.find((g) => g.id === statusId)
-    let list = group ? [...group.files] : []
-
-    const fromIdx = list.indexOf(fromPath)
-    const toIdx = list.indexOf(toPath)
+    const fromIdx = fileOrder.indexOf(fromPath)
+    const toIdx = fileOrder.indexOf(toPath)
     if (fromIdx === -1 || toIdx === -1) return
 
-    list.splice(fromIdx, 1)
-    list.splice(toIdx, 0, fromPath)
+    fileOrder.splice(fromIdx, 1)
+    fileOrder.splice(toIdx, 0, fromPath)
 
-    fileOrder[key] = list
     this.meta = { ...this.meta, _fileOrder: fileOrder }
     await this.saveMeta()
   }
 
-  async moveToGroup(path, targetStatusId, beforePath) {
-    const oldStatus = this.getMeta(path).status || ''
-    const newStatus = targetStatusId ?? ''
-    const fileOrder = { ...(this.meta._fileOrder || {}) }
+  async moveFileToFolder(filePath, targetFolder) {
+    const fileName = filePath.split('/').pop()
+    const newPath = targetFolder ? targetFolder + '/' + fileName : fileName
 
-    // Remove from old group's file order
-    const oldKey = oldStatus || ''
-    if (Array.isArray(fileOrder[oldKey])) {
-      fileOrder[oldKey] = fileOrder[oldKey].filter((p) => p !== path)
+    if (newPath === filePath) return
+
+    // Move on disk
+    await api.moveFile(filePath, newPath)
+
+    // Update metadata key
+    const m = this.getMeta(filePath)
+    const newMeta = { ...this.meta }
+    delete newMeta[filePath]
+    newMeta[newPath] = m
+
+    // Update file order
+    if (Array.isArray(newMeta._fileOrder)) {
+      newMeta._fileOrder = newMeta._fileOrder.map((p) =>
+        p === filePath ? newPath : p,
+      )
     }
 
-    // Get target group's current rendered list
-    const targetGroup = this.groupedFiles.find((g) => g.id === targetStatusId)
-    let targetList = targetGroup ? [...targetGroup.files] : []
-    // Remove in case it's somehow already there
-    targetList = targetList.filter((p) => p !== path)
-
-    // Insert at position
-    if (beforePath) {
-      const idx = targetList.indexOf(beforePath)
-      if (idx !== -1) {
-        targetList.splice(idx, 0, path)
-      } else {
-        targetList.push(path)
-      }
-    } else {
-      targetList.push(path)
-    }
-
-    const newKey = newStatus || ''
-    fileOrder[newKey] = targetList
-
-    // Update status + file order + save in one go
-    const updatedMeta = {
-      ...this.meta,
-      _fileOrder: fileOrder,
-      [path]: { ...this.getMeta(path), status: newStatus },
-    }
-    this.meta = updatedMeta
+    this.meta = newMeta
     await this.saveMeta()
+    await this.scanAll()
+  }
+
+  async createFolder(name) {
+    await api.createFolder(name)
+    await this.scanAll()
+  }
+
+  async renameFolderOnDisk(oldPath, newPath) {
+    await api.renameFolder(oldPath, newPath)
+
+    // Update all metadata keys that start with oldPath/
+    const newMeta = { ...this.meta }
+    const prefix = oldPath + '/'
+    for (const [key, val] of Object.entries(newMeta)) {
+      if (key === oldPath || key.startsWith(prefix)) {
+        const newKey = newPath + key.slice(oldPath.length)
+        newMeta[newKey] = val
+        delete newMeta[key]
+      }
+    }
+
+    // Update file order
+    if (Array.isArray(newMeta._fileOrder)) {
+      newMeta._fileOrder = newMeta._fileOrder.map((p) => {
+        if (p === oldPath || p.startsWith(prefix)) {
+          return newPath + p.slice(oldPath.length)
+        }
+        return p
+      })
+    }
+
+    this.meta = newMeta
+    await this.saveMeta()
+    await this.scanAll()
   }
 
   migrateStatusIds(oldStatuses, newStatuses) {
@@ -341,7 +335,6 @@ class ProjectStore {
 
     const newMeta = { ...this.meta }
 
-    // Update file metadata status fields
     for (const [path, data] of Object.entries(newMeta)) {
       if (path.startsWith('_')) continue
       if (data.status && idMap[data.status]) {
@@ -349,17 +342,27 @@ class ProjectStore {
       }
     }
 
-    // Update _fileOrder keys
-    if (newMeta._fileOrder) {
-      const newFileOrder = {}
-      for (const [key, list] of Object.entries(newMeta._fileOrder)) {
-        const newKey = idMap[key] !== undefined ? idMap[key] : key
-        newFileOrder[newKey] = list
-      }
-      newMeta._fileOrder = newFileOrder
-    }
-
     this.meta = newMeta
+  }
+
+  // ── Search (debounced, server-side body search) ─────────────────────────
+
+  triggerSearch(query) {
+    clearTimeout(this.#searchTimer)
+    if (!query.trim()) {
+      this.searchMatches = null
+      return
+    }
+    this.#searchTimer = setTimeout(async () => {
+      try {
+        const matches = await api.searchFiles(query)
+        if (this.searchQuery === query) {
+          this.searchMatches = new Set(matches)
+        }
+      } catch {
+        this.searchMatches = null
+      }
+    }, 250)
   }
 
   // ── App visibility ─────────────────────────────────────────────────────
