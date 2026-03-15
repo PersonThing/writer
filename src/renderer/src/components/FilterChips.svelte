@@ -24,13 +24,6 @@
       {s.label} ({fileCounts[s.id] || 0})
     </button>
   {/each}
-  <button
-    class="chip"
-    class:active={project.activeFilter === 'social'}
-    onclick={() => setFilter('social')}
-  >
-    Social ({fileCounts.social || 0})
-  </button>
 </div>
 
 <style>

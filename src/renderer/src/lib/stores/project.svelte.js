@@ -109,16 +109,7 @@ class ProjectStore {
     const groups = this.groupedFiles
     let result = []
 
-    if (this.activeFilter === 'social') {
-      // Show social files across all groups, preserving status order
-      for (const g of groups) {
-        for (const path of g.files) {
-          if (this.getMeta(path).social) {
-            result.push({ path, color: g.color, statusId: g.id })
-          }
-        }
-      }
-    } else if (this.activeFilter === '_none') {
+    if (this.activeFilter === '_none') {
       // Show only no-status group
       const g = groups.find((g) => g.id === '')
       if (g) {
@@ -147,7 +138,7 @@ class ProjectStore {
   }
 
   get fileCounts() {
-    const counts = { '': 0, social: 0 }
+    const counts = { '': 0 }
     for (const s of this.statuses) counts[s.id] = 0
     let total = 0
     for (const [path] of this.files) {
@@ -156,7 +147,6 @@ class ProjectStore {
       const sid = m.status || ''
       if (sid in counts) counts[sid]++
       else counts['']++
-      if (m.social) counts.social++
     }
     counts._total = total
     return counts
@@ -165,7 +155,7 @@ class ProjectStore {
   // ── Meta helpers ─────────────────────────────────────────────────────────
 
   getMeta(path) {
-    return this.meta[path] || { status: '', quality: 0, social: false }
+    return this.meta[path] || { status: '', quality: 0 }
   }
 
   async patchMeta(path, patch) {

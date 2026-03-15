@@ -25,6 +25,7 @@ export const ui = $state({
 
   // App view
   appReady: false,
+  activeTab: 'poetry',
 
   // Dark mode
   darkMode:

@@ -43,12 +43,6 @@
     await patchMeta(activePane.filePath, { quality: cur === p ? 0 : p });
   }
 
-  async function handleSocial() {
-    if (!activePane) return;
-    const was = getMeta(activePane.filePath).social;
-    await patchMeta(activePane.filePath, { social: !was });
-  }
-
   function handleClose() {
     if (activePane) closePane(activePane.id);
   }
@@ -100,12 +94,6 @@
         >&#9733;</span>
       {/each}
     </div>
-
-    <button class="social-btn" class:on={m.social} onclick={handleSocial}>
-      &#128241; Social
-    </button>
-
-    <div class="toolbar-sep"></div>
 
     <button class="cleanup-btn" title="Clean up formatting" onclick={() => cleanupOpen = true}>
       &#128295; Clean
@@ -170,16 +158,6 @@
     transition: color .1s; line-height: 1; user-select: none;
   }
   .star.on { color: var(--accent); }
-
-  .social-btn {
-    font-size: .75rem; padding: .28rem .65rem; border-radius: 6px;
-    border: 1px solid var(--border); background: var(--surface);
-    cursor: pointer; color: var(--muted); transition: all .13s;
-  }
-  .social-btn.on {
-    border-color: #7c35d4; color: #7c35d4;
-    background: #f5eeff;
-  }
 
   .cleanup-btn {
     font-size: .75rem; padding: .28rem .65rem; border-radius: 6px;

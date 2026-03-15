@@ -3,8 +3,6 @@
   import { project } from '../lib/stores/project.svelte.js'
   import { editor } from '../lib/stores/editor.svelte.js'
   import { showToast } from '../lib/stores/ui.svelte.js'
-  import { iconShare } from '../lib/icons.js'
-  import { social } from '../lib/stores/social.svelte.js'
 
   let { pane, isActive = false } = $props()
 
@@ -80,10 +78,6 @@
   async function handleStar(p) {
     const cur = m.quality || 0
     await project.patchMeta(pane.filePath, { quality: cur === p ? 0 : p })
-  }
-
-  async function handleSocial() {
-    await project.patchMeta(pane.filePath, { social: !m.social })
   }
 
   async function handleSave() {
@@ -586,24 +580,6 @@
     </div>
 
     <button
-      class="social-btn"
-      class:on={m.social}
-      onclick={handleSocial}
-      title="Social media"
-    >
-      {@html iconShare()}
-    </button>
-
-    {#if m.social}
-      <button
-        class="compose-btn"
-        onclick={() => social.open(pane.filePath, pane.content)}
-      >
-        Compose
-      </button>
-    {/if}
-
-    <button
       class="save-btn"
       class:saved={!pane.dirty}
       disabled={!pane.dirty}
@@ -740,55 +716,6 @@
   }
   .star.on {
     color: var(--accent);
-  }
-
-  .social-btn {
-    font-size: 0.7rem;
-    padding: 0.18rem 0.4rem;
-    height: 1.45rem;
-    border-radius: 5px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    cursor: pointer;
-    color: var(--muted);
-    transition: all 0.13s;
-    flex-shrink: 0;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-  }
-  .social-btn.on {
-    border-color: #7c35d4;
-    color: #7c35d4;
-    background: #f5eeff;
-  }
-  :global(.dark) .social-btn.on {
-    background: #2a1f3a;
-  }
-
-  .compose-btn {
-    font-size: 0.68rem;
-    padding: 0.18rem 0.5rem;
-    height: 1.45rem;
-    border-radius: 5px;
-    border: 1px solid #7c35d4;
-    background: #f5eeff;
-    color: #7c35d4;
-    cursor: pointer;
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    font-weight: 600;
-    transition: all 0.13s;
-  }
-  .compose-btn:hover {
-    background: #ede0ff;
-  }
-  :global(.dark) .compose-btn {
-    background: #2a1f3a;
-  }
-  :global(.dark) .compose-btn:hover {
-    background: #3a2d4f;
   }
 
   .save-btn {

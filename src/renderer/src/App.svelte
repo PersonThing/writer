@@ -9,7 +9,6 @@
   import Sidebar from './components/Sidebar.svelte'
   import EditorArea from './components/EditorArea.svelte'
 
-  import SocialComposer from './components/SocialComposer.svelte'
   import ContextMenu from './components/ContextMenu.svelte'
   import Toast from './components/Toast.svelte'
   import StatusEditor from './components/StatusEditor.svelte'
@@ -51,7 +50,6 @@
     <div class="app-content">
       <Sidebar />
       <EditorArea />
-      <SocialComposer />
     </div>
   {/if}
 </div>

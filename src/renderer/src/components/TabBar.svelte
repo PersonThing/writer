@@ -4,7 +4,16 @@
 </script>
 
 <div class="tab-bar">
-  <button class="tab-btn active" data-tab="poetry">Poetry</button>
+  <button
+    class="tab-btn"
+    class:active={ui.activeTab === 'poetry'}
+    onclick={() => (ui.activeTab = 'poetry')}
+  >Poetry</button>
+  <button
+    class="tab-btn"
+    class:active={ui.activeTab === 'short-stories'}
+    onclick={() => (ui.activeTab = 'short-stories')}
+  >Short stories</button>
   <div class="tab-spacer"></div>
   <button
     class="tab-icon"

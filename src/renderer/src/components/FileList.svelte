@@ -2,7 +2,7 @@
   import { project } from '../lib/stores/project.svelte.js'
   import { editor } from '../lib/stores/editor.svelte.js'
   import { showContextMenu } from '../lib/stores/ui.svelte.js'
-  import { iconShare, iconGripDots } from '../lib/icons.js'
+  import { iconGripDots } from '../lib/icons.js'
 
   let draggedPath = $state(null)
   let dragSourceStatusId = $state(null)
@@ -103,7 +103,6 @@
         {#if isDirty}<span class="dirty-mark">&bull;</span>{/if}
       </span>
       <span class="item-badges">
-        {#if m.social}<span class="social-pip">{@html iconShare(12)}</span>{/if}
         <span class="p-dots">
           {#each Array(5) as _, i}
             <span class="p-dot" class:on={i < m.quality}></span>
@@ -196,11 +195,6 @@
     align-items: center;
     gap: 3px;
     flex-shrink: 0;
-  }
-  .social-pip {
-    display: inline-flex;
-    align-items: center;
-    color: #7c35d4;
   }
   .p-dots {
     display: flex;

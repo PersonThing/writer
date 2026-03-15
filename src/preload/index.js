@@ -46,14 +46,6 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('fs:writeBase64', filePath, dataUrl),
   copyFile: (src, dest) => ipcRenderer.invoke('fs:copyFile', src, dest),
 
-  // Social composer auto-save
-  socialSave: (projectRoot, poemPath, state) =>
-    ipcRenderer.invoke('social:save', projectRoot, poemPath, state),
-  socialLoad: (projectRoot, poemPath) =>
-    ipcRenderer.invoke('social:load', projectRoot, poemPath),
-  socialClear: (projectRoot, poemPath) =>
-    ipcRenderer.invoke('social:clear', projectRoot, poemPath),
-
   // Video creation
   createReel: (imageDataUrl, audioArrayBuffer, duration) =>
     ipcRenderer.invoke('video:createReel', imageDataUrl, audioArrayBuffer, duration),

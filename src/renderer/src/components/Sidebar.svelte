@@ -8,7 +8,6 @@
     iconRefresh,
     iconFolder,
     iconGear,
-    iconShare,
   } from '../lib/icons.js'
   import FileList from './FileList.svelte'
 
@@ -91,16 +90,6 @@
         <span class="chip-count">{project.fileCounts['']}</span>
       </button>
     {/if}
-    <button
-      class="chip"
-      class:active={project.activeFilter === 'social'}
-      onclick={() =>
-        (project.activeFilter =
-          project.activeFilter === 'social' ? '' : 'social')}
-    >
-      <span class="chip-social-icon">{@html iconShare(10)}</span>
-      Social <span class="chip-count">{project.fileCounts.social || 0}</span>
-    </button>
   </div>
 
   <FileList />
@@ -225,12 +214,5 @@
     color: inherit;
     opacity: 0.6;
     font-size: 0.65rem;
-  }
-  .chip-social-icon {
-    display: inline-flex;
-    color: #7c35d4;
-  }
-  .chip.active .chip-social-icon {
-    color: inherit;
   }
 </style>
