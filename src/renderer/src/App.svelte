@@ -45,6 +45,20 @@
         <button class="signin-btn" onclick={() => auth.signIn()}>
           Sign in with Google
         </button>
+
+        {#if auth.testLoginAvailable && auth.allowedEmails.length}
+          <div class="test-signin">
+            <div class="test-signin-label">Dev shortcut — sign in as:</div>
+            <div class="test-signin-buttons">
+              {#each auth.allowedEmails as email}
+                <button
+                  class="test-signin-btn"
+                  onclick={() => auth.signInAs(email)}
+                >{email}</button>
+              {/each}
+            </div>
+          </div>
+        {/if}
       </div>
     </div>
   {:else if !ui.appReady}
@@ -123,5 +137,38 @@
   }
   .signin-btn:hover {
     filter: brightness(1.1);
+  }
+  .test-signin {
+    margin-top: 1.4rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--border);
+  }
+  .test-signin-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .test-signin-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .test-signin-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0.35rem 0.6rem;
+    color: var(--text);
+    font-size: 0.78rem;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .test-signin-btn:hover {
+    background: var(--accent-light);
+    border-color: var(--accent);
+    color: var(--accent);
   }
 </style>

@@ -1,0 +1,750 @@
+{
+  "home": {
+    "path": "/",
+    "status": 200,
+    "images": [
+      "663ee7_ce193cf08c5e4528a9c4c7c14414bd2c~mv2.jpg",
+      "663ee7_052cb7c61d0648339e38852fa79551af~mv2.jpg",
+      "663ee7_6ae55d6c83094ba2bc24b5e13ac87e29~mv2.jpg",
+      "663ee7_a5097ef05be94683bbb17a74fb7aaa03~mv2.jpg",
+      "663ee7_19c73452b3574e2096fb6f467db582a1~mv2.jpg",
+      "663ee7_9dabb2e6f8184452a79b5fbaeefeb474~mv2.jpg",
+      "663ee7_08f7f8e6db7e4d47a29dc73dbf8dfb84~mv2.png",
+      "663ee7_b10f3f0e1ba64995ad8a821ff939e429~mv2.png",
+      "663ee7_a6798de174b647e78c6624988f6798fc~mv2.png",
+      "663ee7_4af351a4600b45cf9db26f24e7d55327~mv2.png",
+      "663ee7_368c7b4d2d69484294d27c1d938d5f06~mv2.png",
+      "663ee7_f44e73db98c24a9f8ea420578c995067~mv2.png",
+      "663ee7_46d6bfab8bcc4420bbb2bb75a795988a~mv2.png",
+      "663ee7_987702b503f84824a810d95918c3b38a~mv2.png",
+      "663ee7_4f807ce6e43a458193f2d4caaabe9359~mv2.png",
+      "663ee7_2d3cbdd7d9af4ada844a80785e538770~mv2.jpg",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": [
+      "/copywriting/grand-seiko-film",
+      "/copywriting/tag-heuer-film",
+      "/creative-direction/ethnicwear-db",
+      "/creative-direction/style-in-the-city",
+      "/creative-direction/seasonal-campaigns",
+      "/fashion-editorial/azzedine-alaia:-master-and-maverick",
+      "/fashion-editorial/you-dont-need-to-be-a-wizard-to-pull-off-a-cape-this-winter",
+      "/fashion-editorial/fashion-weak-is-it",
+      "/editorial/weekend-watch-coming-of-rage-with-i-may-destroy-you",
+      "/editorial/as-news-gets-compromised-for-clicks-3-saviours-rise-to-the-challenge",
+      "/editorial/its-time-for-a-period-of-change-at-workplace",
+      "/poetry/on-writing",
+      "/poetry/hannah-banana",
+      "/poetry/my-dad-socks-and-gulzar"
+    ]
+  },
+  "contact": {
+    "path": "/contact",
+    "status": 200,
+    "images": [
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "creative-direction--style-in-the-city": {
+    "path": "/creative-direction/style-in-the-city",
+    "status": 200,
+    "images": [
+      "663ee7_19c73452b3574e2096fb6f467db582a1~mv2.jpg",
+      "663ee7_47dae0cc3d50407d9e8f684e9a5e3967~mv2.jpg",
+      "663ee7_0eee46ae25af4698bf7344c9b401440d~mv2.jpeg",
+      "663ee7_bd4538f7783c4f1cb518ea92788443d9~mv2.jpg",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "fashion-editorial--azzedine-alaia--master-and-maverick": {
+    "path": "/fashion-editorial/azzedine-alaia:-master-and-maverick",
+    "status": 200,
+    "images": [
+      "663ee7_08f7f8e6db7e4d47a29dc73dbf8dfb84~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "fashion-editorial--you-dont-need-to-be-a-wizard-to-pull-off-a-cape-this-winter": {
+    "path": "/fashion-editorial/you-dont-need-to-be-a-wizard-to-pull-off-a-cape-this-winter",
+    "status": 200,
+    "images": [
+      "663ee7_b10f3f0e1ba64995ad8a821ff939e429~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "fashion-editorial--fashion-weak-is-it": {
+    "path": "/fashion-editorial/fashion-weak-is-it",
+    "status": 200,
+    "images": [
+      "663ee7_a6798de174b647e78c6624988f6798fc~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "editorial--its-time-for-a-period-of-change-at-workplace": {
+    "path": "/editorial/its-time-for-a-period-of-change-at-workplace",
+    "status": 200,
+    "images": [
+      "663ee7_f44e73db98c24a9f8ea420578c995067~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "about": {
+    "path": "/about",
+    "status": 200,
+    "images": [
+      "663ee7_b220f43509264034b686cd84c50d3835~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "creative-direction": {
+    "path": "/creative-direction",
+    "status": 200,
+    "images": [
+      "663ee7_a5097ef05be94683bbb17a74fb7aaa03~mv2.jpg",
+      "663ee7_19c73452b3574e2096fb6f467db582a1~mv2.jpg",
+      "663ee7_9dabb2e6f8184452a79b5fbaeefeb474~mv2.jpg",
+      "663ee7_cf56f5e705a94105bc3125917a60040c~mv2.jpg",
+      "663ee7_51c958150ebd4682bf980df2dc06f6e3~mv2.jpg",
+      "663ee7_15859ebb5958468582814c16f6e87aa3~mv2.jpg",
+      "663ee7_98e1b85334ac49ea9390c46aaf1e8634~mv2.jpg",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": [
+      "/creative-direction/ethnicwear-db",
+      "/creative-direction/seasonal-campaigns",
+      "/creative-direction/end-of-season-sale",
+      "/creative-direction/the-great-indian-wedding",
+      "/creative-direction/dress-for-the-job-you-want",
+      "/creative-direction/fableisure"
+    ]
+  },
+  "fashion-editorial": {
+    "path": "/fashion-editorial",
+    "status": 200,
+    "images": [
+      "663ee7_08f7f8e6db7e4d47a29dc73dbf8dfb84~mv2.png",
+      "663ee7_b10f3f0e1ba64995ad8a821ff939e429~mv2.png",
+      "663ee7_a6798de174b647e78c6624988f6798fc~mv2.png",
+      "663ee7_f82d5f2517004926a534cb1107828543~mv2.jpg",
+      "663ee7_ae0a5f2f76394cba9bd04b3cf3d8fc27~mv2.jpg",
+      "663ee7_eab6234fcf344d21ac6c4c6749e4c703~mv2.webp",
+      "663ee7_da7b29e9809f4f19a4e9fa2c9431b1be~mv2.png",
+      "663ee7_a5c37190ab074d3dbd99cead935ae3e6~mv2.jpg",
+      "663ee7_7569e144b5ba4b688a30b22d00f40a0b~mv2.png",
+      "663ee7_cb8a9f4a1e7e46cc8c67a08e099431b4~mv2.png",
+      "663ee7_b841d666ba00416890ef5fa8b70aa95d~mv2.jpg",
+      "663ee7_4b235ba585894e38ab3839ee0d3910fc~mv2.jpg",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": [
+      "/fashion-editorial/manish-arora-at-paris-fashion-week",
+      "/fashion-editorial/bazaar-runway",
+      "/fashion-editorial/bespoke-for-the-masses",
+      "/fashion-editorial/lecoanet-hemant-4-decades-in-fashion",
+      "/fashion-editorial/up-close-with-danilo-venturi",
+      "/fashion-editorial/trend-forecast-ss18",
+      "/fashion-editorial/trend-forecast-aw18",
+      "/fashion-editorial/clothing---an-exercise-in-mythmaking",
+      "/fashion-editorial/weaving-tradition-and-modernity"
+    ]
+  },
+  "editorial": {
+    "path": "/editorial",
+    "status": 200,
+    "images": [
+      "663ee7_4af351a4600b45cf9db26f24e7d55327~mv2.png",
+      "663ee7_368c7b4d2d69484294d27c1d938d5f06~mv2.png",
+      "663ee7_f44e73db98c24a9f8ea420578c995067~mv2.png",
+      "663ee7_566235aa0efc454d9fee66a4e3cbb4fb~mv2.png",
+      "663ee7_c7884a36e53b4329ad64bfc1d7d9d643~mv2.png",
+      "663ee7_6cdf2b9bfcc24001abb3412d14cebee1~mv2.png",
+      "663ee7_1969bc9385c94dab8d1bf90519e7fc7b~mv2.webp",
+      "663ee7_71b86525980c4a3990c7a0247b07bc59~mv2.png",
+      "663ee7_5ea4d3448ba24fbe8c0406cfe77dc5ce~mv2.png",
+      "663ee7_3ca3798556d8471eac93107c7c3ba769~mv2.jpg",
+      "663ee7_014f32938ec04f4f84488e6d0eca9c73~mv2.jpg",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": [
+      "/editorial/weekend-watch-coming-of-rage-with-i-may-destroy-you",
+      "/editorial/as-news-gets-compromised-for-clicks-3-saviours-rise-to-the-challenge",
+      "/editorial/lets-talk-about-masculinity-one-closet-at-a-time",
+      "/editorial/the-kharab-uprising",
+      "/editorial/death-in-the-gunj",
+      "/editorial/can-the-mr-gay-world-pageant-rescue-the-reputation-of-beauty-pageants",
+      "/editorial/all-hail-the-taxi",
+      "/editorial/where-to-meet-delhis-pilots-paupers-and-princeton-dudes",
+      "/editorial/how-to-get-filthy-rich-in-rising-asia",
+      "/editorial/writers-bloc"
+    ]
+  },
+  "poetry": {
+    "path": "/poetry",
+    "status": 200,
+    "images": [
+      "663ee7_46d6bfab8bcc4420bbb2bb75a795988a~mv2.png",
+      "663ee7_987702b503f84824a810d95918c3b38a~mv2.png",
+      "663ee7_4f807ce6e43a458193f2d4caaabe9359~mv2.png",
+      "663ee7_660154972e7b41f8b3b9c71cc5c91947~mv2.png",
+      "663ee7_593fdb73b9bd4b579ec9d8e78bc742a9~mv2.png",
+      "663ee7_d6e0faf0e7a14dac9f23cf924fac6c18~mv2.png",
+      "663ee7_d03b7d6952604ff38329d4d50b17b46c~mv2.jpg",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": [
+      "/poetry/on-writing",
+      "/poetry/hannah-banana",
+      "/poetry/my-dad-socks-and-gulzar",
+      "/poetry/medeas-ideas",
+      "/poetry/home-and-hell",
+      "/poetry/times-square",
+      "/poetry/ek-sher"
+    ]
+  },
+  "published-paper": {
+    "path": "/published-paper",
+    "status": 200,
+    "images": [
+      "663ee7_d3a2b6c5bbcd4a94b3c9e16490080f31~mv2.png",
+      "663ee7_0ae7683da21b451ea365fb23b4a7b41e~mv2.png",
+      "663ee7_188c96a94e634be1a39782a9c1160b6b~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "creative-direction--ethnicwear-db": {
+    "path": "/creative-direction/ethnicwear-db",
+    "status": 200,
+    "images": [
+      "663ee7_29e12cf64d814987bfdb307f594573f5~mv2.jpg",
+      "663ee7_bd8589dc7ad14fcfac90e8d324758cc1~mv2.jpg",
+      "663ee7_bcadac7db0514081bfa133f1857a4670~mv2.jpg",
+      "663ee7_8ad8dff9f43e4af5bbb3ba9ab55715b3~mv2.jpg",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "creative-direction--seasonal-campaigns": {
+    "path": "/creative-direction/seasonal-campaigns",
+    "status": 200,
+    "images": [
+      "663ee7_9dabb2e6f8184452a79b5fbaeefeb474~mv2.jpg",
+      "663ee7_1a426c7006fe4741a51cc0ca59f48ce8~mv2.png",
+      "663ee7_b63c9e4f976842769b076ac95c9f3b67~mv2.jpg",
+      "663ee7_5dfe7aad565b407a82b26e9e7ab5516b~mv2.jpg",
+      "663ee7_f04dd06c2bdc41aa89d236ac99cfb9e1~mv2.jpg",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "creative-direction--end-of-season-sale": {
+    "path": "/creative-direction/end-of-season-sale",
+    "status": 200,
+    "images": [
+      "663ee7_9015b55d4f66461aa04bbe16962722d2~mv2.jpg",
+      "663ee7_22253f8021cb4e01a0c8d8f97b60e9c4~mv2.jpg",
+      "663ee7_fae3f1a0e04a4350b817d0d4de5412f3~mv2.jpg",
+      "663ee7_cf56f5e705a94105bc3125917a60040c~mv2.jpg",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "creative-direction--the-great-indian-wedding": {
+    "path": "/creative-direction/the-great-indian-wedding",
+    "status": 200,
+    "images": [
+      "663ee7_51c958150ebd4682bf980df2dc06f6e3~mv2.jpg",
+      "663ee7_2455de3e9a8a46da83ded797a05bb9d8~mv2.jpg",
+      "663ee7_179bd0cb02f94f408c786454a26bf30b~mv2.jpg",
+      "663ee7_e68c37ad282741dd8de2566813cfcd37~mv2.jpg",
+      "663ee7_fa6fc42998c44ea5bc4d0fd80b433d12~mv2.jpg",
+      "663ee7_cfaa6ecf3b524350bbb652bde450d8cf~mv2.jpg",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "creative-direction--dress-for-the-job-you-want": {
+    "path": "/creative-direction/dress-for-the-job-you-want",
+    "status": 200,
+    "images": [
+      "663ee7_15859ebb5958468582814c16f6e87aa3~mv2.jpg",
+      "663ee7_bab206c43c5942b5bd55cc0ddc24a6cc~mv2.jpg",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "creative-direction--fableisure": {
+    "path": "/creative-direction/fableisure",
+    "status": 200,
+    "images": [
+      "663ee7_98e1b85334ac49ea9390c46aaf1e8634~mv2.jpg",
+      "663ee7_6cdccc576e894d138dccbc4d9186d1e5~mv2.jpg",
+      "663ee7_19f15cf429dd481d8894abb9a1ab04a5~mv2.jpg",
+      "663ee7_84d843100a144710aa25f857415290ca~mv2.jpg",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "fashion-editorial--manish-arora-at-paris-fashion-week": {
+    "path": "/fashion-editorial/manish-arora-at-paris-fashion-week",
+    "status": 200,
+    "images": [
+      "663ee7_291ca3aca9484ebb8a4d641ba901b7f3~mv2.jpg",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "fashion-editorial--bazaar-runway": {
+    "path": "/fashion-editorial/bazaar-runway",
+    "status": 200,
+    "images": [
+      "663ee7_4e138ba304cf44a5a42fe0fb1ea3f744~mv2.jpg",
+      "663ee7_11f1005ebcf946d398602fc635e48ded~mv2.jpg",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "fashion-editorial--bespoke-for-the-masses": {
+    "path": "/fashion-editorial/bespoke-for-the-masses",
+    "status": 200,
+    "images": [
+      "663ee7_f34605cf0aac448c8587fe0240ad4122~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "fashion-editorial--lecoanet-hemant-4-decades-in-fashion": {
+    "path": "/fashion-editorial/lecoanet-hemant-4-decades-in-fashion",
+    "status": 200,
+    "images": [
+      "663ee7_da7b29e9809f4f19a4e9fa2c9431b1be~mv2.png",
+      "663ee7_72b8fd38c02d498abc52f17a2c3d0374~mv2.png",
+      "663ee7_55e079e7b6df48f7a691ebbe06666ae1~mv2.png",
+      "663ee7_8766ae554e8c452fbd9137f605360bac~mv2.png",
+      "663ee7_874c8ad37acc47789c804d9065325a19~mv2.png",
+      "663ee7_21e13f5148c046a4bdc787487b866035~mv2.png",
+      "663ee7_9ec3968ffd894ddabdb3cda173305ec7~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "fashion-editorial--up-close-with-danilo-venturi": {
+    "path": "/fashion-editorial/up-close-with-danilo-venturi",
+    "status": 200,
+    "images": [
+      "663ee7_54788c9143894fbdba153b6c16b91aec~mv2.jpg",
+      "663ee7_1bbca1def21640659cf17fa7fb3523b4~mv2.jpg",
+      "663ee7_8a75707fb858416599cd56fbda2749f7~mv2.jpg",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "fashion-editorial--trend-forecast-ss18": {
+    "path": "/fashion-editorial/trend-forecast-ss18",
+    "status": 200,
+    "images": [
+      "663ee7_175fbb891f9544c3b44d072f4be413c1~mv2.jpg",
+      "663ee7_a8cb71aae7e34b2f9ae03b1074b124df~mv2.png",
+      "663ee7_9a0bbd3ba571402884d736df7e827d4f~mv2.png",
+      "663ee7_6d56f3e82fce4704b1f84fa370681bb5~mv2.png",
+      "663ee7_49290c34a0464cbaae6ae17e0b0ff404~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "fashion-editorial--trend-forecast-aw18": {
+    "path": "/fashion-editorial/trend-forecast-aw18",
+    "status": 200,
+    "images": [
+      "663ee7_54ec806f4ef24746b8cd8de9ca41f4c6~mv2.png",
+      "663ee7_e8b1b3c189744fb394a5b6ba76dab3e3~mv2.png",
+      "663ee7_fec7046b00cf4c39a63afaeb711c11ed~mv2.png",
+      "663ee7_d4f3afd8993d4757b4ee041fd38e8aee~mv2.png",
+      "663ee7_df6159409d3d471590a7adf49eb74633~mv2.png",
+      "663ee7_63b24e26a5c44c69acae360eefaffb50~mv2.png",
+      "663ee7_66ff1a54ea9b47e1b860c13cf107cb27~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "fashion-editorial--clothing---an-exercise-in-mythmaking": {
+    "path": "/fashion-editorial/clothing---an-exercise-in-mythmaking",
+    "status": 200,
+    "images": [
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "fashion-editorial--weaving-tradition-and-modernity": {
+    "path": "/fashion-editorial/weaving-tradition-and-modernity",
+    "status": 200,
+    "images": [
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "editorial--weekend-watch-coming-of-rage-with-i-may-destroy-you": {
+    "path": "/editorial/weekend-watch-coming-of-rage-with-i-may-destroy-you",
+    "status": 200,
+    "images": [
+      "663ee7_4af351a4600b45cf9db26f24e7d55327~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "editorial--as-news-gets-compromised-for-clicks-3-saviours-rise-to-the-challenge": {
+    "path": "/editorial/as-news-gets-compromised-for-clicks-3-saviours-rise-to-the-challenge",
+    "status": 200,
+    "images": [
+      "663ee7_368c7b4d2d69484294d27c1d938d5f06~mv2.png",
+      "663ee7_08c0f64d642f4c2f942e80721b574f0a~mv2.png",
+      "663ee7_6ce16691a7694db099e202e404bcc263~mv2.png",
+      "663ee7_a93fe731ee1a4d3fb51c0dfe6d74cf2d~mv2.png",
+      "663ee7_f1e733d106ea43ad918989f0e8de9bb5~mv2.png",
+      "663ee7_d74bdd074a8f409fb40c2f98dfb3922c~mv2.png",
+      "663ee7_db6579354006468d98f05e1b62b466f4~mv2.png",
+      "663ee7_e189d3991c844363b2b8ff1272b1a0c0~mv2.png",
+      "663ee7_333319011c26421d80e538baf492796d~mv2.png",
+      "663ee7_ccf9f4b65f99473c8f6c73abeee685c1~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "editorial--lets-talk-about-masculinity-one-closet-at-a-time": {
+    "path": "/editorial/lets-talk-about-masculinity-one-closet-at-a-time",
+    "status": 200,
+    "images": [
+      "663ee7_566235aa0efc454d9fee66a4e3cbb4fb~mv2.png",
+      "663ee7_eecd20e5dc3f4c149bcd1dfac2a67d3f~mv2.png",
+      "663ee7_c1eaf67d588f4e5b8c2192a170286215~mv2.png",
+      "663ee7_1486fd766f544922a989bee502bc1217~mv2.png",
+      "663ee7_c79acf4a404c4113908009d596a609fb~mv2.png",
+      "663ee7_d8b07cd414c648e7ae6380ac611b993f~mv2.png",
+      "663ee7_ba6af603b2684c1f9d1a20dee3cc44ec~mv2.png",
+      "663ee7_0937397772fe487eb1759095a877c748~mv2.png",
+      "663ee7_447801790c754479b8600355dce586f6~mv2.png",
+      "663ee7_fc9121ac4c32461bb0460140d9680e39~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "editorial--the-kharab-uprising": {
+    "path": "/editorial/the-kharab-uprising",
+    "status": 200,
+    "images": [
+      "663ee7_c7884a36e53b4329ad64bfc1d7d9d643~mv2.png",
+      "663ee7_332c23f75c764690994f5109b0052fa6~mv2.png",
+      "663ee7_13136502892145e8965eb377b124362f~mv2.png",
+      "663ee7_8673d273a70644389d6cdb23fe6c2c23~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "editorial--death-in-the-gunj": {
+    "path": "/editorial/death-in-the-gunj",
+    "status": 200,
+    "images": [
+      "663ee7_6cdf2b9bfcc24001abb3412d14cebee1~mv2.png",
+      "663ee7_46d8f85048c44343b8a2729a8bc538a4~mv2.png",
+      "663ee7_0bb0a924f6134f1d986af08a5cb45f5c~mv2.png",
+      "663ee7_b267b874fb614bb08a3607aa9e73ebe5~mv2.png",
+      "663ee7_a782538db64741198b0c40bcdd5a4ebb~mv2.png",
+      "663ee7_c8bd8abd4fe94511981bf25afa1792a2~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "editorial--can-the-mr-gay-world-pageant-rescue-the-reputation-of-beauty-pageants": {
+    "path": "/editorial/can-the-mr-gay-world-pageant-rescue-the-reputation-of-beauty-pageants",
+    "status": 200,
+    "images": [
+      "663ee7_1969bc9385c94dab8d1bf90519e7fc7b~mv2.webp",
+      "663ee7_259428de2597486489ae356a26f92034~mv2.png",
+      "663ee7_5be2bfbb756a453d83a5d62e637c38dd~mv2.png",
+      "663ee7_56f5f0d20e0e48ed9fd859e3eeb1fe23~mv2.png",
+      "663ee7_7d38fdebbdf140338d330c870ae6ff89~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "editorial--all-hail-the-taxi": {
+    "path": "/editorial/all-hail-the-taxi",
+    "status": 200,
+    "images": [
+      "663ee7_71b86525980c4a3990c7a0247b07bc59~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "editorial--where-to-meet-delhis-pilots-paupers-and-princeton-dudes": {
+    "path": "/editorial/where-to-meet-delhis-pilots-paupers-and-princeton-dudes",
+    "status": 200,
+    "images": [
+      "663ee7_5ea4d3448ba24fbe8c0406cfe77dc5ce~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "editorial--how-to-get-filthy-rich-in-rising-asia": {
+    "path": "/editorial/how-to-get-filthy-rich-in-rising-asia",
+    "status": 200,
+    "images": [
+      "663ee7_6d60ade8867241d09f103a71528c6d70~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "editorial--writers-bloc": {
+    "path": "/editorial/writers-bloc",
+    "status": 200,
+    "images": [
+      "663ee7_2fd90ab760ce47e4a425d62f1698cf2a~mv2.png",
+      "663ee7_40ed3a084454475db11b4f6118ff2642~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "poetry--on-writing": {
+    "path": "/poetry/on-writing",
+    "status": 200,
+    "images": [
+      "663ee7_46d6bfab8bcc4420bbb2bb75a795988a~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "poetry--hannah-banana": {
+    "path": "/poetry/hannah-banana",
+    "status": 200,
+    "images": [
+      "663ee7_987702b503f84824a810d95918c3b38a~mv2.png",
+      "663ee7_9b3c8f4150f745c095a9017c8478eadc~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "poetry--my-dad-socks-and-gulzar": {
+    "path": "/poetry/my-dad-socks-and-gulzar",
+    "status": 200,
+    "images": [
+      "663ee7_4f807ce6e43a458193f2d4caaabe9359~mv2.png",
+      "663ee7_cd54301d2bf14b89bdadd0b2eb2b2506~mv2.png",
+      "663ee7_6c1aa746e4a94ebb8ab10c6a60464c21~mv2.png",
+      "663ee7_e07ebdb5b67e45edb32f7a07c66e9b18~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "poetry--medeas-ideas": {
+    "path": "/poetry/medeas-ideas",
+    "status": 200,
+    "images": [
+      "663ee7_660154972e7b41f8b3b9c71cc5c91947~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "poetry--home-and-hell": {
+    "path": "/poetry/home-and-hell",
+    "status": 200,
+    "images": [
+      "663ee7_593fdb73b9bd4b579ec9d8e78bc742a9~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "poetry--times-square": {
+    "path": "/poetry/times-square",
+    "status": 200,
+    "images": [
+      "663ee7_d6e0faf0e7a14dac9f23cf924fac6c18~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "poetry--ek-sher": {
+    "path": "/poetry/ek-sher",
+    "status": 200,
+    "images": [
+      "663ee7_7dce59c151764c67994fd8177a15337d~mv2.png",
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png"
+    ],
+    "subItems": []
+  },
+  "recommendations": {
+    "path": "/recommendations",
+    "status": 404,
+    "error": null
+  },
+  "copywriting": {
+    "path": "/copywriting",
+    "status": 404,
+    "error": null
+  },
+  "copywriting--grand-seiko-film": {
+    "path": "/copywriting/grand-seiko-film",
+    "status": 200,
+    "images": [
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png",
+      "663ee7_4d37a8eab8914955a2d0488e4c3f3354f000.jpg"
+    ],
+    "subItems": []
+  },
+  "copywriting--tag-heuer-film": {
+    "path": "/copywriting/tag-heuer-film",
+    "status": 200,
+    "images": [
+      "663ee7_316707966776407eaf89c331191c533b~mv2.png",
+      "11062b_b5690303a8ff470e9b1c03a24aff140b~mv2.png",
+      "11062b_cef3b719166a4815b446d4dcfcb6120d~mv2.png",
+      "663ee7_710b97eebf114ea2a5621eeec23d9673~mv2.png",
+      "663ee7_cdc05794877b4042982898cacac325d7f000.jpg"
+    ],
+    "subItems": []
+  }
+}

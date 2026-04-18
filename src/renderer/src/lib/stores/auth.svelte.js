@@ -3,10 +3,15 @@ import * as api from '../api.js'
 class AuthStore {
   user = $state(null)
   loading = $state(true)
+  testLoginAvailable = $state(false)
+  allowedEmails = $state([])
 
   async init() {
     try {
-      this.user = await api.getCurrentUser()
+      const state = await api.getAuthState()
+      this.user = state.user
+      this.testLoginAvailable = state.testLoginAvailable
+      this.allowedEmails = state.allowedEmails
     } catch (e) {
       console.error('auth init failed:', e)
       this.user = null
@@ -23,6 +28,11 @@ class AuthStore {
 
   signIn() {
     window.location.href = '/auth/google'
+  }
+
+  async signInAs(email) {
+    this.user = await api.testLogin(email)
+    window.location.reload()
   }
 }
 

@@ -19,10 +19,10 @@ Sign in with Google. Files live in Postgres, keyed by your user. The UI exposes 
 git clone git@github.com:PersonThing/writer.git
 cd writer
 npm install
-cp .env.example .env
+cp .env.local.template .env.local
 ```
 
-Populate `.env`:
+Populate `.env.local` (gitignored). Higher environments use platform-managed secrets — Railway env vars for production, GitHub Actions secrets for CI.
 - `DATABASE_URL` — points at the dockerized Postgres at `postgres://writer:writer@localhost:5434/writer_dev`.
 - `SESSION_SECRET` — any random string for dev.
 - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — only needed to exercise the browser login flow (tests use a bypass). Create credentials at [Google Cloud Console](https://console.cloud.google.com/apis/credentials) → OAuth 2.0 Client, Web type. Add `http://localhost:3456/auth/google/callback` as an authorized redirect URI.

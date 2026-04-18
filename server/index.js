@@ -147,6 +147,56 @@ app.post('/api/create-folder', (req, res) => {
   res.json({ ok: true })
 })
 
+app.post('/api/copy-file', async (req, res) => {
+  const { sourcePath } = req.body
+  const userId = req.session.userId
+
+  const [src] = await db
+    .select({ content: schema.files.content, storyId: schema.files.storyId })
+    .from(schema.files)
+    .where(and(eq(schema.files.userId, userId), eq(schema.files.path, sourcePath)))
+  if (!src) return res.status(404).json({ error: 'File not found' })
+
+  // Find a unique "<stem> (copy).md" / "<stem> (copy N).md" name
+  const lastSlash = sourcePath.lastIndexOf('/')
+  const folder = lastSlash >= 0 ? sourcePath.slice(0, lastSlash) : ''
+  const fileName = lastSlash >= 0 ? sourcePath.slice(lastSlash + 1) : sourcePath
+  const dotMd = fileName.endsWith('.md')
+  const stem = dotMd ? fileName.slice(0, -3) : fileName
+
+  const existing = await db
+    .select({ path: schema.files.path })
+    .from(schema.files)
+    .where(
+      and(
+        eq(schema.files.userId, userId),
+        like(schema.files.path, folder ? `${folder}/${stem}%` : `${stem}%`),
+      ),
+    )
+  const taken = new Set(existing.map((r) => r.path))
+
+  const build = (suffix) =>
+    `${folder ? folder + '/' : ''}${stem}${suffix}.md`
+  let candidate = build(' (copy)')
+  let i = 2
+  while (taken.has(candidate)) {
+    candidate = build(` (copy ${i})`)
+    i++
+  }
+
+  const [row] = await db
+    .insert(schema.files)
+    .values({
+      userId,
+      path: candidate,
+      content: src.content,
+      storyId: src.storyId,
+    })
+    .returning({ path: schema.files.path })
+
+  res.json({ path: row.path })
+})
+
 app.post('/api/move-file', async (req, res) => {
   const { oldPath, newPath } = req.body
   const userId = req.session.userId

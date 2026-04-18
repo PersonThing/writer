@@ -8,7 +8,7 @@ export default {
   },
   webServer: {
     command:
-      'node --env-file=.env scripts/migrate.js && node --env-file=.env server/index.js',
+      'node --env-file=.env.local scripts/migrate.js && node --env-file=.env.local server/index.js',
     url: 'http://localhost:3456/auth/me',
     reuseExistingServer: !process.env.CI,
     timeout: 20_000,

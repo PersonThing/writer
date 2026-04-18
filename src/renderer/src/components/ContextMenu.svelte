@@ -8,7 +8,7 @@
     modalAlert,
   } from '../lib/stores/ui.svelte.js'
   import * as api from '../lib/api.js'
-  import { iconPencil, iconTrash } from '../lib/icons.js'
+  import { iconPencil, iconTrash, iconPlus } from '../lib/icons.js'
 
   function handleStatus(statusId) {
     if (!ui.ctxPath) return
@@ -32,6 +32,19 @@
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent('focus-heading'))
     }, 50)
+  }
+
+  async function handleDuplicate() {
+    if (!ui.ctxPath) return
+    const path = ui.ctxPath
+    hideContextMenu()
+    try {
+      const newPath = await api.copyFile(path)
+      await project.scanAll()
+      await editor.openFile(newPath)
+    } catch (e) {
+      await modalAlert('Could not duplicate: ' + e.message)
+    }
   }
 
   async function handleDelete() {
@@ -144,6 +157,9 @@
     <hr class="ctx-sep" />
     <div class="ctx-item" onclick={handleRename}>
       <span class="ctx-icon">{@html iconPencil()}</span> Rename
+    </div>
+    <div class="ctx-item" onclick={handleDuplicate}>
+      <span class="ctx-icon">{@html iconPlus()}</span> Duplicate
     </div>
     <div class="ctx-item ctx-delete" onclick={handleDelete}>
       <span class="ctx-icon">{@html iconTrash()}</span> Delete

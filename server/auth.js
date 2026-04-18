@@ -133,8 +133,9 @@ export function mountAuth(app) {
     req.session.destroy(() => res.status(204).end())
   })
 
-  // Test-only auth bypass. Do not mount in production.
-  if (process.env.NODE_ENV === 'test') {
+  // Test/dev-only auth bypass. Mounted for any non-production env so Playwright
+  // can reuse a live `npm run dev` server instead of spawning its own.
+  if (process.env.NODE_ENV !== 'production') {
     app.post('/auth/test-login', async (req, res) => {
       const { email } = req.body
       if (!email) return res.status(400).json({ error: 'email required' })
@@ -165,7 +166,15 @@ export function mountAuth(app) {
   }
 
   app.get('/auth/me', async (req, res) => {
-    if (!req.session?.userId) return res.status(401).json({ error: 'Not authenticated' })
+    if (!req.session?.userId) {
+      // Advertise test-login availability so the sign-in UI can offer a shortcut in dev.
+      const testLoginAvailable = process.env.NODE_ENV !== 'production'
+      return res.status(401).json({
+        error: 'Not authenticated',
+        testLoginAvailable,
+        allowedEmails: testLoginAvailable ? [...allowedEmails] : undefined,
+      })
+    }
     const [user] = await db
       .select({
         id: schema.users.id,

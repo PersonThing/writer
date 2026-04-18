@@ -24,10 +24,29 @@ async function get(url) {
 
 // ── Auth ─────────────────────────────────────────────────────────────────
 
-export async function getCurrentUser() {
+export async function getAuthState() {
   const res = await fetch('/auth/me')
-  if (res.status === 401) return null
-  if (!res.ok) throw new Error(res.statusText)
+  if (res.ok) {
+    return { user: await res.json(), testLoginAvailable: false, allowedEmails: [] }
+  }
+  if (res.status === 401) {
+    const body = await res.json().catch(() => ({}))
+    return {
+      user: null,
+      testLoginAvailable: !!body.testLoginAvailable,
+      allowedEmails: body.allowedEmails || [],
+    }
+  }
+  throw new Error(res.statusText)
+}
+
+export async function testLogin(email) {
+  const res = await fetch('/auth/test-login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  })
+  if (!res.ok) throw new Error((await res.json()).error || res.statusText)
   return res.json()
 }
 
@@ -70,6 +89,11 @@ export async function createFolder(name) {
 
 export async function moveFile(oldPath, newPath) {
   await post('/api/move-file', { oldPath, newPath })
+}
+
+export async function copyFile(sourcePath) {
+  const result = await post('/api/copy-file', { sourcePath })
+  return result.path
 }
 
 export async function renameFolder(oldPath, newPath) {

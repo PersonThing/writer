@@ -62,6 +62,35 @@ test.describe('files CRUD', () => {
     expect(scan.files['gone.md']).toBeUndefined()
   })
 
+  test('copy-file duplicates content with a " (copy)" suffix, incrementing on collision', async ({ db, asUser }) => {
+    const alice = await asUser('alice@test.local')
+    await alice.post('/api/write-file', { data: { path: 'note.md', content: 'body' } })
+
+    const first = await (await alice.post('/api/copy-file', { data: { sourcePath: 'note.md' } })).json()
+    expect(first.path).toBe('note (copy).md')
+
+    const firstContent = await (
+      await alice.post('/api/read-file', { data: { path: 'note (copy).md' } })
+    ).json()
+    expect(firstContent.content).toBe('body')
+
+    const second = await (await alice.post('/api/copy-file', { data: { sourcePath: 'note.md' } })).json()
+    expect(second.path).toBe('note (copy 2).md')
+  })
+
+  test('copy-file preserves folder prefix', async ({ db, asUser }) => {
+    const alice = await asUser('alice@test.local')
+    await alice.post('/api/write-file', { data: { path: 'sub/a.md', content: 'x' } })
+    const res = await (await alice.post('/api/copy-file', { data: { sourcePath: 'sub/a.md' } })).json()
+    expect(res.path).toBe('sub/a (copy).md')
+  })
+
+  test('copy-file on missing path returns 404', async ({ db, asUser }) => {
+    const alice = await asUser('alice@test.local')
+    const res = await alice.post('/api/copy-file', { data: { sourcePath: 'nope.md' } })
+    expect(res.status()).toBe(404)
+  })
+
   test('set-meta updates status/quality without touching content', async ({ db, asUser }) => {
     const alice = await asUser('alice@test.local')
     await alice.post('/api/write-file', { data: { path: 'p.md', content: 'body' } })
