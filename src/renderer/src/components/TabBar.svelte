@@ -1,18 +1,37 @@
 <script>
+  import { onMount } from 'svelte'
   import { ui, toggleDarkMode } from '../lib/stores/ui.svelte.js'
   import { iconGear } from '../lib/icons.js'
+
+  function setTab(tab) {
+    ui.activeTab = tab
+    const hash = tab === 'short-stories' ? '#stories' : '#poetry'
+    history.replaceState(null, '', hash)
+  }
+
+  onMount(() => {
+    // sync hash on load
+    const hash = ui.activeTab === 'short-stories' ? '#stories' : '#poetry'
+    history.replaceState(null, '', hash)
+
+    function onHashChange() {
+      ui.activeTab = location.hash === '#stories' ? 'short-stories' : 'poetry'
+    }
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  })
 </script>
 
 <div class="tab-bar">
   <button
     class="tab-btn"
     class:active={ui.activeTab === 'poetry'}
-    onclick={() => (ui.activeTab = 'poetry')}
+    onclick={() => setTab('poetry')}
   >Poetry</button>
   <button
     class="tab-btn"
     class:active={ui.activeTab === 'short-stories'}
-    onclick={() => (ui.activeTab = 'short-stories')}
+    onclick={() => setTab('short-stories')}
   >Short stories</button>
   <div class="tab-spacer"></div>
   <button

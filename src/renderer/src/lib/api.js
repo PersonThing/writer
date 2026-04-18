@@ -70,6 +70,16 @@ export async function renameFolder(oldPath, newPath) {
   await post('/api/rename-folder', { oldPath, newPath })
 }
 
+// ── Stories ───────────────────────────────────────────────────────────────
+
+export async function createStory(name) {
+  await post('/api/create-story', { name })
+}
+
+export async function deleteFolder(folderPath) {
+  await post('/api/delete-folder', { path: folderPath })
+}
+
 // ── Config ─────────────────────────────────────────────────────────────────
 
 export async function configSet(key, val) {

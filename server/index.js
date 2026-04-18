@@ -89,6 +89,7 @@ app.post('/api/scan-directory', async (req, res) => {
     for (const entry of entries) {
       if (entry.name.startsWith('.')) continue
       if (entry.name === 'poems-meta.json') continue
+      if (entry.name === 'stories-meta.json') continue
       if (
         ['INDEX.html', 'watch_poems.ps1', 'start_watcher.vbs'].includes(
           entry.name,
@@ -105,7 +106,7 @@ app.post('/api/scan-directory', async (req, res) => {
       } else if (entry.name.endsWith('.md')) {
         try {
           const stat = await fs.stat(full)
-          files[rel] = { modified: stat.mtimeMs }
+          files[rel] = { modified: stat.mtimeMs, created: stat.birthtimeMs }
         } catch {
           /* skip unreadable */
         }
@@ -134,6 +135,7 @@ app.post('/api/search', async (req, res) => {
     for (const entry of entries) {
       if (entry.name.startsWith('.')) continue
       if (entry.name === 'poems-meta.json') continue
+      if (entry.name === 'stories-meta.json') continue
       const rel = prefix ? `${prefix}/${entry.name}` : entry.name
       const full = path.join(dir, entry.name)
       if (entry.isDirectory()) {
@@ -213,6 +215,63 @@ app.post('/api/rename-folder', async (req, res) => {
   const fullNew = path.join(WRITER_ROOT, newPath)
   await fs.rename(fullOld, fullNew)
   res.json({ ok: true })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STORY API
+// ═══════════════════════════════════════════════════════════════════════════
+
+app.post('/api/create-story', async (req, res) => {
+  const { name } = req.body
+  if (!name) return res.status(400).json({ error: 'name is required' })
+
+  const storyDir = path.join(WRITER_ROOT, '_stories', name)
+  try {
+    await fs.mkdir(storyDir, { recursive: true })
+
+    const plotContent = `---
+notes: []
+connections: []
+---
+
+# Plot Board
+`
+    await fs.writeFile(path.join(storyDir, '_plot.md'), plotContent, 'utf-8')
+
+    const bibleContent = `# Story Bible
+
+## Characters
+
+## Setting
+
+## Genre & Tone
+
+## Timeline
+`
+    await fs.writeFile(path.join(storyDir, '_bible.md'), bibleContent, 'utf-8')
+
+    res.json({ ok: true })
+  } catch (e) {
+    res.status(500).json({ error: e.message })
+  }
+})
+
+app.post('/api/delete-folder', async (req, res) => {
+  const { path: folderPath } = req.body
+  if (!folderPath) return res.status(400).json({ error: 'path is required' })
+
+  // Safety: only allow deleting within WRITER_ROOT
+  const full = path.resolve(folderPath)
+  if (!full.startsWith(path.resolve(WRITER_ROOT))) {
+    return res.status(403).json({ error: 'Cannot delete outside WRITER_ROOT' })
+  }
+
+  try {
+    await fs.rm(full, { recursive: true, force: true })
+    res.json({ ok: true })
+  } catch (e) {
+    res.status(500).json({ error: e.message })
+  }
 })
 
 // ═══════════════════════════════════════════════════════════════════════════

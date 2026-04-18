@@ -3,6 +3,7 @@
   import { project } from '../lib/stores/project.svelte.js'
   import { editor } from '../lib/stores/editor.svelte.js'
   import { showToast } from '../lib/stores/ui.svelte.js'
+  import { iconGripDots } from '../lib/icons.js'
 
   let { pane, isActive = false } = $props()
 
@@ -10,10 +11,40 @@
   let previewPaneEl = $state(null)
   let headingEl = $state(null)
   let headingValue = $state('')
+  let statusOpen = $state(false)
+  let qualityOpen = $state(false)
   let _undoTimer = 0
   let _caseTimer = 0
   let _caseCount = 0
   let _syncRaf = 0
+
+  // ── Pane drag (works from the grip handle) ────────────────────────────
+  function handleGripDragStart(e) {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', pane.id)
+    requestAnimationFrame(() => {
+      editor.draggedPaneId = pane.id
+    })
+  }
+  function handleGripDragEnd() {
+    editor.draggedPaneId = null
+    editor.dragOverPaneId = null
+  }
+
+  // ── Dropdown pickers (close on outside click) ─────────────────────────
+  $effect(() => {
+    if (!statusOpen && !qualityOpen) return
+    function onDocClick(e) {
+      if (!e.target.closest('.picker-wrap')) {
+        statusOpen = false
+        qualityOpen = false
+      }
+    }
+    document.addEventListener('mousedown', onDocClick)
+    return () => document.removeEventListener('mousedown', onDocClick)
+  })
+
+  let currentStatus = $derived(project.statuses.find((s) => s.id === m.status))
 
   // ── Derived ────────────────────────────────────────────────────────────
   let effectiveView = $derived(
@@ -27,8 +58,13 @@
   let m = $derived(project.getMeta(pane.filePath))
 
   // ── Effects ────────────────────────────────────────────────────────────
+  let lastFilePath = ''
   $effect(() => {
-    headingValue = project.displayName(pane.filePath)
+    const fp = pane.filePath
+    if (fp !== lastFilePath) {
+      lastFilePath = fp
+      headingValue = project.displayName(fp)
+    }
   })
 
   $effect(() => {
@@ -555,6 +591,17 @@
 >
   <!-- Header: always visible -->
   <div class="pane-header">
+    <span
+      class="drag-grip"
+      class:dragging={editor.draggedPaneId === pane.id}
+      draggable="true"
+      role="button"
+      tabindex="-1"
+      title="Drag to reorder"
+      ondragstart={handleGripDragStart}
+      ondragend={handleGripDragEnd}
+    >{@html iconGripDots(12)}</span>
+
     <input
       type="text"
       class="file-heading"
@@ -565,26 +612,74 @@
       spellcheck="false"
     />
 
-    <div class="status-dots">
-      {#each project.statuses as s}
-        <button
-          class="status-dot"
-          class:active={m.status === s.id}
-          style="--dot-color: {s.color}"
-          data-tip={s.label}
-          onclick={() => handleStatus(s.id)}
-        ></button>
-      {/each}
+    <!-- Status dropdown -->
+    <div class="picker-wrap">
+      <button
+        class="picker-btn"
+        aria-label={currentStatus ? currentStatus.label : 'Status'}
+        data-tip={currentStatus ? currentStatus.label : 'Status'}
+        onclick={() => { statusOpen = !statusOpen; qualityOpen = false }}
+      >
+        <span class="status-dot" class:active={!!currentStatus} style="--dot-color: {currentStatus ? currentStatus.color : 'var(--border)'}"></span>
+      </button>
+      {#if statusOpen}
+        <div class="picker-popup" role="menu">
+          <button
+            class="picker-row"
+            onclick={() => { handleStatus(''); statusOpen = false }}
+          >
+            <span class="status-dot" style="--dot-color: var(--border)"></span>
+            <span class="picker-label">None</span>
+          </button>
+          {#each project.statuses as s}
+            <button
+              class="picker-row"
+              class:active={m.status === s.id}
+              onclick={() => { handleStatus(s.id); statusOpen = false }}
+            >
+              <span class="status-dot active" style="--dot-color: {s.color}"></span>
+              <span class="picker-label">{s.label}</span>
+            </button>
+          {/each}
+        </div>
+      {/if}
     </div>
 
-    <div class="stars">
-      {#each Array(5) as _, i}
-        <span
-          class="star"
-          class:on={i < m.quality}
-          onclick={() => handleStar(i + 1)}>&#9733;</span
-        >
-      {/each}
+    <!-- Quality (stars) dropdown -->
+    <div class="picker-wrap">
+      <button
+        class="picker-btn"
+        aria-label="Quality"
+        data-tip="Quality"
+        onclick={() => { qualityOpen = !qualityOpen; statusOpen = false }}
+      >
+        <span class="stars">
+          {#each Array(5) as _, i}
+            <span class="star" class:on={i < m.quality}>&#9733;</span>
+          {/each}
+        </span>
+      </button>
+      {#if qualityOpen}
+        <div class="picker-popup quality" role="menu">
+          <div class="stars picker-stars">
+            {#each Array(5) as _, i}
+              <button
+                type="button"
+                class="star-btn"
+                class:on={i < m.quality}
+                aria-label="{i + 1} stars"
+                onclick={() => { handleStar(i + 1); qualityOpen = false }}
+              >&#9733;</button>
+            {/each}
+          </div>
+          <button
+            class="picker-row"
+            onclick={() => { handleStar(0); qualityOpen = false }}
+          >
+            <span class="picker-label">Clear</span>
+          </button>
+        </div>
+      {/if}
     </div>
 
     <button
@@ -680,12 +775,97 @@
     background: var(--surface);
   }
 
-  .status-dots {
-    display: flex;
-    gap: 0;
-    flex-shrink: 0;
+  /* ── Drag grip ───────────────────────────────────────────────────── */
+  .drag-grip {
+    display: inline-flex;
     align-items: center;
+    color: var(--muted);
+    cursor: grab;
+    padding: 2px 2px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    user-select: none;
   }
+  .drag-grip:hover {
+    color: var(--text);
+    background: var(--accent-light);
+  }
+  .drag-grip:active {
+    cursor: grabbing;
+  }
+  .drag-grip.dragging {
+    opacity: 0.5;
+  }
+
+  /* ── Picker (status & quality dropdowns) ─────────────────────────── */
+  .picker-wrap {
+    position: relative;
+    flex-shrink: 0;
+  }
+  .picker-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text);
+  }
+  .picker-btn:hover {
+    border-color: var(--border);
+    background: var(--accent-light);
+  }
+  .picker-popup {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 20;
+    min-width: 140px;
+    padding: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .picker-popup.quality {
+    min-width: 0;
+    align-items: stretch;
+  }
+  .picker-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: left;
+    color: var(--text);
+    font-size: 0.78rem;
+    font-family: var(--font-ui);
+  }
+  .picker-row:hover {
+    background: var(--accent-light);
+  }
+  .picker-row.active {
+    background: var(--accent-light);
+    color: var(--accent);
+  }
+  .picker-label {
+    flex: 1;
+  }
+  .picker-stars {
+    padding: 4px 6px;
+    justify-content: center;
+    gap: 3px;
+  }
+
   .status-dot {
     width: 12px;
     height: 12px;
@@ -693,16 +873,11 @@
     border: none;
     background: var(--dot-color);
     background-clip: content-box;
-    cursor: pointer;
     padding: 4px;
     box-sizing: content-box;
     opacity: 0.4;
-    transition:
-      opacity 0.15s,
-      box-shadow 0.15s;
-  }
-  .status-dot:hover {
-    opacity: 0.8;
+    display: inline-block;
+    flex-shrink: 0;
   }
   .status-dot.active {
     opacity: 1;
@@ -716,13 +891,26 @@
   }
   .star {
     font-size: 0.85rem;
-    cursor: pointer;
     color: var(--star-off);
     transition: color 0.1s;
     line-height: 1;
     user-select: none;
   }
   .star.on {
+    color: var(--accent);
+  }
+  .star-btn {
+    font-size: 1.1rem;
+    background: none;
+    border: none;
+    padding: 0 2px;
+    cursor: pointer;
+    color: var(--star-off);
+    line-height: 1;
+    transition: color 0.1s;
+  }
+  .star-btn.on,
+  .star-btn:hover {
     color: var(--accent);
   }
 
@@ -838,6 +1026,14 @@
     border: none;
     border-top: 1px solid var(--border);
     margin: 1.5rem 0;
+  }
+  .preview-content :global(ul),
+  .preview-content :global(ol) {
+    margin-bottom: 0.9rem;
+    padding-left: 1.5rem;
+  }
+  .preview-content :global(li) {
+    margin-bottom: 0.25rem;
   }
   .preview-content :global(blockquote) {
     border-left: 3px solid var(--accent);

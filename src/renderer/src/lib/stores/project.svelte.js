@@ -29,6 +29,7 @@ class ProjectStore {
   searchQuery = $state('')
   searchMatches = $state(null)
   activeFilter = $state('')
+  sortMode = $state('name') // 'name' | 'created' | 'status'
 
   #showAppCallback = null
   #searchTimer = 0
@@ -69,20 +70,33 @@ class ProjectStore {
       )
     }
 
-    // Sort: custom order first, then alphabetical
-    const fileOrder = this.meta._fileOrder || []
-    const orderMap = new Map()
-    fileOrder.forEach((p, i) => orderMap.set(p, i))
+    // Sort by selected mode
+    const statusOrder = new Map()
+    this.statuses.forEach((s, i) => statusOrder.set(s.id, i))
 
-    const pathSet = new Set(allPaths)
-    const ordered = fileOrder.filter((p) => pathSet.has(p))
-    const orderedSet = new Set(ordered)
-    const remaining = allPaths.filter((p) => !orderedSet.has(p))
-    remaining.sort((a, b) =>
-      this.displayName(a).localeCompare(this.displayName(b)),
-    )
+    if (this.sortMode === 'created') {
+      allPaths.sort((a, b) => {
+        const ca = this.files.get(a)?.created || 0
+        const cb = this.files.get(b)?.created || 0
+        return cb - ca // newest first
+      })
+    } else if (this.sortMode === 'status') {
+      allPaths.sort((a, b) => {
+        const sa = this.getMeta(a).status || ''
+        const sb = this.getMeta(b).status || ''
+        const oa = sa ? (statusOrder.get(sa) ?? 999) : 1000
+        const ob = sb ? (statusOrder.get(sb) ?? 999) : 1000
+        if (oa !== ob) return oa - ob
+        return this.displayName(a).localeCompare(this.displayName(b))
+      })
+    } else {
+      // 'name' — alphabetical
+      allPaths.sort((a, b) =>
+        this.displayName(a).localeCompare(this.displayName(b)),
+      )
+    }
 
-    const result = [...ordered, ...remaining]
+    const result = allPaths
     return result.map((p) => ({
       path: p,
       color: this.statusColor(this.getMeta(p).status || ''),
@@ -182,6 +196,8 @@ class ProjectStore {
     this.rootPath = await api.getRootPath()
     await this.scanAll()
     await this.loadMeta()
+    await this.scanStories()
+    await this.loadStoryMeta()
     this.#showApp()
   }
 
@@ -189,11 +205,14 @@ class ProjectStore {
     const result = await api.scanDirectory()
     const newFiles = new Map()
     for (const rel of Object.keys(result.files)) {
+      // Exclude _stories/ files from poetry view
+      if (rel.startsWith('_stories/')) continue
       newFiles.set(rel, result.files[rel])
     }
     this.files = newFiles
     const newDirs = new Set()
     for (const rel of Object.keys(result.dirs)) {
+      if (rel.startsWith('_stories')) continue
       newDirs.add(rel)
     }
     this.dirs = newDirs
@@ -343,6 +362,124 @@ class ProjectStore {
     }
 
     this.meta = newMeta
+  }
+
+  // ── Stories ─────────────────────────────────────────────────────────────
+
+  stories = $state(new Map()) // storyName -> { files: [...] }
+  storyMeta = $state({})
+  activeStory = $state(null) // currently expanded story folder name
+
+  get storyList() {
+    const order = this.storyMeta._storyOrder || []
+    const all = [...this.stories.keys()]
+    const ordered = order.filter((n) => this.stories.has(n))
+    const rest = all.filter((n) => !order.includes(n)).sort()
+    return [...ordered, ...rest]
+  }
+
+  getStoryFiles(storyName) {
+    return this.stories.get(storyName) || []
+  }
+
+  getStoryChapters(storyName) {
+    const files = this.getStoryFiles(storyName)
+    return files.filter((f) => !f.startsWith('_'))
+  }
+
+  async scanStories() {
+    const result = await api.scanDirectory()
+    const storyMap = new Map()
+
+    for (const rel of Object.keys(result.files)) {
+      if (!rel.startsWith('_stories/')) continue
+      const rest = rel.slice('_stories/'.length)
+      const slash = rest.indexOf('/')
+      if (slash === -1) continue
+      const storyName = rest.slice(0, slash)
+      const fileName = rest.slice(slash + 1)
+      if (!storyMap.has(storyName)) storyMap.set(storyName, [])
+      storyMap.get(storyName).push(fileName)
+    }
+
+    // Sort files within each story: _plot.md first, _bible.md second, rest sorted
+    for (const [name, files] of storyMap) {
+      files.sort((a, b) => {
+        if (a === '_plot.md') return -1
+        if (b === '_plot.md') return 1
+        if (a === '_bible.md') return -1
+        if (b === '_bible.md') return 1
+        return a.localeCompare(b)
+      })
+    }
+
+    this.stories = storyMap
+  }
+
+  async loadStoryMeta() {
+    try {
+      const text = await api.readFile(this.rootPath + '/stories-meta.json')
+      this.storyMeta = text.trim() ? JSON.parse(text) : {}
+    } catch {
+      this.storyMeta = {}
+    }
+  }
+
+  async saveStoryMeta() {
+    await api.writeFile(
+      this.rootPath + '/stories-meta.json',
+      JSON.stringify(this.storyMeta, null, 2),
+    )
+  }
+
+  async patchStoryMeta(storyName, patch) {
+    this.storyMeta = {
+      ...this.storyMeta,
+      [storyName]: { ...(this.storyMeta[storyName] || {}), ...patch },
+    }
+    await this.saveStoryMeta()
+  }
+
+  async createStory(name) {
+    const slug = slugify(name)
+    if (!slug) return
+    await api.createStory(slug)
+
+    // Add to order
+    const order = [...(this.storyMeta._storyOrder || []), slug]
+    this.storyMeta = {
+      ...this.storyMeta,
+      _storyOrder: order,
+      [slug]: { status: 'new', created: Date.now() },
+    }
+    await this.saveStoryMeta()
+    await this.scanStories()
+    this.activeStory = slug
+  }
+
+  async deleteStory(storyName) {
+    await api.deleteFolder(this.rootPath + '/_stories/' + storyName)
+
+    const newMeta = { ...this.storyMeta }
+    delete newMeta[storyName]
+    if (Array.isArray(newMeta._storyOrder)) {
+      newMeta._storyOrder = newMeta._storyOrder.filter((n) => n !== storyName)
+    }
+    this.storyMeta = newMeta
+    await this.saveStoryMeta()
+    await this.scanStories()
+    if (this.activeStory === storyName) this.activeStory = null
+  }
+
+  async addChapter(storyName, chapterName) {
+    const fileName = chapterName.endsWith('.md') ? chapterName : chapterName + '.md'
+    const filePath = this.rootPath + '/_stories/' + storyName + '/' + fileName
+    await api.writeFile(filePath, '')
+    await this.scanStories()
+  }
+
+  storyFilePath(storyName, fileName) {
+    return '_stories/' + storyName + '/' + fileName
   }
 
   // ── Search (debounced, server-side body search) ─────────────────────────

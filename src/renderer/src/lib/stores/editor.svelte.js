@@ -7,12 +7,17 @@ import { project } from './project.svelte.js'
 import { modalConfirm, modalAlert } from './ui.svelte.js'
 
 const MAX_UNDO = 200
+const MAX_PANES = 4
 
 class EditorStore {
   // ── State ──────────────────────────────────────────────────────────────
   panes = $state([])
   activePaneId = $state(null)
   viewMode = $state('split') // 'split' | 'edit' | 'preview'
+
+  // Drag state for pane reordering (shared across pane components)
+  draggedPaneId = $state(null)
+  dragOverPaneId = $state(null)
 
   // ── Derived (getters) ─────────────────────────────────────────────────
   get activePane() {
@@ -33,7 +38,7 @@ class EditorStore {
 
   // ── Pane lifecycle ────────────────────────────────────────────────────
 
-  #createPane(filePath, content = '') {
+  #createPane(filePath, content = '', viewType = 'markdown') {
     return {
       id: crypto.randomUUID(),
       filePath,
@@ -43,7 +48,17 @@ class EditorStore {
       pendingRename: null,
       undoStack: [],
       redoStack: [],
+      viewType, // 'markdown' | 'plot-board' | 'bible'
+      flex: 1, // relative width when multi-pane
     }
+  }
+
+  resizePanes(leftId, rightId, leftFlex, rightFlex) {
+    this.panes = this.panes.map((p) => {
+      if (p.id === leftId) return { ...p, flex: leftFlex }
+      if (p.id === rightId) return { ...p, flex: rightFlex }
+      return p
+    })
   }
 
   async openFile(path, { newPane = false } = {}) {
@@ -56,15 +71,21 @@ class EditorStore {
 
     const content = await api.readFile(project.rootPath + '/' + path)
 
-    if (newPane && this.panes.length < 3) {
-      const pane = this.#createPane(path, content)
+    // Detect special file types
+    const fileName = path.split('/').pop()
+    let viewType = 'markdown'
+    if (fileName === '_plot.md') viewType = 'plot-board'
+    else if (fileName === '_bible.md') viewType = 'bible'
+
+    if (newPane && this.panes.length < MAX_PANES) {
+      const pane = this.#createPane(path, content, viewType)
       this.panes = [...this.panes, pane]
       this.activePaneId = pane.id
       // Split view not supported in multi-pane mode
       if (this.panes.length > 1 && this.viewMode === 'split')
         this.viewMode = 'edit'
     } else if (this.panes.length === 0) {
-      const pane = this.#createPane(path, content)
+      const pane = this.#createPane(path, content, viewType)
       this.panes = [pane]
       this.activePaneId = pane.id
     } else {
@@ -75,7 +96,7 @@ class EditorStore {
         if (!(await modalConfirm(`Discard unsaved changes to "${name}"?`)))
           return
       }
-      const pane = this.#createPane(path, content)
+      const pane = this.#createPane(path, content, viewType)
       this.panes = this.panes.map((p) =>
         p.id === this.activePaneId ? pane : p,
       )
@@ -104,6 +125,17 @@ class EditorStore {
 
   setActivePane(paneId) {
     this.activePaneId = paneId
+  }
+
+  reorderPanes(fromId, toId) {
+    if (fromId === toId) return
+    const fromIdx = this.panes.findIndex((p) => p.id === fromId)
+    const toIdx = this.panes.findIndex((p) => p.id === toId)
+    if (fromIdx === -1 || toIdx === -1) return
+    const next = [...this.panes]
+    const [moved] = next.splice(fromIdx, 1)
+    next.splice(toIdx, 0, moved)
+    this.panes = next
   }
 
   // ── Content editing ───────────────────────────────────────────────────
@@ -238,11 +270,11 @@ class EditorStore {
       i++
     }
 
-    const content = `# ${name}\n\n`
+    const content = ''
     await api.writeFile(project.rootPath + '/' + filename, content)
     await project.scanAll()
 
-    const useNewPane = this.panes.length < 3
+    const useNewPane = this.panes.length < MAX_PANES
     if (project.files.has(filename)) {
       await this.openFile(filename, { newPane: useNewPane })
     }

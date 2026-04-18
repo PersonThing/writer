@@ -6,7 +6,6 @@
   import { iconGripDots } from '../lib/icons.js'
 
   let draggedPath = $state(null)
-  let dragOverPath = $state(null)
   let dragOverFolder = $state(null)
   let renamingPath = $state(null)
   let renameValue = $state('')
@@ -77,24 +76,16 @@
   // ── Drag & drop for reordering and moving to folders ─────────────────
 
   function handleDragStart(e, path) {
-    draggedPath = path
     e.dataTransfer.effectAllowed = 'move'
-    setTimeout(() => {
-      e.target.style.opacity = '.4'
-    }, 0)
+    e.dataTransfer.setData('text/plain', path)
+    // Delay state update so Svelte doesn't re-render and kill the drag
+    requestAnimationFrame(() => {
+      draggedPath = path
+    })
   }
 
   function handleDragEnd(e) {
-    e.target.style.opacity = ''
     draggedPath = null
-    dragOverPath = null
-    dragOverFolder = null
-  }
-
-  function handleDragOverFile(e, path) {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-    dragOverPath = path !== draggedPath ? path : null
     dragOverFolder = null
   }
 
@@ -102,44 +93,23 @@
     e.preventDefault()
     e.dataTransfer.dropEffect = 'move'
     dragOverFolder = folderPath
-    dragOverPath = null
-  }
-
-  async function handleDropOnFile(e, path) {
-    e.preventDefault()
-    if (!draggedPath || path === draggedPath) return
-    await project.reorderFile(draggedPath, path)
-    draggedPath = null
-    dragOverPath = null
   }
 
   async function handleDropOnFolder(e, folderPath) {
     e.preventDefault()
     if (!draggedPath) return
-    // Move file into this folder
+    const currentFolder = project.folderOf(draggedPath)
+    if (currentFolder === folderPath) {
+      draggedPath = null
+      dragOverFolder = null
+      return
+    }
     await project.moveFileToFolder(draggedPath, folderPath)
-    // Update any open pane references
     const fileName = draggedPath.split('/').pop()
     const newPath = folderPath ? folderPath + '/' + fileName : fileName
     editor.panes = editor.panes.map((p) => {
       if (p.filePath === draggedPath) {
         return { ...p, filePath: newPath }
-      }
-      return p
-    })
-    draggedPath = null
-    dragOverFolder = null
-  }
-
-  async function handleDropOnRoot(e) {
-    e.preventDefault()
-    if (!draggedPath) return
-    // Move to root
-    await project.moveFileToFolder(draggedPath, '')
-    const fileName = draggedPath.split('/').pop()
-    editor.panes = editor.panes.map((p) => {
-      if (p.filePath === draggedPath) {
-        return { ...p, filePath: fileName }
       }
       return p
     })
@@ -249,11 +219,17 @@
   }
 </script>
 
-<div
-  class="file-list"
-  ondragover={(e) => { e.preventDefault(); dragOverFolder = '_root' }}
-  ondrop={handleDropOnRoot}
->
+<div class="file-list" class:is-dragging={draggedPath}>
+  <!-- Root drop zone (top) — always rendered, shown via CSS when dragging -->
+  <div
+    class="root-drop-zone"
+    class:visible={draggedPath}
+    class:drag-over-folder={dragOverFolder === '_root'}
+    ondragover={(e) => handleDragOverFolder(e, '_root')}
+    ondragleave={() => { if (dragOverFolder === '_root') dragOverFolder = null }}
+    ondrop={(e) => handleDropOnFolder(e, '')}
+  >Move to root</div>
+
   <!-- Folders -->
   {#each tree.folders as [folderPath, folderItems]}
     {@const folderName = folderPath.split('/').pop()}
@@ -262,6 +238,7 @@
       class="folder-header"
       class:drag-over-folder={dragOverFolder === folderPath}
       ondragover={(e) => handleDragOverFolder(e, folderPath)}
+      ondragleave={() => { if (dragOverFolder === folderPath) dragOverFolder = null }}
       ondrop={(e) => handleDropOnFolder(e, folderPath)}
     >
       <button class="folder-toggle" onclick={() => toggleFolder(folderPath)}>
@@ -295,14 +272,12 @@
           class="file-item indented"
           class:current={isCur}
           class:open={isOpen && !isCur}
-          class:drag-over={dragOverPath === item.path}
+          class:dragging={draggedPath === item.path}
           draggable="true"
           role="button"
           tabindex="0"
           ondragstart={(e) => handleDragStart(e, item.path)}
           ondragend={handleDragEnd}
-          ondragover={(e) => handleDragOverFile(e, item.path)}
-          ondrop={(e) => handleDropOnFile(e, item.path)}
           onclick={(e) => handleClick(e, item.path)}
           oncontextmenu={(e) => handleContext(e, item.path)}
           onkeydown={(e) => { if (e.key === 'Enter') handleClick(e, item.path) }}
@@ -348,14 +323,12 @@
       class="file-item"
       class:current={isCur}
       class:open={isOpen && !isCur}
-      class:drag-over={dragOverPath === item.path}
+      class:dragging={draggedPath === item.path}
       draggable="true"
       role="button"
       tabindex="0"
       ondragstart={(e) => handleDragStart(e, item.path)}
       ondragend={handleDragEnd}
-      ondragover={(e) => handleDragOverFile(e, item.path)}
-      ondrop={(e) => handleDropOnFile(e, item.path)}
       onclick={(e) => handleClick(e, item.path)}
       oncontextmenu={(e) => handleContext(e, item.path)}
       onkeydown={(e) => { if (e.key === 'Enter') handleClick(e, item.path) }}
@@ -415,6 +388,29 @@
     font-style: italic;
   }
 
+  /* ── Root drop zone ───────────────────────────────────────────────── */
+  .root-drop-zone {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #555;
+    border: 2px dashed #444;
+    border-radius: 4px;
+    margin: 0.4rem 0.6rem;
+    text-align: center;
+    transition: all 0.15s;
+    display: none;
+  }
+  .root-drop-zone.visible {
+    display: block;
+  }
+  .root-drop-zone.drag-over-folder {
+    background: rgba(196, 160, 0, 0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
   /* ── Folder header ───────────────────────────────────────────────── */
   .folder-header {
     display: flex;
@@ -430,8 +426,9 @@
     cursor: default;
   }
   .folder-header.drag-over-folder {
-    background: var(--sb-active);
-    border-bottom-color: var(--accent);
+    background: rgba(196, 160, 0, 0.15);
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
   }
   .folder-toggle {
     background: none;
@@ -479,6 +476,9 @@
     background: var(--sb-hover);
     border-left-color: var(--sb-border);
   }
+  .file-item.dragging {
+    opacity: 0.4;
+  }
 
   .s-dot {
     width: 6px;
@@ -495,10 +495,6 @@
   .drag-grip:active {
     cursor: grabbing;
   }
-  .file-item.drag-over {
-    border-top: 2px solid var(--accent);
-  }
-
   .file-name {
     font-size: 0.8rem;
     flex: 1;

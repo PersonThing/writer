@@ -1,26 +1,10 @@
 # Writer
 
-A desktop app for managing writing projects. Open a folder of markdown files, organize them with statuses and quality ratings, and edit multiple files at once.
-
-## Install
-
-Download the latest release for your platform:
-
-**[Download Writer](https://github.com/PersonThing/writer/releases/latest)**
-
-- **Mac** — download the `.dmg`, open it, and drag Writer to your Applications folder
-- **Windows** — download the `.exe` installer and run it
-
-Writer auto-updates when new versions are available.
+A web app for managing writing projects. Open a folder of markdown files, organize them with statuses and quality ratings, and edit multiple files at once.
 
 ## Usage
 
-1. Open Writer
-2. Click "Open Folder" and select a folder containing `.md` files (or an empty folder to start fresh)
-3. Your files appear in the sidebar — click to open, right-click for status/quality/rename/delete
-4. Edit one or multiple files at once using the tab bar
-
-Your writing stays on your computer — Writer reads and writes plain markdown files directly on disk.
+Point Writer at a folder of `.md` files on disk. Files appear in the sidebar — click to open, right-click for status/quality/rename/delete. Edit one or multiple files at once using the tab bar. Your writing stays on your computer as plain markdown.
 
 ## Development
 
@@ -37,13 +21,19 @@ cd writer
 npm install
 ```
 
+Create a `.env` file in the repo root pointing at the folder you want Writer to manage:
+
+```
+WRITER_ROOT=/absolute/path/to/your/writing
+```
+
 ### Run
 
 ```sh
 npm run dev
 ```
 
-Starts the app with hot-reload via electron-vite.
+Starts the Express backend (port 3456) and the Vite dev server concurrently. Open the URL Vite prints (typically http://localhost:5173).
 
 ### Build
 
@@ -51,30 +41,18 @@ Starts the app with hot-reload via electron-vite.
 npm run build
 ```
 
-Compiles to the `out/` directory.
+Compiles the frontend to `dist/`.
 
-### Package
-
-```sh
-npm run dist        # Mac + Windows
-npm run dist:mac    # Mac only (.dmg)
-npm run dist:win    # Windows only (.exe)
-```
-
-### Release
-
-Releases are automated via GitHub Actions. Push a version tag to trigger a build:
+### Serve the built app
 
 ```sh
-npm version patch   # or minor, major
-git push --follow-tags
+npm start
 ```
 
-This builds and publishes installers for Mac and Windows to [GitHub Releases](https://github.com/PersonThing/writer/releases).
+Builds the frontend, then serves it from the Express server on port 3456.
 
 ### Tech stack
 
-- **Electron** — desktop shell
 - **Svelte 5** — UI
-- **electron-vite** — dev server and build
-- **electron-builder** — packaging and auto-updates
+- **Vite** — dev server and frontend build
+- **Express** — backend API and static file serving

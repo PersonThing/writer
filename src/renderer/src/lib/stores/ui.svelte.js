@@ -25,14 +25,28 @@ export const ui = $state({
 
   // App view
   appReady: false,
-  activeTab: 'poetry',
+  activeTab:
+    typeof location !== 'undefined' && location.hash === '#stories'
+      ? 'short-stories'
+      : 'poetry',
 
   // Dark mode
   darkMode:
     typeof localStorage !== 'undefined'
       ? localStorage.getItem('darkMode') === 'true'
       : false,
+
+  // Sidebar collapsed
+  sidebarCollapsed:
+    typeof localStorage !== 'undefined'
+      ? localStorage.getItem('sidebarCollapsed') === 'true'
+      : false,
 })
+
+export function toggleSidebar() {
+  ui.sidebarCollapsed = !ui.sidebarCollapsed
+  localStorage.setItem('sidebarCollapsed', String(ui.sidebarCollapsed))
+}
 
 // ── Context menu ─────────────────────────────────────────────────────────
 export function showContextMenu(x, y, path) {
