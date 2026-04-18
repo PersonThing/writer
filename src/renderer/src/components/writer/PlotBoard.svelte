@@ -1,10 +1,10 @@
 <script>
   import yaml from 'js-yaml'
   import { tick } from 'svelte'
-  import { editor } from '../lib/stores/editor.svelte.js'
-  import { project } from '../lib/stores/project.svelte.js'
-  import { showToast, modalPrompt } from '../lib/stores/ui.svelte.js'
-  import { iconPlus, iconGripDots } from '../lib/icons.js'
+  import { editor } from '../../lib/stores/editor.svelte.js'
+  import { project } from '../../lib/stores/project.svelte.js'
+  import { showToast, modalPrompt } from '../../lib/stores/ui.svelte.js'
+  import { iconPlus, iconGripDots } from '../../lib/icons.js'
   import PlotNote from './PlotNote.svelte'
 
   function handleGripDragStart(e) {

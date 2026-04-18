@@ -1,7 +1,7 @@
 <script>
-  import { getMeta, patchMeta, statuses, displayName } from '../lib/stores/project.svelte.js';
-  import { activePane, savePane, closePane, setPendingRename, viewMode } from '../lib/stores/editor.svelte.js';
-  import { showToast, cleanupOpen } from '../lib/stores/ui.svelte.js';
+  import { getMeta, patchMeta, statuses, displayName } from '../../lib/stores/project.svelte.js';
+  import { activePane, savePane, closePane, setPendingRename, viewMode } from '../../lib/stores/editor.svelte.js';
+  import { showToast, cleanupOpen } from '../../lib/stores/ui.svelte.js';
 
   let headingValue = $state('');
 

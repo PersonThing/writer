@@ -8,10 +8,10 @@ export default {
   },
   webServer: {
     command:
-      'node --env-file=.env.local scripts/migrate.js && node --env-file=.env.local server/index.js',
+      'npx vite build && node --env-file=.env.local scripts/migrate.js && node --env-file=.env.local server/index.js',
     url: 'http://localhost:3456/auth/me',
     reuseExistingServer: !process.env.CI,
-    timeout: 20_000,
+    timeout: 60_000,
     env: { NODE_ENV: 'test' },
   },
 }

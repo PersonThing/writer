@@ -1,7 +1,7 @@
 <script>
-  import { CLEANUP_RULES, applyCleanup, computeDiff } from '../lib/cleanup.js'
-  import { ui, showToast } from '../lib/stores/ui.svelte.js'
-  import { editor } from '../lib/stores/editor.svelte.js'
+  import { CLEANUP_RULES, applyCleanup, computeDiff } from '../../lib/cleanup.js'
+  import { ui, showToast } from '../../lib/stores/ui.svelte.js'
+  import { editor } from '../../lib/stores/editor.svelte.js'
 
   let rules = $state({})
 

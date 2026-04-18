@@ -1,5 +1,5 @@
 ---
-title: Amazon Designer Boutique
+title: Creative Direction
 slug: creative-direction
 source_path: /creative-direction
 images: 

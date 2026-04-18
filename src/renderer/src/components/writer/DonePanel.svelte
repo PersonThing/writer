@@ -1,6 +1,6 @@
 <script>
-  import { doneOrder, displayName, reorderDone } from '../lib/stores/project.svelte.js';
-  import { openFile, panes, activePaneId } from '../lib/stores/editor.svelte.js';
+  import { doneOrder, displayName, reorderDone } from '../../lib/stores/project.svelte.js';
+  import { openFile, panes, activePaneId } from '../../lib/stores/editor.svelte.js';
 
   let draggedPath = $state(null);
   let dragOverPath = $state(null);

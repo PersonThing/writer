@@ -1,7 +1,7 @@
 <script>
-  import { project, slugify } from '../lib/stores/project.svelte.js'
-  import { ui, modalAlert } from '../lib/stores/ui.svelte.js'
-  import { iconGripDots } from '../lib/icons.js'
+  import { project, slugify } from '../../lib/stores/project.svelte.js'
+  import { ui, modalAlert } from '../../lib/stores/ui.svelte.js'
+  import { iconGripDots } from '../../lib/icons.js'
 
   let draft = $state([])
   let dragIdx = $state(null)

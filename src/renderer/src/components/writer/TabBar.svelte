@@ -1,33 +1,33 @@
 <script>
   import { onMount } from 'svelte'
-  import { ui, toggleDarkMode } from '../lib/stores/ui.svelte.js'
-  import { auth } from '../lib/stores/auth.svelte.js'
+  import { ui, toggleDarkMode } from '../../lib/stores/ui.svelte.js'
+  import { auth } from '../../lib/stores/auth.svelte.js'
+  import { router } from '../../lib/router.svelte.js'
 
   let userMenuOpen = $state(false)
 
-  function setTab(tab) {
-    ui.activeTab = tab
-    const hash = tab === 'short-stories' ? '#stories' : '#poetry'
-    history.replaceState(null, '', hash)
-  }
+  // Sync ui.activeTab from the current path. /writer/stories → short-stories,
+  // anything else under /writer → poetry (default).
+  $effect(() => {
+    const p = router.pathname
+    ui.activeTab = p === '/writer/stories' ? 'short-stories' : 'poetry'
+  })
 
+  // On first mount, if we're at bare /writer, canonicalize to /writer/poetry.
   onMount(() => {
-    const hash = ui.activeTab === 'short-stories' ? '#stories' : '#poetry'
-    history.replaceState(null, '', hash)
+    if (router.pathname === '/writer') router.replace('/writer/poetry')
 
-    function onHashChange() {
-      ui.activeTab = location.hash === '#stories' ? 'short-stories' : 'poetry'
-    }
     function onDocClick(e) {
       if (!e.target.closest('.user-menu-wrap')) userMenuOpen = false
     }
-    window.addEventListener('hashchange', onHashChange)
     document.addEventListener('mousedown', onDocClick)
-    return () => {
-      window.removeEventListener('hashchange', onHashChange)
-      document.removeEventListener('mousedown', onDocClick)
-    }
+    return () => document.removeEventListener('mousedown', onDocClick)
   })
+
+  function setTab(tab) {
+    const to = tab === 'short-stories' ? '/writer/stories' : '/writer/poetry'
+    router.navigate(to)
+  }
 </script>
 
 <div class="tab-bar">

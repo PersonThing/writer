@@ -1,5 +1,5 @@
 ---
-title: "Azzedine Alaia: Master & Maverick"
+title: Fashion Editorial
 slug: fashion-editorial
 source_path: /fashion-editorial
 images: 

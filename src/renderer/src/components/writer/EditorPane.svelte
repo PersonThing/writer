@@ -1,9 +1,9 @@
 <script>
-  import { parseMarkdown } from '../lib/markdown.js'
-  import { project } from '../lib/stores/project.svelte.js'
-  import { editor } from '../lib/stores/editor.svelte.js'
-  import { showToast } from '../lib/stores/ui.svelte.js'
-  import { iconGripDots } from '../lib/icons.js'
+  import { parseMarkdown } from '../../lib/markdown.js'
+  import { project } from '../../lib/stores/project.svelte.js'
+  import { editor } from '../../lib/stores/editor.svelte.js'
+  import { showToast } from '../../lib/stores/ui.svelte.js'
+  import { iconGripDots } from '../../lib/icons.js'
 
   let { pane, isActive = false } = $props()
 

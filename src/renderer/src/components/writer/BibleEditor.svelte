@@ -1,8 +1,8 @@
 <script>
-  import { editor } from '../lib/stores/editor.svelte.js'
-  import { project } from '../lib/stores/project.svelte.js'
-  import { modalPrompt, modalConfirm, showToast } from '../lib/stores/ui.svelte.js'
-  import { iconPlus, iconTrash, iconGripDots } from '../lib/icons.js'
+  import { editor } from '../../lib/stores/editor.svelte.js'
+  import { project } from '../../lib/stores/project.svelte.js'
+  import { modalPrompt, modalConfirm, showToast } from '../../lib/stores/ui.svelte.js'
+  import { iconPlus, iconTrash, iconGripDots } from '../../lib/icons.js'
 
   function handleGripDragStart(e) {
     e.dataTransfer.effectAllowed = 'move'

@@ -1,13 +1,13 @@
 <script>
-  import { project } from '../lib/stores/project.svelte.js'
-  import { editor } from '../lib/stores/editor.svelte.js'
-  import { ui, modalPrompt, modalConfirm, showContextMenu } from '../lib/stores/ui.svelte.js'
+  import { project } from '../../lib/stores/project.svelte.js'
+  import { editor } from '../../lib/stores/editor.svelte.js'
+  import { ui, modalPrompt, modalConfirm, showContextMenu } from '../../lib/stores/ui.svelte.js'
   import {
     iconPlus,
     iconChevronRight,
     iconChevronDown,
     iconTrash,
-  } from '../lib/icons.js'
+  } from '../../lib/icons.js'
 
   async function newStory() {
     const name = await modalPrompt('Story name:')

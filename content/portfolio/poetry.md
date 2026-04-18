@@ -1,5 +1,5 @@
 ---
-title: On Writing
+title: Poetry
 slug: poetry
 source_path: /poetry
 images: 

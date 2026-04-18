@@ -1,5 +1,5 @@
 ---
-title: Coming-of-rage with I May Destroy You
+title: Editorial
 slug: editorial
 source_path: /editorial
 images: 

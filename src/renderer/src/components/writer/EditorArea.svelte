@@ -1,7 +1,7 @@
 <script>
-  import { editor } from '../lib/stores/editor.svelte.js'
-  import { ui } from '../lib/stores/ui.svelte.js'
-  import { iconLink, iconBroom } from '../lib/icons.js'
+  import { editor } from '../../lib/stores/editor.svelte.js'
+  import { ui } from '../../lib/stores/ui.svelte.js'
+  import { iconLink, iconBroom } from '../../lib/icons.js'
   import EditorPane from './EditorPane.svelte'
   import PlotBoard from './PlotBoard.svelte'
   import BibleEditor from './BibleEditor.svelte'

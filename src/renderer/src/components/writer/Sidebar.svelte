@@ -1,14 +1,14 @@
 <script>
-  import { project } from '../lib/stores/project.svelte.js'
-  import { editor } from '../lib/stores/editor.svelte.js'
-  import { ui, toggleSidebar } from '../lib/stores/ui.svelte.js'
+  import { project } from '../../lib/stores/project.svelte.js'
+  import { editor } from '../../lib/stores/editor.svelte.js'
+  import { ui, toggleSidebar } from '../../lib/stores/ui.svelte.js'
   import {
     iconPlus,
     iconRefresh,
     iconGear,
     iconFolder,
-  } from '../lib/icons.js'
-  import { modalPrompt } from '../lib/stores/ui.svelte.js'
+  } from '../../lib/icons.js'
+  import { modalPrompt } from '../../lib/stores/ui.svelte.js'
   import FileList from './FileList.svelte'
   import StoryList from './StoryList.svelte'
 

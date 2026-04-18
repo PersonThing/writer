@@ -1,9 +1,9 @@
 <script>
-  import * as api from '../lib/api.js'
-  import { project } from '../lib/stores/project.svelte.js'
-  import { editor } from '../lib/stores/editor.svelte.js'
-  import { showContextMenu, modalPrompt, modalAlert, showToast } from '../lib/stores/ui.svelte.js'
-  import { iconGripDots } from '../lib/icons.js'
+  import * as api from '../../lib/api.js'
+  import { project } from '../../lib/stores/project.svelte.js'
+  import { editor } from '../../lib/stores/editor.svelte.js'
+  import { showContextMenu, modalPrompt, modalAlert, showToast } from '../../lib/stores/ui.svelte.js'
+  import { iconGripDots } from '../../lib/icons.js'
 
   let draggedPath = $state(null)
   let dragOverFolder = $state(null)
