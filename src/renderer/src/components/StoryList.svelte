@@ -65,8 +65,7 @@
   {:else}
     {#each project.storyList as storyName}
       {@const expanded = project.activeStory === storyName}
-      {@const meta = project.storyMeta[storyName] || {}}
-      {@const statusColor = project.statusColor(meta.status || '')}
+      {@const statusColor = project.statusColor('')}
       <div class="story-group" class:expanded>
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div

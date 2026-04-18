@@ -17,9 +17,9 @@
   $effect(() => {
     if (ui.statusEditorOpen) {
       const statuses = JSON.parse(JSON.stringify(project.statuses))
-      const pos = project.meta._noStatusPosition ?? statuses.length
-      const clamped = Math.max(0, Math.min(pos, statuses.length))
-      statuses.splice(clamped, 0, { ...NO_STATUS_ENTRY })
+      // Append the fixed "No Status" entry at the end. Its position in the
+      // picker doesn't need to be stored per-user.
+      statuses.push({ ...NO_STATUS_ENTRY })
       draft = statuses
     }
   })
@@ -65,10 +65,6 @@
   }
 
   async function save() {
-    const oldStatuses = JSON.parse(JSON.stringify(project.statuses))
-
-    // Find position of "No Status" and extract it from the list
-    const noStatusIdx = draft.findIndex((s) => s.isNoStatus)
     const statusesOnly = draft.filter((s) => !s.isNoStatus)
 
     const cleaned = statusesOnly.map((s) => ({
@@ -77,20 +73,13 @@
       color: s.color,
     }))
 
-    // Validate non-empty IDs and uniqueness
     const ids = cleaned.map((s) => s.id).filter(Boolean)
     if (ids.length !== cleaned.length || new Set(ids).size !== ids.length) {
       await modalAlert('Each status needs a unique non-empty label.')
       return
     }
 
-    project.migrateStatusIds(oldStatuses, cleaned)
-    project.meta = {
-      ...project.meta,
-      _statuses: cleaned,
-      _noStatusPosition: noStatusIdx,
-    }
-    await project.saveMeta()
+    await project.saveStatuses(cleaned)
     ui.statusEditorOpen = false
   }
 

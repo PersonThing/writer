@@ -69,7 +69,7 @@ class EditorStore {
       return
     }
 
-    const content = await api.readFile(project.rootPath + '/' + path)
+    const content = await api.readFile(path)
 
     // Detect special file types
     const fileName = path.split('/').pop()
@@ -174,8 +174,8 @@ class EditorStore {
       const newPath = folder ? folder + '/' + newFileName : newFileName
 
       try {
-        await api.writeFile(project.rootPath + '/' + newPath, pane.content)
-        await api.deleteFile(project.rootPath + '/' + pane.filePath)
+        await api.writeFile(newPath, pane.content)
+        await api.deleteFile(pane.filePath)
         await project.patchMeta(newPath, {
           ...project.getMeta(pane.filePath),
           modified: Date.now(),
@@ -198,7 +198,7 @@ class EditorStore {
         return
       }
     } else {
-      await api.writeFile(project.rootPath + '/' + pane.filePath, pane.content)
+      await api.writeFile(pane.filePath, pane.content)
       await project.patchMeta(pane.filePath, { modified: Date.now() })
 
       this.panes = this.panes.map((p) => {
@@ -271,7 +271,7 @@ class EditorStore {
     }
 
     const content = ''
-    await api.writeFile(project.rootPath + '/' + filename, content)
+    await api.writeFile(filename, content)
     await project.scanAll()
 
     const useNewPane = this.panes.length < MAX_PANES

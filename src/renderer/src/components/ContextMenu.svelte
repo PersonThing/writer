@@ -43,17 +43,12 @@
       return
     }
     try {
-      await api.deleteFile(project.rootPath + '/' + path)
+      await api.deleteFile(path)
     } catch (e) {
       await modalAlert('Could not delete: ' + e.message)
     }
     const pane = editor.panes.find((p) => p.filePath === path)
     if (pane) editor.closePane(pane.id)
-
-    const newMeta = { ...project.meta }
-    delete newMeta[path]
-    project.meta = newMeta
-    await project.saveMeta()
     await project.scanAll()
   }
 

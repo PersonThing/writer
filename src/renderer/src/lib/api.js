@@ -22,11 +22,17 @@ async function get(url) {
   return res.json()
 }
 
-// ── Root path (fixed, from server .env) ────────────────────────────────────
+// ── Auth ─────────────────────────────────────────────────────────────────
 
-export async function getRootPath() {
-  const result = await get('/api/root')
-  return result.path
+export async function getCurrentUser() {
+  const res = await fetch('/auth/me')
+  if (res.status === 401) return null
+  if (!res.ok) throw new Error(res.statusText)
+  return res.json()
+}
+
+export async function logout() {
+  await fetch('/auth/logout', { method: 'POST' })
 }
 
 // ── File system ────────────────────────────────────────────────────────────
@@ -68,6 +74,20 @@ export async function moveFile(oldPath, newPath) {
 
 export async function renameFolder(oldPath, newPath) {
   await post('/api/rename-folder', { oldPath, newPath })
+}
+
+export async function setMeta(filePath, patch) {
+  await post('/api/set-meta', { path: filePath, ...patch })
+}
+
+// ── Statuses ───────────────────────────────────────────────────────────────
+
+export async function getStatuses() {
+  return get('/api/statuses')
+}
+
+export async function saveStatuses(statuses) {
+  await post('/api/statuses', { statuses })
 }
 
 // ── Stories ───────────────────────────────────────────────────────────────

@@ -15,6 +15,9 @@ const __dirname = path.dirname(__filename)
 const app = express()
 const PORT = process.env.PORT || 3456
 
+// Trust Railway's proxy so secure cookies work behind TLS termination.
+if (process.env.NODE_ENV === 'production') app.set('trust proxy', 1)
+
 app.use(express.json({ limit: '50mb' }))
 app.use(sessionMiddleware)
 
@@ -133,7 +136,8 @@ app.post('/api/rename-file', async (req, res) => {
       .where(and(eq(schema.files.userId, userId), eq(schema.files.path, oldPath)))
     res.json({ ok: true })
   } catch (e) {
-    if (e.code === '23505') return res.status(409).json({ error: 'A file with that name already exists' })
+    if (e.cause?.code === '23505' || e.code === '23505')
+      return res.status(409).json({ error: 'A file with that name already exists' })
     res.status(500).json({ error: e.message })
   }
 })
@@ -153,7 +157,8 @@ app.post('/api/move-file', async (req, res) => {
       .where(and(eq(schema.files.userId, userId), eq(schema.files.path, oldPath)))
     res.json({ ok: true })
   } catch (e) {
-    if (e.code === '23505') return res.status(409).json({ error: 'A file with that name already exists' })
+    if (e.cause?.code === '23505' || e.code === '23505')
+      return res.status(409).json({ error: 'A file with that name already exists' })
     res.status(500).json({ error: e.message })
   }
 })
@@ -161,19 +166,25 @@ app.post('/api/move-file', async (req, res) => {
 app.post('/api/rename-folder', async (req, res) => {
   const { oldPath, newPath } = req.body
   const userId = req.session.userId
-  await db
-    .update(schema.files)
-    .set({
-      path: sql`${newPath} || substring(${schema.files.path} from ${oldPath.length + 1})`,
-      modifiedAt: sql`now()`,
-    })
-    .where(
-      and(
-        eq(schema.files.userId, userId),
-        like(schema.files.path, `${oldPath}/%`),
-      ),
-    )
-  res.json({ ok: true })
+  try {
+    await db
+      .update(schema.files)
+      .set({
+        path: sql`${newPath} || substr(${schema.files.path}, ${oldPath.length + 1})`,
+        modifiedAt: sql`now()`,
+      })
+      .where(
+        and(
+          eq(schema.files.userId, userId),
+          like(schema.files.path, `${oldPath}/%`),
+        ),
+      )
+    res.json({ ok: true })
+  } catch (e) {
+    if (e.cause?.code === '23505')
+      return res.status(409).json({ error: 'A file with that name already exists' })
+    res.status(500).json({ error: e.message })
+  }
 })
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -207,7 +218,8 @@ app.post('/api/create-story', async (req, res) => {
 
     res.json({ ok: true })
   } catch (e) {
-    if (e.code === '23505') return res.status(409).json({ error: 'A story with that name already exists' })
+    if (e.cause?.code === '23505' || e.code === '23505')
+      return res.status(409).json({ error: 'A story with that name already exists' })
     res.status(500).json({ error: e.message })
   }
 })
@@ -217,23 +229,25 @@ app.post('/api/delete-folder', async (req, res) => {
   const userId = req.session.userId
   if (!folderPath) return res.status(400).json({ error: 'path is required' })
 
-  // If it's a story folder, delete the story row (CASCADE handles files)
+  // Always delete files whose path is under the prefix.
+  await db
+    .delete(schema.files)
+    .where(
+      and(
+        eq(schema.files.userId, userId),
+        like(schema.files.path, `${folderPath}/%`),
+      ),
+    )
+
+  // If it's a story folder, also delete the story row.
   const match = folderPath.match(/^_stories\/([^/]+)$/)
   if (match) {
     const slug = match[1]
     await db
       .delete(schema.stories)
       .where(and(eq(schema.stories.userId, userId), eq(schema.stories.slug, slug)))
-  } else {
-    await db
-      .delete(schema.files)
-      .where(
-        and(
-          eq(schema.files.userId, userId),
-          like(schema.files.path, `${folderPath}/%`),
-        ),
-      )
   }
+
   res.json({ ok: true })
 })
 
@@ -376,6 +390,16 @@ if (existsSync(distPath)) {
 // ═══════════════════════════════════════════════════════════════════════════
 // START
 // ═══════════════════════════════════════════════════════════════════════════
+
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err)
+  res.status(500).json({ error: err.message || 'Internal server error' })
+})
+
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled rejection:', err)
+})
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Writer server running at http://0.0.0.0:${PORT}`)

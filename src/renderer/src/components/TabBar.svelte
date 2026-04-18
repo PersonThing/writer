@@ -1,6 +1,9 @@
 <script>
   import { onMount } from 'svelte'
   import { ui, toggleDarkMode } from '../lib/stores/ui.svelte.js'
+  import { auth } from '../lib/stores/auth.svelte.js'
+
+  let userMenuOpen = $state(false)
 
   function setTab(tab) {
     ui.activeTab = tab
@@ -9,15 +12,21 @@
   }
 
   onMount(() => {
-    // sync hash on load
     const hash = ui.activeTab === 'short-stories' ? '#stories' : '#poetry'
     history.replaceState(null, '', hash)
 
     function onHashChange() {
       ui.activeTab = location.hash === '#stories' ? 'short-stories' : 'poetry'
     }
+    function onDocClick(e) {
+      if (!e.target.closest('.user-menu-wrap')) userMenuOpen = false
+    }
     window.addEventListener('hashchange', onHashChange)
-    return () => window.removeEventListener('hashchange', onHashChange)
+    document.addEventListener('mousedown', onDocClick)
+    return () => {
+      window.removeEventListener('hashchange', onHashChange)
+      document.removeEventListener('mousedown', onDocClick)
+    }
   })
 </script>
 
@@ -45,6 +54,27 @@
     onclick={() => (ui.helpOpen = true)}
     title="Help & shortcuts">?</button
   >
+  {#if auth.user}
+    <div class="user-menu-wrap">
+      <button
+        class="user-btn"
+        onclick={() => (userMenuOpen = !userMenuOpen)}
+        title={auth.user.email}
+      >
+        {#if auth.user.picture}
+          <img src={auth.user.picture} alt="" referrerpolicy="no-referrer" />
+        {:else}
+          <span class="user-fallback">{(auth.user.name || auth.user.email || '?').charAt(0).toUpperCase()}</span>
+        {/if}
+      </button>
+      {#if userMenuOpen}
+        <div class="user-popup" role="menu">
+          <div class="user-popup-email">{auth.user.email}</div>
+          <button class="user-popup-btn" onclick={() => auth.logout()}>Sign out</button>
+        </div>
+      {/if}
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -94,5 +124,79 @@
   }
   .tab-icon:hover {
     color: #aaa;
+  }
+
+  .user-menu-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0 0.55rem;
+  }
+  .user-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .user-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .user-fallback {
+    width: 100%;
+    height: 100%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .user-popup {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 20;
+    min-width: 180px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .user-popup-email {
+    font-size: 0.72rem;
+    color: var(--muted);
+    padding: 4px 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .user-popup-btn {
+    background: transparent;
+    border: none;
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: left;
+    color: var(--text);
+    font-size: 0.78rem;
+    font-family: var(--font-ui);
+  }
+  .user-popup-btn:hover {
+    background: var(--accent-light);
+    color: var(--accent);
   }
 </style>

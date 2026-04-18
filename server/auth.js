@@ -13,13 +13,11 @@ const {
   NODE_ENV,
 } = process.env
 
-for (const [key, val] of Object.entries({
-  GOOGLE_CLIENT_ID,
-  GOOGLE_CLIENT_SECRET,
-  SESSION_SECRET,
-  APP_URL,
-})) {
-  if (!val) {
+// In test mode we use the /auth/test-login bypass and don't need real Google creds.
+const required = ['SESSION_SECRET', 'APP_URL']
+if (NODE_ENV !== 'test') required.push('GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET')
+for (const key of required) {
+  if (!process.env[key]) {
     console.error(`ERROR: ${key} is not set.`)
     process.exit(1)
   }
@@ -134,6 +132,37 @@ export function mountAuth(app) {
   app.post('/auth/logout', (req, res) => {
     req.session.destroy(() => res.status(204).end())
   })
+
+  // Test-only auth bypass. Do not mount in production.
+  if (process.env.NODE_ENV === 'test') {
+    app.post('/auth/test-login', async (req, res) => {
+      const { email } = req.body
+      if (!email) return res.status(400).json({ error: 'email required' })
+      const normalized = String(email).toLowerCase()
+
+      const [existing] = await db
+        .select()
+        .from(schema.users)
+        .where(eq(schema.users.email, normalized))
+
+      let user = existing
+      if (!user) {
+        const [created] = await db
+          .insert(schema.users)
+          .values({ email: normalized, name: normalized, picture: null })
+          .returning()
+        user = created
+        await db
+          .insert(schema.statuses)
+          .values(DEFAULT_STATUSES.map((s) => ({ ...s, userId: user.id })))
+      }
+
+      req.session.userId = user.id
+      req.session.save(() =>
+        res.json({ id: user.id, email: user.email, name: user.name, picture: user.picture }),
+      )
+    })
+  }
 
   app.get('/auth/me', async (req, res) => {
     if (!req.session?.userId) return res.status(401).json({ error: 'Not authenticated' })

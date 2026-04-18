@@ -209,8 +209,8 @@
 
     try {
       await api.renameFile(
-        project.rootPath + '/' + path,
-        project.rootPath + '/' + newPath,
+        path,
+        newPath,
       )
       // Update metadata
       const m = project.getMeta(path)
