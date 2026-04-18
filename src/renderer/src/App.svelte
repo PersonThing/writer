@@ -34,7 +34,9 @@
   })
 
   $effect(() => {
-    document.documentElement.classList.toggle('dark', ui.darkMode)
+    // The `dark` class is a writer-only theme toggle. Remove it on portfolio
+    // pages so the portfolio's own styles don't fight with it.
+    document.documentElement.classList.toggle('dark', isWriter && ui.darkMode)
   })
 
   let writerInitialized = false

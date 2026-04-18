@@ -3,14 +3,14 @@ import { test, expect } from './fixtures.js'
 test.describe('portfolio content rendering', () => {
   test('piece page H1 matches the source title', async ({ page }) => {
     await page.goto('/fashion-editorial/azzedine-alaia--master-and-maverick')
-    await expect(page.locator('article.piece h1').first()).toContainText(
+    await expect(page.locator('article.piece .piece-body h1').first()).toContainText(
       /Azzedine Alaia: Master & Maverick/i,
     )
   })
 
   test('piece body contains known text from the source', async ({ page }) => {
     await page.goto('/fashion-editorial/azzedine-alaia--master-and-maverick')
-    await expect(page.locator('article.piece .body')).toContainText('King of Cling')
+    await expect(page.locator('article.piece .piece-body')).toContainText('King of Cling')
   })
 
   test('piece hero image resolves with a 200', async ({ page, request }) => {
@@ -25,23 +25,32 @@ test.describe('portfolio content rendering', () => {
 
   test('poetry category lists all 7 pieces', async ({ page }) => {
     await page.goto('/poetry')
-    const cards = page.locator('.grid .card')
-    await expect(cards).toHaveCount(7)
+    const rows = page.locator('.piece-row')
+    await expect(rows).toHaveCount(7)
   })
 
-  test('top nav has wordmark + 7 links on every page', async ({ page }) => {
+  test('top nav has wordmark + Work dropdown + About + Contact', async ({ page }) => {
     await page.goto('/about')
     await expect(page.locator('.wordmark')).toBeVisible()
-    // 5 categories + About + Contact
-    await expect(page.locator('.top-nav nav a')).toHaveCount(7)
+    await expect(page.locator('.work-trigger')).toHaveText(/Work/)
+    await expect(page.getByRole('link', { name: 'About' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Contact' })).toBeVisible()
   })
 
-  test('poem with italic + list renders proper HTML tags', async ({ page }) => {
-    // The Azzedine piece has bold + italic in the body
+  test('Work dropdown opens and lists all categories', async ({ page }) => {
+    await page.goto('/')
+    await page.locator('.work-trigger').click()
+    const dropdown = page.locator('.work-dropdown')
+    await expect(dropdown).toBeVisible()
+    await expect(dropdown.locator('a')).toHaveCount(6)
+    await expect(dropdown.getByText('Fashion Editorial')).toBeVisible()
+    await expect(dropdown.getByText('Copywriting')).toBeVisible()
+  })
+
+  test('piece page renders markdown (paragraphs present)', async ({ page }) => {
     await page.goto('/fashion-editorial/azzedine-alaia--master-and-maverick')
-    const body = page.locator('article.piece .body')
-    // First paragraph is italic in the source (the lede/subtitle)
-    const anyEm = await body.locator('em').count()
-    expect(anyEm).toBeGreaterThanOrEqual(0) // at least doesn't crash; this page uses italics
+    const body = page.locator('article.piece .piece-body')
+    const paragraphs = await body.locator('p').count()
+    expect(paragraphs).toBeGreaterThan(3)
   })
 })

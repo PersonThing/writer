@@ -19,24 +19,25 @@ test.describe('portfolio navigation', () => {
     // The initial load already bumped navCount by 1
     const before = navCount
 
-    await page.getByRole('link', { name: 'Fashion Editorial' }).first().click()
+    // Open Work dropdown, then click Fashion Editorial
+    await page.locator('.work-trigger').click()
+    await page.locator('.work-dropdown a', { hasText: 'Fashion Editorial' }).click()
     await expect(page).toHaveURL('/fashion-editorial')
     // history.pushState fires framenavigated too, so one navigation
     expect(navCount - before).toBeLessThanOrEqual(1)
     await expect(page.locator('article.category h1')).toContainText(/Fashion Editorial/i)
   })
 
-  test('clicking a piece card navigates to the piece page', async ({ page }) => {
+  test('clicking a piece row navigates to the piece page', async ({ page }) => {
     await page.goto('/fashion-editorial')
-    // Click the first card
-    await page.locator('.grid .card').first().click()
+    await page.locator('.piece-row').first().click()
     await expect(page).toHaveURL(/\/fashion-editorial\/.+/)
-    await expect(page.locator('article.piece h1')).toBeVisible()
+    await expect(page.locator('article.piece')).toBeVisible()
   })
 
   test('browser back button returns to previous page', async ({ page }) => {
     await page.goto('/fashion-editorial')
-    await page.locator('.grid .card').first().click()
+    await page.locator('.piece-row').first().click()
     await expect(page).toHaveURL(/\/fashion-editorial\/.+/)
     await page.goBack()
     await expect(page).toHaveURL('/fashion-editorial')
@@ -44,7 +45,7 @@ test.describe('portfolio navigation', () => {
 
   test('deep-link to a piece loads correctly (SPA fallback)', async ({ page }) => {
     await page.goto('/fashion-editorial/azzedine-alaia--master-and-maverick')
-    await expect(page.locator('article.piece h1')).toContainText(/Azzedine Alaia/i)
+    await expect(page.locator('article.piece .piece-body h1')).toContainText(/Azzedine Alaia/i)
   })
 
   test('unknown path renders the not-found page', async ({ page }) => {

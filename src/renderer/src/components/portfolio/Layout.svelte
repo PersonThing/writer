@@ -1,26 +1,69 @@
 <script>
   import Link from '../Link.svelte'
+  import { onMount } from 'svelte'
+  import { router } from '../../lib/router.svelte.js'
 
   let { children } = $props()
 
-  const CATEGORIES = [
-    { path: '/fashion-editorial', label: 'Fashion Editorial' },
-    { path: '/editorial', label: 'Editorial' },
-    { path: '/creative-direction', label: 'Creative Direction' },
-    { path: '/poetry', label: 'Poetry' },
-    { path: '/published-paper', label: 'Published Paper' },
+  let workOpen = $state(false)
+  let mobileOpen = $state(false)
+
+  const WORK_CATEGORIES = [
+    { path: '/copywriting', label: 'Copywriting', hasLanding: false },
+    { path: '/creative-direction', label: 'Creative Direction', hasLanding: true },
+    { path: '/fashion-editorial', label: 'Fashion Editorial', hasLanding: true },
+    { path: '/editorial', label: 'Editorial', hasLanding: true },
+    { path: '/poetry', label: 'Poetry', hasLanding: true },
+    { path: '/published-paper', label: 'Published Paper', hasLanding: true },
   ]
+
+  const isWorkActive = $derived(
+    WORK_CATEGORIES.some((c) => router.pathname.startsWith(c.path)),
+  )
+
+  onMount(() => {
+    function onDocClick(e) {
+      if (!e.target.closest('.work-menu')) workOpen = false
+    }
+    document.addEventListener('mousedown', onDocClick)
+    return () => document.removeEventListener('mousedown', onDocClick)
+  })
 </script>
 
 <div class="portfolio-root">
   <header class="top-nav">
     <Link href="/" class="wordmark">Shigorika</Link>
-    <nav>
-      {#each CATEGORIES as { path, label }}
-        <Link href={path}>{label}</Link>
-      {/each}
-      <Link href="/about">About</Link>
-      <Link href="/contact">Contact</Link>
+
+    <button
+      class="hamburger"
+      aria-label="Menu"
+      onclick={() => (mobileOpen = !mobileOpen)}
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <nav class:open={mobileOpen}>
+      <div class="work-menu">
+        <button
+          class="nav-link work-trigger"
+          class:active={isWorkActive}
+          onclick={() => (workOpen = !workOpen)}
+        >
+          Work
+          <span class="chevron">▾</span>
+        </button>
+        {#if workOpen}
+          <div class="work-dropdown" role="menu">
+            {#each WORK_CATEGORIES as { path, label }}
+              <Link href={path} class="work-dropdown-item">{label}</Link>
+            {/each}
+          </div>
+        {/if}
+      </div>
+      <Link href="/about" class="nav-link">About</Link>
+      <Link href="/contact" class="nav-link">Contact</Link>
     </nav>
   </header>
 
@@ -41,71 +84,139 @@
 </div>
 
 <style>
-  :global(.portfolio-root) {
-    --p-bg: #faf7f0;
-    --p-text: #1a1a1a;
-    --p-muted: #6b6b6b;
-    --p-border: #d8d3c4;
-    --p-accent: #8a6d2a;
-    --p-max-width: 42rem;
+  :global(html:has(.portfolio-root)),
+  :global(body:has(.portfolio-root)) {
+    background: #000;
+    margin: 0;
+    padding: 0;
+    height: auto;
+    overflow: auto;
+  }
+
+  .portfolio-root {
+    --p-bg: #000;
+    --p-text: #f3f1ec;
+    --p-muted: #9c968a;
+    --p-border: #2a2721;
+    --p-accent: #d9b673;
 
     min-height: 100vh;
     background: var(--p-bg);
     color: var(--p-text);
-    font-family: Georgia, 'Times New Roman', serif;
-    line-height: 1.7;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-weight: 300;
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
   }
 
   :global(.portfolio-root a) {
     color: inherit;
     text-decoration: none;
   }
-  :global(.portfolio-root .page-main a) {
-    color: var(--p-accent);
-    text-decoration: underline;
-  }
 
   .top-nav {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1.5rem 2rem;
-    border-bottom: 1px solid var(--p-border);
-    flex-wrap: wrap;
-    gap: 1rem;
+    padding: 1.5rem 3rem;
+    gap: 2rem;
+    position: relative;
   }
-  .top-nav :global(.wordmark) {
-    font-size: 1.5rem;
-    font-weight: 600;
+  :global(.portfolio-root .wordmark) {
+    font-size: 1.4rem;
+    font-weight: 400;
     letter-spacing: 0.02em;
   }
-  .top-nav nav {
+
+  nav {
     display: flex;
-    gap: 1.4rem;
-    flex-wrap: wrap;
+    align-items: center;
+    gap: 2.5rem;
     font-size: 0.9rem;
   }
-  .top-nav nav :global(a:hover) {
-    color: var(--p-accent);
+  :global(.portfolio-root .nav-link),
+  .work-trigger {
+    background: transparent;
+    border: none;
+    color: inherit;
+    font: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0.4rem 0;
+    opacity: 0.78;
+    transition: opacity 0.15s;
+  }
+  :global(.portfolio-root .nav-link:hover),
+  .work-trigger:hover,
+  :global(.portfolio-root .nav-link.active),
+  .work-trigger.active {
+    opacity: 1;
+  }
+  .chevron {
+    font-size: 0.7rem;
+    margin-left: 0.3rem;
+    opacity: 0.7;
+  }
+
+  .work-menu {
+    position: relative;
+  }
+  .work-dropdown {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    background: #111;
+    border: 1px solid var(--p-border);
+    padding: 0.5rem 0;
+    min-width: 200px;
+    z-index: 50;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  }
+  :global(.portfolio-root .work-dropdown-item) {
+    display: block;
+    padding: 0.55rem 1.2rem;
+    font-size: 0.88rem;
+    opacity: 0.85;
+    transition: background 0.12s, opacity 0.12s;
+  }
+  :global(.portfolio-root .work-dropdown-item:hover) {
+    background: #1c1a15;
+    opacity: 1;
+  }
+
+  .hamburger {
+    display: none;
+    background: none;
+    border: none;
+    flex-direction: column;
+    gap: 4px;
+    cursor: pointer;
+    padding: 6px;
+  }
+  .hamburger span {
+    width: 24px;
+    height: 2px;
+    background: currentColor;
+    display: block;
   }
 
   .page-main {
-    max-width: var(--p-max-width);
-    margin: 0 auto;
-    padding: 3rem 2rem 4rem;
+    flex: 1;
   }
 
   .site-footer {
     border-top: 1px solid var(--p-border);
-    padding: 2rem;
+    padding: 2rem 3rem;
     display: flex;
     justify-content: space-between;
     gap: 1rem;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     color: var(--p-muted);
     flex-wrap: wrap;
+    margin-top: 4rem;
   }
-  .site-footer a:hover {
+  :global(.portfolio-root .site-footer a:hover) {
     color: var(--p-accent);
   }
   .socials {
@@ -113,17 +224,40 @@
     gap: 1.2rem;
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 800px) {
     .top-nav {
+      padding: 1rem 1.25rem;
+    }
+    .hamburger {
+      display: inline-flex;
+    }
+    nav {
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      left: 0;
+      background: #0a0a0a;
+      border-top: 1px solid var(--p-border);
+      border-bottom: 1px solid var(--p-border);
       flex-direction: column;
       align-items: flex-start;
+      padding: 1rem 1.25rem;
+      z-index: 40;
     }
-    .top-nav nav {
-      gap: 0.9rem;
-      font-size: 0.82rem;
+    nav.open {
+      display: flex;
     }
-    .page-main {
-      padding: 2rem 1.25rem 3rem;
+    .work-dropdown {
+      position: static;
+      background: transparent;
+      border: none;
+      padding: 0 0 0 1rem;
+      box-shadow: none;
+      min-width: 0;
+    }
+    .site-footer {
+      padding: 2rem 1.25rem;
     }
   }
 </style>

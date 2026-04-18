@@ -9,29 +9,49 @@
 
 <Layout>
   <article class="about">
-    {#if page}
-      <h1>{page.title}</h1>
+    <h1>{page?.title || 'About'}</h1>
+    {#if rendered}
       <div class="body">{@html rendered}</div>
     {/if}
   </article>
 </Layout>
 
 <style>
+  .about {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: 3rem 2rem 4rem;
+  }
   .about h1 {
     font-size: 2rem;
-    font-weight: 500;
-    margin-bottom: 1.5rem;
+    font-weight: 300;
+    margin: 0 0 1.5rem;
   }
-  .body :global(h2),
-  .body :global(h3) {
+  :global(.portfolio-root .about .body h2) {
+    font-size: 1.1rem;
     font-weight: 500;
     margin: 2rem 0 0.5rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--p-accent);
   }
-  .body :global(p) {
-    margin-bottom: 1rem;
+  :global(.portfolio-root .about .body h3) {
+    font-size: 1rem;
+    font-weight: 400;
+    margin: 1.5rem 0 0.4rem;
   }
-  .body :global(ul) {
-    margin-bottom: 1rem;
-    padding-left: 1.5rem;
+  :global(.portfolio-root .about .body p) {
+    margin: 0 0 1rem;
+    line-height: 1.7;
+  }
+  :global(.portfolio-root .about .body a) {
+    color: var(--p-accent);
+    border-bottom: 1px solid rgba(217, 182, 115, 0.4);
+  }
+
+  @media (max-width: 600px) {
+    .about {
+      padding: 2rem 1.25rem 3rem;
+    }
   }
 </style>
