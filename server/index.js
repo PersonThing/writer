@@ -5,6 +5,7 @@ import { existsSync, readFileSync, writeFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import os from 'os'
 import multer from 'multer'
+import mammoth from 'mammoth'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -417,6 +418,63 @@ app.post('/api/ai/generate-image', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } })
+
+const UPLOAD_ALLOWED_EXTS = new Set(['md', 'txt', 'docx'])
+
+async function uniqueMarkdownPath(dir, baseStem) {
+  let candidate = path.join(dir, `${baseStem}.md`)
+  if (!existsSync(candidate)) return candidate
+  let i = 1
+  while (existsSync(path.join(dir, `${baseStem}-${i}.md`))) i++
+  return path.join(dir, `${baseStem}-${i}.md`)
+}
+
+app.post('/api/upload-files', upload.array('files'), async (req, res) => {
+  const files = req.files || []
+  const targetFolder = (req.body.targetFolder || '').trim()
+
+  const targetDir = path.resolve(path.join(WRITER_ROOT, targetFolder))
+  if (!targetDir.startsWith(path.resolve(WRITER_ROOT))) {
+    return res.status(403).json({ error: 'Cannot upload outside WRITER_ROOT' })
+  }
+
+  try {
+    await fs.mkdir(targetDir, { recursive: true })
+  } catch (e) {
+    return res.status(500).json({ error: e.message })
+  }
+
+  const results = []
+  for (const f of files) {
+    const ext = path.extname(f.originalname).toLowerCase().slice(1)
+    const stem = path.basename(f.originalname, path.extname(f.originalname))
+
+    if (!UPLOAD_ALLOWED_EXTS.has(ext)) {
+      results.push({ original: f.originalname, skipped: true, error: `Unsupported extension: .${ext}` })
+      continue
+    }
+
+    try {
+      let content
+      if (ext === 'docx') {
+        const conv = await mammoth.convertToMarkdown({ buffer: f.buffer })
+        content = conv.value
+      } else {
+        content = f.buffer.toString('utf-8')
+      }
+      const finalPath = await uniqueMarkdownPath(targetDir, stem)
+      await fs.writeFile(finalPath, content, 'utf-8')
+      results.push({
+        original: f.originalname,
+        saved: path.relative(path.resolve(WRITER_ROOT), finalPath),
+      })
+    } catch (e) {
+      results.push({ original: f.originalname, error: e.message })
+    }
+  }
+
+  res.json({ results })
+})
 
 app.post('/api/upload-image', upload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' })

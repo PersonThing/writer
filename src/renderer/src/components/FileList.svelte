@@ -2,16 +2,29 @@
   import * as api from '../lib/api.js'
   import { project } from '../lib/stores/project.svelte.js'
   import { editor } from '../lib/stores/editor.svelte.js'
-  import { showContextMenu, modalPrompt, modalAlert } from '../lib/stores/ui.svelte.js'
+  import { showContextMenu, modalPrompt, modalAlert, showToast } from '../lib/stores/ui.svelte.js'
   import { iconGripDots } from '../lib/icons.js'
 
   let draggedPath = $state(null)
   let dragOverFolder = $state(null)
+  let externalDragActive = $state(false)
   let renamingPath = $state(null)
   let renameValue = $state('')
   let renamingFolder = $state(null)
   let renameFolderValue = $state('')
   let collapsedFolders = $state(new Set())
+
+  const ALLOWED_EXTS = ['md', 'txt', 'docx']
+  function extOf(name) {
+    const i = name.lastIndexOf('.')
+    return i >= 0 ? name.slice(i + 1).toLowerCase() : ''
+  }
+  function isAllowedFile(file) {
+    return ALLOWED_EXTS.includes(extOf(file.name))
+  }
+  function hasExternalFiles(e) {
+    return Array.from(e.dataTransfer?.types || []).includes('Files')
+  }
 
   // Build tree from filteredFiles
   let tree = $derived.by(() => {
@@ -91,12 +104,48 @@
 
   function handleDragOverFolder(e, folderPath) {
     e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
+    e.dataTransfer.dropEffect = hasExternalFiles(e) ? 'copy' : 'move'
     dragOverFolder = folderPath
   }
 
   async function handleDropOnFolder(e, folderPath) {
     e.preventDefault()
+
+    // External drop from Finder/Explorer
+    if (hasExternalFiles(e) && e.dataTransfer.files?.length) {
+      const files = Array.from(e.dataTransfer.files)
+      const accepted = files.filter(isAllowedFile)
+      const rejected = files.filter((f) => !isAllowedFile(f))
+      dragOverFolder = null
+      externalDragActive = false
+
+      if (rejected.length) {
+        await modalAlert(
+          `Skipped ${rejected.length} unsupported file(s):\n` +
+            rejected.map((f) => f.name).join('\n') +
+            `\n\nAllowed: .${ALLOWED_EXTS.join(', .')}`,
+        )
+      }
+      if (!accepted.length) return
+
+      try {
+        const results = await api.uploadFiles(accepted, folderPath)
+        await project.scanAll()
+        const saved = results.filter((r) => r.saved).length
+        const errors = results.filter((r) => r.error && !r.skipped)
+        if (saved) showToast(`Uploaded ${saved} file${saved === 1 ? '' : 's'}`)
+        if (errors.length) {
+          await modalAlert(
+            'Errors:\n' + errors.map((r) => `${r.original}: ${r.error}`).join('\n'),
+          )
+        }
+      } catch (err) {
+        await modalAlert('Upload failed: ' + err.message)
+      }
+      return
+    }
+
+    // Internal drop — moving an existing file between folders
     if (!draggedPath) return
     const currentFolder = project.folderOf(draggedPath)
     if (currentFolder === folderPath) {
@@ -115,6 +164,29 @@
     })
     draggedPath = null
     dragOverFolder = null
+  }
+
+  // ── External file drag (Finder/Explorer) ─────────────────────────────
+
+  function handleListDragOver(e) {
+    if (hasExternalFiles(e)) {
+      e.preventDefault()
+      e.dataTransfer.dropEffect = 'copy'
+      externalDragActive = true
+    }
+  }
+  function handleListDragLeave(e) {
+    // Only clear when leaving the list entirely (relatedTarget outside)
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      externalDragActive = false
+      dragOverFolder = null
+    }
+  }
+  function handleListDrop(e) {
+    // Fallback: dropped on empty sidebar space → treat as root drop
+    if (hasExternalFiles(e) && e.dataTransfer.files?.length) {
+      handleDropOnFolder(e, '')
+    }
   }
 
   // ── Rename files inline ──────────────────────────────────────────────
@@ -219,16 +291,23 @@
   }
 </script>
 
-<div class="file-list" class:is-dragging={draggedPath}>
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+  class="file-list"
+  class:is-dragging={draggedPath || externalDragActive}
+  ondragover={handleListDragOver}
+  ondragleave={handleListDragLeave}
+  ondrop={handleListDrop}
+>
   <!-- Root drop zone (top) — always rendered, shown via CSS when dragging -->
   <div
     class="root-drop-zone"
-    class:visible={draggedPath}
+    class:visible={draggedPath || externalDragActive}
     class:drag-over-folder={dragOverFolder === '_root'}
     ondragover={(e) => handleDragOverFolder(e, '_root')}
     ondragleave={() => { if (dragOverFolder === '_root') dragOverFolder = null }}
     ondrop={(e) => handleDropOnFolder(e, '')}
-  >Move to root</div>
+  >{externalDragActive ? 'Drop files to import' : 'Move to root'}</div>
 
   <!-- Folders -->
   {#each tree.folders as [folderPath, folderItems]}

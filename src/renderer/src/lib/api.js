@@ -118,6 +118,25 @@ export async function getOpenAIKey() {
   return secureGet('openaiApiKey')
 }
 
+// ── File upload (external drag-drop into sidebar) ─────────────────────────
+
+export async function uploadFiles(files, targetFolder = '') {
+  const formData = new FormData()
+  for (const f of files) formData.append('files', f)
+  formData.append('targetFolder', targetFolder)
+
+  const res = await fetch('/api/upload-files', {
+    method: 'POST',
+    body: formData,
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }))
+    throw new Error(err.error || res.statusText)
+  }
+  const data = await res.json()
+  return data.results
+}
+
 // ── Image upload ───────────────────────────────────────────────────────────
 
 export async function openImage() {
