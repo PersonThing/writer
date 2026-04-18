@@ -1,7 +1,6 @@
 <script>
   import { onMount } from 'svelte'
   import { ui, toggleDarkMode } from '../lib/stores/ui.svelte.js'
-  import { iconGear } from '../lib/icons.js'
 
   function setTab(tab) {
     ui.activeTab = tab
@@ -45,11 +44,6 @@
     class="tab-icon"
     onclick={() => (ui.helpOpen = true)}
     title="Help & shortcuts">?</button
-  >
-  <button
-    class="tab-icon"
-    onclick={() => (ui.settingsOpen = true)}
-    title="Settings">{@html iconGear(18)}</button
   >
 </div>
 

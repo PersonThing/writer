@@ -1,65 +1,30 @@
 import express from 'express'
 import path from 'path'
-import fs from 'fs/promises'
-import { existsSync, readFileSync, writeFileSync } from 'fs'
+import { existsSync } from 'fs'
 import { fileURLToPath } from 'url'
-import os from 'os'
 import multer from 'multer'
 import mammoth from 'mammoth'
+import { and, asc, eq, ilike, like, sql } from 'drizzle-orm'
+
+import { db, schema } from './db.js'
+import { sessionMiddleware, requireAuth, mountAuth } from './auth.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// ── Load .env from app root ────────────────────────────────────────────────
-const envPath = path.join(__dirname, '..', '.env')
-if (existsSync(envPath)) {
-  for (const line of readFileSync(envPath, 'utf-8').split('\n')) {
-    const trimmed = line.trim()
-    if (!trimmed || trimmed.startsWith('#')) continue
-    const eq = trimmed.indexOf('=')
-    if (eq === -1) continue
-    const key = trimmed.slice(0, eq).trim()
-    const val = trimmed.slice(eq + 1).trim()
-    if (!process.env[key]) process.env[key] = val
-  }
-}
-
 const app = express()
 const PORT = process.env.PORT || 3456
-const WRITER_ROOT = process.env.WRITER_ROOT
 
-if (!WRITER_ROOT) {
-  console.error('ERROR: WRITER_ROOT is not set. Add it to .env in the app root.')
-  process.exit(1)
-}
-
-if (!existsSync(WRITER_ROOT)) {
-  console.error(`ERROR: WRITER_ROOT directory does not exist: ${WRITER_ROOT}`)
-  process.exit(1)
-}
-
-// ── Config file (replaces electron-store) ──────────────────────────────────
-const CONFIG_PATH = path.join(os.homedir(), '.writer-config.json')
-
-function loadConfig() {
-  try {
-    if (existsSync(CONFIG_PATH)) {
-      return JSON.parse(readFileSync(CONFIG_PATH, 'utf-8'))
-    }
-  } catch {}
-  return {}
-}
-
-function saveConfig(data) {
-  writeFileSync(CONFIG_PATH, JSON.stringify(data, null, 2), 'utf-8')
-}
-
-let config = loadConfig()
-
-// ── Middleware ──────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '50mb' }))
+app.use(sessionMiddleware)
 
-// Serve the built Svelte frontend in production
+// Auth routes (unprotected)
+mountAuth(app)
+
+// Protect everything under /api
+app.use('/api', requireAuth)
+
+// Serve the built Svelte frontend
 const distPath = path.join(__dirname, '..', 'dist')
 if (existsSync(distPath)) {
   app.use(express.static(distPath))
@@ -69,152 +34,145 @@ if (existsSync(distPath)) {
 // FILE SYSTEM API
 // ═══════════════════════════════════════════════════════════════════════════
 
-app.get('/api/root', (req, res) => {
-  res.json({ path: WRITER_ROOT })
-})
-
 app.post('/api/scan-directory', async (req, res) => {
-  const dirPath = WRITER_ROOT
+  const userId = req.session.userId
+
+  const rows = await db
+    .select({
+      path: schema.files.path,
+      status: schema.files.status,
+      quality: schema.files.quality,
+      modifiedAt: schema.files.modifiedAt,
+      createdAt: schema.files.createdAt,
+    })
+    .from(schema.files)
+    .where(eq(schema.files.userId, userId))
 
   const files = {}
-  const dirs = {}
-
-  async function scan(dir, prefix) {
-    let entries
-    try {
-      entries = await fs.readdir(dir, { withFileTypes: true })
-    } catch {
-      return
+  const dirSet = new Set()
+  for (const r of rows) {
+    files[r.path] = {
+      status: r.status,
+      quality: r.quality,
+      modified: r.modifiedAt.getTime(),
+      created: r.createdAt.getTime(),
     }
-
-    for (const entry of entries) {
-      if (entry.name.startsWith('.')) continue
-      if (entry.name === 'poems-meta.json') continue
-      if (entry.name === 'stories-meta.json') continue
-      if (
-        ['INDEX.html', 'watch_poems.ps1', 'start_watcher.vbs'].includes(
-          entry.name,
-        )
-      )
-        continue
-
-      const rel = prefix ? `${prefix}/${entry.name}` : entry.name
-      const full = path.join(dir, entry.name)
-
-      if (entry.isDirectory()) {
-        dirs[rel] = true
-        await scan(full, rel)
-      } else if (entry.name.endsWith('.md')) {
-        try {
-          const stat = await fs.stat(full)
-          files[rel] = { modified: stat.mtimeMs, created: stat.birthtimeMs }
-        } catch {
-          /* skip unreadable */
-        }
-      }
+    // Collect directory prefixes
+    const parts = r.path.split('/')
+    for (let i = 1; i < parts.length; i++) {
+      dirSet.add(parts.slice(0, i).join('/'))
     }
   }
+  const dirs = {}
+  for (const d of dirSet) dirs[d] = true
 
-  await scan(dirPath, '')
   res.json({ files, dirs })
 })
 
 app.post('/api/search', async (req, res) => {
   const { query } = req.body
+  const userId = req.session.userId
   if (!query || !query.trim()) return res.json({ matches: [] })
 
-  const q = query.toLowerCase()
-  const matches = []
+  const rows = await db
+    .select({ path: schema.files.path })
+    .from(schema.files)
+    .where(
+      and(
+        eq(schema.files.userId, userId),
+        ilike(schema.files.content, `%${query}%`),
+      ),
+    )
 
-  async function scan(dir, prefix) {
-    let entries
-    try {
-      entries = await fs.readdir(dir, { withFileTypes: true })
-    } catch {
-      return
-    }
-    for (const entry of entries) {
-      if (entry.name.startsWith('.')) continue
-      if (entry.name === 'poems-meta.json') continue
-      if (entry.name === 'stories-meta.json') continue
-      const rel = prefix ? `${prefix}/${entry.name}` : entry.name
-      const full = path.join(dir, entry.name)
-      if (entry.isDirectory()) {
-        await scan(full, rel)
-      } else if (entry.name.endsWith('.md')) {
-        try {
-          const content = await fs.readFile(full, 'utf-8')
-          const nameMatch = entry.name.toLowerCase().includes(q)
-          const bodyMatch = content.toLowerCase().includes(q)
-          if (nameMatch || bodyMatch) {
-            matches.push(rel)
-          }
-        } catch {}
-      }
-    }
-  }
-
-  await scan(WRITER_ROOT, '')
-  res.json({ matches })
+  res.json({ matches: rows.map((r) => r.path) })
 })
 
 app.post('/api/read-file', async (req, res) => {
   const { path: filePath } = req.body
-  try {
-    const content = await fs.readFile(filePath, 'utf-8')
-    res.json({ content })
-  } catch (e) {
-    if (e.code === 'ENOENT') return res.json({ content: '' })
-    res.status(500).json({ error: e.message })
-  }
+  const userId = req.session.userId
+
+  const [row] = await db
+    .select({ content: schema.files.content })
+    .from(schema.files)
+    .where(and(eq(schema.files.userId, userId), eq(schema.files.path, filePath)))
+  res.json({ content: row?.content || '' })
 })
 
 app.post('/api/write-file', async (req, res) => {
   const { path: filePath, content } = req.body
-  await fs.writeFile(filePath, content, 'utf-8')
-  const stat = await fs.stat(filePath)
-  res.json({ modified: stat.mtimeMs })
+  const userId = req.session.userId
+
+  const [row] = await db
+    .insert(schema.files)
+    .values({ userId, path: filePath, content })
+    .onConflictDoUpdate({
+      target: [schema.files.userId, schema.files.path],
+      set: { content, modifiedAt: sql`now()` },
+    })
+    .returning({ modifiedAt: schema.files.modifiedAt })
+
+  res.json({ modified: row.modifiedAt.getTime() })
 })
 
 app.post('/api/delete-file', async (req, res) => {
   const { path: filePath } = req.body
-  await fs.unlink(filePath)
+  const userId = req.session.userId
+  await db
+    .delete(schema.files)
+    .where(and(eq(schema.files.userId, userId), eq(schema.files.path, filePath)))
   res.json({ ok: true })
 })
 
 app.post('/api/rename-file', async (req, res) => {
   const { oldPath, newPath } = req.body
-  await fs.rename(oldPath, newPath)
-  res.json({ ok: true })
-})
-
-app.post('/api/create-folder', async (req, res) => {
-  const { name } = req.body
-  if (!name) return res.status(400).json({ error: 'name is required' })
-  const fullPath = path.join(WRITER_ROOT, name)
+  const userId = req.session.userId
   try {
-    await fs.mkdir(fullPath, { recursive: true })
+    await db
+      .update(schema.files)
+      .set({ path: newPath, modifiedAt: sql`now()` })
+      .where(and(eq(schema.files.userId, userId), eq(schema.files.path, oldPath)))
     res.json({ ok: true })
   } catch (e) {
+    if (e.code === '23505') return res.status(409).json({ error: 'A file with that name already exists' })
     res.status(500).json({ error: e.message })
   }
 })
 
+app.post('/api/create-folder', (req, res) => {
+  // Folders are implicit (derived from file path prefixes). No-op for API compatibility.
+  res.json({ ok: true })
+})
+
 app.post('/api/move-file', async (req, res) => {
   const { oldPath, newPath } = req.body
-  const fullOld = path.join(WRITER_ROOT, oldPath)
-  const fullNew = path.join(WRITER_ROOT, newPath)
-  // Ensure target directory exists
-  await fs.mkdir(path.dirname(fullNew), { recursive: true })
-  await fs.rename(fullOld, fullNew)
-  res.json({ ok: true })
+  const userId = req.session.userId
+  try {
+    await db
+      .update(schema.files)
+      .set({ path: newPath, modifiedAt: sql`now()` })
+      .where(and(eq(schema.files.userId, userId), eq(schema.files.path, oldPath)))
+    res.json({ ok: true })
+  } catch (e) {
+    if (e.code === '23505') return res.status(409).json({ error: 'A file with that name already exists' })
+    res.status(500).json({ error: e.message })
+  }
 })
 
 app.post('/api/rename-folder', async (req, res) => {
   const { oldPath, newPath } = req.body
-  const fullOld = path.join(WRITER_ROOT, oldPath)
-  const fullNew = path.join(WRITER_ROOT, newPath)
-  await fs.rename(fullOld, fullNew)
+  const userId = req.session.userId
+  await db
+    .update(schema.files)
+    .set({
+      path: sql`${newPath} || substring(${schema.files.path} from ${oldPath.length + 1})`,
+      modifiedAt: sql`now()`,
+    })
+    .where(
+      and(
+        eq(schema.files.userId, userId),
+        like(schema.files.path, `${oldPath}/%`),
+      ),
+    )
   res.json({ ok: true })
 })
 
@@ -222,227 +180,155 @@ app.post('/api/rename-folder', async (req, res) => {
 // STORY API
 // ═══════════════════════════════════════════════════════════════════════════
 
+function slugify(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+}
+
 app.post('/api/create-story', async (req, res) => {
   const { name } = req.body
-  if (!name) return res.status(400).json({ error: 'name is required' })
+  const userId = req.session.userId
+  if (!name || !name.trim()) return res.status(400).json({ error: 'name is required' })
 
-  const storyDir = path.join(WRITER_ROOT, '_stories', name)
+  const slug = slugify(name)
   try {
-    await fs.mkdir(storyDir, { recursive: true })
+    const [story] = await db
+      .insert(schema.stories)
+      .values({ userId, name: name.trim(), slug })
+      .returning()
 
-    const plotContent = `---
-notes: []
-connections: []
----
+    const basePath = `_stories/${slug}`
+    const plotContent = `---\nnotes: []\nconnections: []\n---\n\n# Plot Board\n`
+    const bibleContent = `# Story Bible\n\n## Characters\n\n## Setting\n\n## Genre & Tone\n\n## Timeline\n`
 
-# Plot Board
-`
-    await fs.writeFile(path.join(storyDir, '_plot.md'), plotContent, 'utf-8')
-
-    const bibleContent = `# Story Bible
-
-## Characters
-
-## Setting
-
-## Genre & Tone
-
-## Timeline
-`
-    await fs.writeFile(path.join(storyDir, '_bible.md'), bibleContent, 'utf-8')
+    await db.insert(schema.files).values([
+      { userId, path: `${basePath}/_plot.md`, content: plotContent, storyId: story.id },
+      { userId, path: `${basePath}/_bible.md`, content: bibleContent, storyId: story.id },
+    ])
 
     res.json({ ok: true })
   } catch (e) {
+    if (e.code === '23505') return res.status(409).json({ error: 'A story with that name already exists' })
     res.status(500).json({ error: e.message })
   }
 })
 
 app.post('/api/delete-folder', async (req, res) => {
   const { path: folderPath } = req.body
+  const userId = req.session.userId
   if (!folderPath) return res.status(400).json({ error: 'path is required' })
 
-  // Safety: only allow deleting within WRITER_ROOT
-  const full = path.resolve(folderPath)
-  if (!full.startsWith(path.resolve(WRITER_ROOT))) {
-    return res.status(403).json({ error: 'Cannot delete outside WRITER_ROOT' })
+  // If it's a story folder, delete the story row (CASCADE handles files)
+  const match = folderPath.match(/^_stories\/([^/]+)$/)
+  if (match) {
+    const slug = match[1]
+    await db
+      .delete(schema.stories)
+      .where(and(eq(schema.stories.userId, userId), eq(schema.stories.slug, slug)))
+  } else {
+    await db
+      .delete(schema.files)
+      .where(
+        and(
+          eq(schema.files.userId, userId),
+          like(schema.files.path, `${folderPath}/%`),
+        ),
+      )
   }
-
-  try {
-    await fs.rm(full, { recursive: true, force: true })
-    res.json({ ok: true })
-  } catch (e) {
-    res.status(500).json({ error: e.message })
-  }
-})
-
-// ═══════════════════════════════════════════════════════════════════════════
-// CONFIG API (replaces electron-store + secure storage)
-// ═══════════════════════════════════════════════════════════════════════════
-
-app.post('/api/config/set', (req, res) => {
-  const { key, value } = req.body
-  config[key] = value
-  saveConfig(config)
   res.json({ ok: true })
 })
 
-app.post('/api/config/get', (req, res) => {
-  const { key, defaultValue } = req.body
-  res.json({ value: config[key] ?? defaultValue ?? null })
-})
-
-// Secure storage (stored in same config file — acceptable for local-only use)
-app.post('/api/secure/set', (req, res) => {
-  const { key, value } = req.body
-  if (!config._secure) config._secure = {}
-  config._secure[key] = value
-  saveConfig(config)
-  res.json({ ok: true })
-})
-
-app.post('/api/secure/get', (req, res) => {
-  const { key } = req.body
-  const value = config._secure?.[key] || null
-  res.json({ value })
-})
-
 // ═══════════════════════════════════════════════════════════════════════════
-// AI SERVICES
+// STATUSES API
 // ═══════════════════════════════════════════════════════════════════════════
 
-function getApiKey(name) {
-  return config._secure?.[name] || null
-}
+app.get('/api/statuses', async (req, res) => {
+  const userId = req.session.userId
+  const rows = await db
+    .select({
+      id: schema.statuses.statusId,
+      label: schema.statuses.label,
+      color: schema.statuses.color,
+    })
+    .from(schema.statuses)
+    .where(eq(schema.statuses.userId, userId))
+    .orderBy(asc(schema.statuses.sortOrder))
+  res.json(rows)
+})
 
-app.post('/api/ai/list-models', async (req, res) => {
-  const apiKey = getApiKey('claudeApiKey')
-  if (!apiKey) return res.status(400).json({ error: 'Claude API key not configured' })
+app.post('/api/statuses', async (req, res) => {
+  const userId = req.session.userId
+  const { statuses } = req.body
+  if (!Array.isArray(statuses)) return res.status(400).json({ error: 'statuses must be an array' })
 
-  try {
-    const { default: Anthropic } = await import('@anthropic-ai/sdk')
-    const client = new Anthropic({ apiKey })
-
-    const models = []
-    for await (const model of client.models.list({ limit: 100 })) {
-      models.push({ id: model.id, name: model.display_name || model.id })
+  await db.transaction(async (tx) => {
+    await tx.delete(schema.statuses).where(eq(schema.statuses.userId, userId))
+    if (statuses.length) {
+      await tx.insert(schema.statuses).values(
+        statuses.map((s, i) => ({
+          userId,
+          statusId: s.id,
+          label: s.label,
+          color: s.color,
+          sortOrder: i,
+        })),
+      )
     }
-    models.sort((a, b) => b.id.localeCompare(a.id))
-    res.json(models)
-  } catch (e) {
-    res.status(500).json({ error: e.message })
-  }
-})
-
-app.post('/api/ai/suggest-image-prompts', async (req, res) => {
-  const apiKey = getApiKey('claudeApiKey')
-  if (!apiKey) return res.status(400).json({ error: 'Claude API key not configured' })
-
-  try {
-    const { default: Anthropic } = await import('@anthropic-ai/sdk')
-    const client = new Anthropic({ apiKey })
-    const model = config.claudeModel || 'claude-haiku-4-5-20251001'
-
-    const message = await client.messages.create({
-      model,
-      max_tokens: 1024,
-      messages: [
-        {
-          role: 'user',
-          content: `Given this poem, suggest 3 evocative image descriptions that would work as backgrounds for an Instagram poetry post. Each should be a vivid, detailed single paragraph suitable as a DALL-E image generation prompt. Return ONLY a JSON array of 3 strings, no other text.\n\nPoem:\n${req.body.text}`,
-        },
-      ],
-    })
-
-    const text = message.content[0].text.trim()
-    const match = text.match(/\[[\s\S]*\]/)
-    if (!match) throw new Error('Failed to parse Claude response')
-    res.json(JSON.parse(match[0]))
-  } catch (e) {
-    res.status(500).json({ error: e.message })
-  }
-})
-
-app.post('/api/ai/suggest-text-style', async (req, res) => {
-  const apiKey = getApiKey('claudeApiKey')
-  if (!apiKey) return res.status(400).json({ error: 'Claude API key not configured' })
-
-  try {
-    const { default: Anthropic } = await import('@anthropic-ai/sdk')
-    const client = new Anthropic({ apiKey })
-    const model = config.claudeModel || 'claude-haiku-4-5-20251001'
-
-    const message = await client.messages.create({
-      model,
-      max_tokens: 512,
-      messages: [
-        {
-          role: 'user',
-          content: `You are styling poem text to overlay on an image for a social media post. Given the poem and image description, suggest text styling that makes the text readable and beautiful. Return ONLY a JSON object with these exact keys: fontFamily (one of "Georgia", "system-ui", "monospace"), fontSize (int 20-60), fontWeight ("normal" or "bold"), fontStyle ("normal" or "italic"), fontColor (hex string), fontOpacity (0-1 float), textX (0-100 int, horizontal % position), textY (0-100 int, vertical % position), textAlign ("left", "center", or "right"), textShadow (boolean).\n\nPoem:\n${req.body.text}\n\nImage description: ${req.body.description || 'unknown'}`,
-        },
-      ],
-    })
-
-    const text = message.content[0].text.trim()
-    const match = text.match(/\{[\s\S]*\}/)
-    if (!match) throw new Error('Failed to parse Claude response')
-    res.json(JSON.parse(match[0]))
-  } catch (e) {
-    res.status(500).json({ error: e.message })
-  }
-})
-
-app.post('/api/ai/generate-image', async (req, res) => {
-  const apiKey = getApiKey('openaiApiKey')
-  if (!apiKey) return res.status(400).json({ error: 'OpenAI API key not configured' })
-
-  try {
-    const { default: OpenAI } = await import('openai')
-    const client = new OpenAI({ apiKey })
-
-    const response = await client.images.generate({
-      model: 'dall-e-3',
-      prompt: req.body.prompt,
-      n: 1,
-      size: '1024x1024',
-      response_format: 'b64_json',
-    })
-
-    res.json({ dataUrl: `data:image/png;base64,${response.data[0].b64_json}` })
-  } catch (e) {
-    res.status(500).json({ error: e.message })
-  }
+  })
+  res.json({ ok: true })
 })
 
 // ═══════════════════════════════════════════════════════════════════════════
-// IMAGE UPLOAD (replaces native dialog)
+// META API (per-file status/quality — replaces poems-meta.json)
+// ═══════════════════════════════════════════════════════════════════════════
+
+app.post('/api/set-meta', async (req, res) => {
+  const { path: filePath, status, quality } = req.body
+  const userId = req.session.userId
+
+  const patch = { modifiedAt: sql`now()` }
+  if (status !== undefined) patch.status = status
+  if (quality !== undefined) patch.quality = quality
+
+  await db
+    .update(schema.files)
+    .set(patch)
+    .where(and(eq(schema.files.userId, userId), eq(schema.files.path, filePath)))
+
+  res.json({ ok: true })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FILE UPLOAD (external drops from Finder/Explorer)
 // ═══════════════════════════════════════════════════════════════════════════
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } })
 
 const UPLOAD_ALLOWED_EXTS = new Set(['md', 'txt', 'docx'])
 
-async function uniqueMarkdownPath(dir, baseStem) {
-  let candidate = path.join(dir, `${baseStem}.md`)
-  if (!existsSync(candidate)) return candidate
+async function uniqueMarkdownPath(userId, targetFolder, baseStem) {
+  const prefix = targetFolder ? `${targetFolder}/${baseStem}` : baseStem
+  // Look up existing paths in this folder matching the stem
+  const existing = await db
+    .select({ path: schema.files.path })
+    .from(schema.files)
+    .where(
+      and(
+        eq(schema.files.userId, userId),
+        like(schema.files.path, `${prefix}%`),
+      ),
+    )
+  const taken = new Set(existing.map((r) => r.path))
+  let candidate = `${prefix}.md`
+  if (!taken.has(candidate)) return candidate
   let i = 1
-  while (existsSync(path.join(dir, `${baseStem}-${i}.md`))) i++
-  return path.join(dir, `${baseStem}-${i}.md`)
+  while (taken.has(`${prefix}-${i}.md`)) i++
+  return `${prefix}-${i}.md`
 }
 
 app.post('/api/upload-files', upload.array('files'), async (req, res) => {
   const files = req.files || []
   const targetFolder = (req.body.targetFolder || '').trim()
-
-  const targetDir = path.resolve(path.join(WRITER_ROOT, targetFolder))
-  if (!targetDir.startsWith(path.resolve(WRITER_ROOT))) {
-    return res.status(403).json({ error: 'Cannot upload outside WRITER_ROOT' })
-  }
-
-  try {
-    await fs.mkdir(targetDir, { recursive: true })
-  } catch (e) {
-    return res.status(500).json({ error: e.message })
-  }
+  const userId = req.session.userId
 
   const results = []
   for (const f of files) {
@@ -462,116 +348,19 @@ app.post('/api/upload-files', upload.array('files'), async (req, res) => {
       } else {
         content = f.buffer.toString('utf-8')
       }
-      const finalPath = await uniqueMarkdownPath(targetDir, stem)
-      await fs.writeFile(finalPath, content, 'utf-8')
-      results.push({
-        original: f.originalname,
-        saved: path.relative(path.resolve(WRITER_ROOT), finalPath),
+      const finalPath = await uniqueMarkdownPath(userId, targetFolder, stem)
+      await db.insert(schema.files).values({
+        userId,
+        path: finalPath,
+        content,
       })
+      results.push({ original: f.originalname, saved: finalPath })
     } catch (e) {
       results.push({ original: f.originalname, error: e.message })
     }
   }
 
   res.json({ results })
-})
-
-app.post('/api/upload-image', upload.single('image'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded' })
-
-  const ext = path.extname(req.file.originalname).toLowerCase().slice(1)
-  const mime = ext === 'jpg' ? 'image/jpeg' : `image/${ext}`
-  const dataUrl = `data:${mime};base64,${req.file.buffer.toString('base64')}`
-
-  res.json({
-    name: req.file.originalname,
-    dataUrl,
-  })
-})
-
-// ═══════════════════════════════════════════════════════════════════════════
-// EXPORT HELPERS
-// ═══════════════════════════════════════════════════════════════════════════
-
-app.post('/api/write-base64', async (req, res) => {
-  const { path: filePath, dataUrl } = req.body
-  const base64 = dataUrl.split(',')[1]
-  await fs.writeFile(filePath, Buffer.from(base64, 'base64'))
-  res.json({ path: filePath })
-})
-
-// Download endpoint — lets the browser download a data URL as a file
-app.post('/api/download', (req, res) => {
-  const { dataUrl, filename } = req.body
-  const base64 = dataUrl.split(',')[1]
-  const mimeMatch = dataUrl.match(/^data:([^;]+);/)
-  const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream'
-
-  res.setHeader('Content-Type', mime)
-  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
-  res.send(Buffer.from(base64, 'base64'))
-})
-
-// ═══════════════════════════════════════════════════════════════════════════
-// VIDEO CREATION
-// ═══════════════════════════════════════════════════════════════════════════
-
-app.post('/api/video/create-reel', async (req, res) => {
-  try {
-    const { default: ffmpegPath } = await import('ffmpeg-static')
-    const { default: ffmpeg } = await import('fluent-ffmpeg')
-    ffmpeg.setFfmpegPath(ffmpegPath)
-
-    const tempDir = os.tmpdir()
-    const ts = Date.now()
-
-    const { imageDataUrl, audioBase64, duration } = req.body
-
-    // Save composite image to temp
-    const imgPath = path.join(tempDir, `reel-img-${ts}.jpg`)
-    const imgBase64 = imageDataUrl.split(',')[1]
-    await fs.writeFile(imgPath, Buffer.from(imgBase64, 'base64'))
-
-    // Save audio to temp
-    const audioPath = path.join(tempDir, `reel-audio-${ts}.webm`)
-    await fs.writeFile(audioPath, Buffer.from(audioBase64, 'base64'))
-
-    const outputPath = path.join(tempDir, `reel-${ts}.mp4`)
-
-    await new Promise((resolve, reject) => {
-      ffmpeg()
-        .input(imgPath)
-        .loop(duration)
-        .input(audioPath)
-        .outputOptions([
-          '-c:v libx264',
-          '-tune stillimage',
-          '-c:a aac',
-          '-b:a 192k',
-          '-pix_fmt yuv420p',
-          '-shortest',
-          '-vf',
-          'scale=1080:1080',
-        ])
-        .output(outputPath)
-        .on('end', async () => {
-          await fs.unlink(imgPath).catch(() => {})
-          await fs.unlink(audioPath).catch(() => {})
-          resolve()
-        })
-        .on('error', reject)
-        .run()
-    })
-
-    // Read the output and send as base64
-    const videoBuffer = await fs.readFile(outputPath)
-    await fs.unlink(outputPath).catch(() => {})
-    res.json({
-      dataUrl: `data:video/mp4;base64,${videoBuffer.toString('base64')}`,
-    })
-  } catch (e) {
-    res.status(500).json({ error: e.message })
-  }
 })
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -590,6 +379,4 @@ if (existsSync(distPath)) {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Writer server running at http://0.0.0.0:${PORT}`)
-  console.log(`Serving files from ${WRITER_ROOT}`)
-  console.log(`Config stored at ${CONFIG_PATH}`)
 })

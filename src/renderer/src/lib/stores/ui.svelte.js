@@ -16,7 +16,6 @@ export const ui = $state({
 
   // Modals
   statusEditorOpen: false,
-  settingsOpen: false,
   cleanupOpen: false,
   helpOpen: false,
 

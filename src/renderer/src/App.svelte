@@ -11,7 +11,6 @@
   import Toast from './components/Toast.svelte'
   import StatusEditor from './components/StatusEditor.svelte'
   import CleanupPreview from './components/CleanupPreview.svelte'
-  import SettingsModal from './components/SettingsModal.svelte'
   import HelpPanel from './components/HelpPanel.svelte'
   import ModalDialog from './components/ModalDialog.svelte'
 
@@ -48,7 +47,6 @@
 <Toast />
 <StatusEditor />
 <CleanupPreview />
-<SettingsModal />
 <HelpPanel />
 <ModalDialog />
 
