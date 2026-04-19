@@ -7,27 +7,52 @@
  *
  * `matchRoute()` is a lightweight matcher for portfolio URLs. The root App
  * consumes `pathname` and branches on it with `{#if}` / `matchRoute()`.
+ *
+ * GH Pages preview quirk: when served at `personthing.github.io/writer/`,
+ * `location.pathname` is prefixed with `/writer` (the repo name). We strip
+ * that prefix on read and re-attach it on push so route matching sees clean
+ * app-absolute paths. On the custom domain the prefix is empty and this is
+ * a no-op.
  */
 
+const ROUTE_PREFIX =
+  typeof location !== 'undefined' && location.hostname === 'personthing.github.io'
+    ? '/writer'
+    : ''
+
+function stripPrefix(path) {
+  if (!ROUTE_PREFIX) return path
+  if (path === ROUTE_PREFIX) return '/'
+  if (path.startsWith(ROUTE_PREFIX + '/')) return path.slice(ROUTE_PREFIX.length)
+  return path
+}
+
+function addPrefix(path) {
+  if (!ROUTE_PREFIX) return path
+  return ROUTE_PREFIX + (path === '/' ? '/' : path)
+}
+
 class Router {
-  pathname = $state(typeof location !== 'undefined' ? location.pathname : '/')
+  pathname = $state(
+    typeof location !== 'undefined' ? stripPrefix(location.pathname) : '/'
+  )
 
   constructor() {
     if (typeof window === 'undefined') return
     window.addEventListener('popstate', () => {
-      this.pathname = location.pathname
+      this.pathname = stripPrefix(location.pathname)
     })
   }
 
   navigate(to) {
-    if (to === location.pathname) return
-    history.pushState(null, '', to)
+    if (to === this.pathname) return
+    history.pushState(null, '', addPrefix(to))
     this.pathname = to
     window.scrollTo(0, 0)
   }
 
   replace(to) {
-    history.replaceState(null, '', to)
+    history.replaceState(null, '', addPrefix(to))
     this.pathname = to
   }
 }
