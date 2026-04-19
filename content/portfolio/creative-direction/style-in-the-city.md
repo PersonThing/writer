@@ -1,5 +1,6 @@
 ---
 title: Style in the City
+order: 2
 slug: creative-direction--style-in-the-city
 source_path: /creative-direction/style-in-the-city
 ---

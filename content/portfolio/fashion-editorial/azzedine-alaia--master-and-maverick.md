@@ -1,5 +1,6 @@
 ---
 title: "Azzedine Alaia: Master & Maverick"
+order: 1
 slug: fashion-editorial--azzedine-alaia--master-and-maverick
 source_path: /fashion-editorial/azzedine-alaia:-master-and-maverick
 lede: The death of an iconic designer who refused to play by the rules has left a vacuum in the fashion world

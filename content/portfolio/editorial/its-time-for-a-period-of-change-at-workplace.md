@@ -1,5 +1,6 @@
 ---
 title: Time For a Period Change at Work
+order: 3
 slug: editorial--its-time-for-a-period-of-change-at-workplace
 source_path: /editorial/its-time-for-a-period-of-change-at-workplace
 lede: "A firm Culture Machine gave women leave on the first day of their period, attracting attention"

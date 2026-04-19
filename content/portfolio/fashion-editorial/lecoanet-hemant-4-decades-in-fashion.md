@@ -1,5 +1,6 @@
 ---
 title: Lecoanet Hemant: 4 Decades In Fashion
+order: 7
 slug: fashion-editorial--lecoanet-hemant-4-decades-in-fashion
 source_path: /fashion-editorial/lecoanet-hemant-4-decades-in-fashion
 hero: /portfolio/images/fashion-editorial--lecoanet-hemant-4-decades-in-fashion--01.png

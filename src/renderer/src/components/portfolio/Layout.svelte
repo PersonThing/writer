@@ -21,6 +21,23 @@
     WORK_CATEGORIES.some((c) => router.pathname.startsWith(c.path)),
   )
 
+  function handleRecsClick(e) {
+    // If we're already on the home page, just scroll. Otherwise navigate to /
+    // and scroll after the new page mounts.
+    if (e.metaKey || e.ctrlKey || e.shiftKey) return
+    e.preventDefault()
+    mobileOpen = false
+    if (router.pathname !== '/') {
+      router.navigate('/')
+      // Wait for HomePage to render, then scroll
+      setTimeout(() => {
+        document.getElementById('recommendations')?.scrollIntoView({ behavior: 'smooth' })
+      }, 50)
+    } else {
+      document.getElementById('recommendations')?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+
   onMount(() => {
     function onDocClick(e) {
       if (!e.target.closest('.work-menu')) workOpen = false
@@ -62,6 +79,7 @@
           </div>
         {/if}
       </div>
+      <a href="/#recommendations" class="nav-link" onclick={handleRecsClick}>Recommendations</a>
       <Link href="/about" class="nav-link">About</Link>
       <Link href="/contact" class="nav-link">Contact</Link>
     </nav>

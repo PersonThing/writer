@@ -1,5 +1,6 @@
 ---
 title: On Writing
+order: 1
 slug: poetry--on-writing
 source_path: /poetry/on-writing
 lede: A pen lies gently

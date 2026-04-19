@@ -1,5 +1,6 @@
 ---
 title: "Fashion Weak, Is It?"
+order: 3
 slug: fashion-editorial--fashion-weak-is-it
 source_path: /fashion-editorial/fashion-weak-is-it
 hero: /portfolio/images/fashion-editorial--fashion-weak-is-it--01.png

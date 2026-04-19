@@ -1,5 +1,6 @@
 ---
 title: Work-wear Store
+order: 6
 slug: creative-direction--dress-for-the-job-you-want
 source_path: /creative-direction/dress-for-the-job-you-want
 ---

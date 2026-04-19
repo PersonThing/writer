@@ -1,5 +1,6 @@
 ---
 title: All Hail The Taxi
+order: 8
 slug: editorial--all-hail-the-taxi
 source_path: /editorial/all-hail-the-taxi
 hero: /portfolio/images/editorial--all-hail-the-taxi--01.png

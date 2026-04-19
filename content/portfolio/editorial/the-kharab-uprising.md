@@ -1,5 +1,6 @@
 ---
 title: The KhArab Uprising
+order: 5
 slug: editorial--the-kharab-uprising
 source_path: /editorial/the-kharab-uprising
 lede: "In 2 years, Delhi has gone from “Tu Jaanta Nahi Mera Baap Kaun Hai” to #NotInMyName. What is the reason for this particular ‘woke’ behaviour our everyday junta is displaying?"

@@ -1,5 +1,6 @@
 ---
 title: "You don’t need to be a wizard to pull off a cape this winter"
+order: 2
 slug: fashion-editorial--you-dont-need-to-be-a-wizard-to-pull-off-a-cape-this-winter
 source_path: /fashion-editorial/you-dont-need-to-be-a-wizard-to-pull-off-a-cape-this-winter
 hero: /portfolio/images/fashion-editorial--you-dont-need-to-be-a-wizard-to-pull-off-a-cape-this-winter--01.png

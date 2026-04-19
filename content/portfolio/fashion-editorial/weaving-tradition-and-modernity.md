@@ -1,5 +1,6 @@
 ---
 title: Weaving tradition and modernity
+order: 12
 slug: fashion-editorial--weaving-tradition-and-modernity
 source_path: /fashion-editorial/weaving-tradition-and-modernity
 ---

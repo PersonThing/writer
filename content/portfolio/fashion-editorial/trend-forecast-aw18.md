@@ -1,5 +1,6 @@
 ---
 title: Trend Forecast AW18
+order: 10
 slug: fashion-editorial--trend-forecast-aw18
 source_path: /fashion-editorial/trend-forecast-aw18
 ---

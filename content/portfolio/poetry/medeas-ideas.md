@@ -1,5 +1,6 @@
 ---
 title: "Medea's Ideas"
+order: 4
 slug: poetry--medeas-ideas
 source_path: /poetry/medeas-ideas
 lede: Every two fortnights

@@ -125,6 +125,7 @@ function toEntry(file, raw) {
     title: frontmatter.title || 'Untitled',
     lede: frontmatter.lede || '',
     hero: frontmatter.hero || '',
+    order: frontmatter.order ? Number(frontmatter.order) : 999,
     images: Array.isArray(frontmatter.images) ? frontmatter.images : [],
     body,
     category,
@@ -151,7 +152,10 @@ export function getPage(routePath) {
 export function getCategoryPages(category) {
   return catalog
     .filter((e) => e.category === category && e.subSlug)
-    .sort((a, b) => a.title.localeCompare(b.title))
+    .sort((a, b) => {
+      if (a.order !== b.order) return a.order - b.order
+      return a.title.localeCompare(b.title)
+    })
 }
 
 export function getCategoryLanding(category) {

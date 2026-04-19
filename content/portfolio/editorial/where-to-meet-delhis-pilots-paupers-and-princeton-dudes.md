@@ -1,5 +1,6 @@
 ---
 title: How To Meet A Guy in 10 Ways
+order: 9
 slug: editorial--where-to-meet-delhis-pilots-paupers-and-princeton-dudes
 source_path: /editorial/where-to-meet-delhis-pilots-paupers-and-princeton-dudes
 hero: /portfolio/images/editorial--where-to-meet-delhis-pilots-paupers-and-princeton-dudes--01.png

@@ -159,12 +159,15 @@ async function main() {
     }
     allRenames.push(...imageRenames)
 
-    // Add videos + audios at mediaY
+    // Add videos + audios
     for (const v of p.videos || []) {
       assets.push({ type: 'video', y: mediaY, path: v.path })
     }
+    // Audio policy: on poetry pages put audio BEFORE any text/image so the
+    // player sits at the top of the piece. Everywhere else, use mediaY.
+    const audioY = category === 'poetry' ? -1 : mediaY
     for (const au of p.audios || []) {
-      assets.push({ type: 'audio', y: mediaY, path: au.path })
+      assets.push({ type: 'audio', y: audioY, path: au.path })
     }
 
     assets.sort((a, b) => a.y - b.y)

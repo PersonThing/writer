@@ -1,5 +1,6 @@
 ---
 title: Runway Trend Report F/W 2012
+order: 5
 slug: fashion-editorial--bazaar-runway
 source_path: /fashion-editorial/bazaar-runway
 ---

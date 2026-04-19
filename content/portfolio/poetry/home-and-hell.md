@@ -1,5 +1,6 @@
 ---
 title: "Home & Hell"
+order: 5
 slug: poetry--home-and-hell
 source_path: /poetry/home-and-hell
 lede: "It decays as much as it grows;"

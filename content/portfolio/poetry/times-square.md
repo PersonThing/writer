@@ -1,5 +1,6 @@
 ---
 title: Times Square
+order: 6
 slug: poetry--times-square
 source_path: /poetry/times-square
 lede: "We were white-washed by Times Square,"

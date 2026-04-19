@@ -1,5 +1,6 @@
 ---
 title: "My Dad, Socks & Gulzar"
+order: 3
 slug: poetry--my-dad-socks-and-gulzar
 source_path: /poetry/my-dad-socks-and-gulzar
 hero: /portfolio/images/poetry--my-dad-socks-and-gulzar--01.png

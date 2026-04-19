@@ -1,5 +1,6 @@
 ---
 title: End of Season Sale
+order: 4
 slug: creative-direction--end-of-season-sale
 source_path: /creative-direction/end-of-season-sale
 ---

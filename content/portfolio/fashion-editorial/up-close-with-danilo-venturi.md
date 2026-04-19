@@ -1,5 +1,6 @@
 ---
 title: Up Close With Danilo Venturi
+order: 8
 slug: fashion-editorial--up-close-with-danilo-venturi
 source_path: /fashion-editorial/up-close-with-danilo-venturi
 ---

@@ -1,5 +1,6 @@
 ---
 title: Coming-of-rage with I May Destroy You
+order: 1
 slug: editorial--weekend-watch-coming-of-rage-with-i-may-destroy-you
 source_path: /editorial/weekend-watch-coming-of-rage-with-i-may-destroy-you
 lede: "BAFTA winner Michaela Coel’s 'I May Destroy You', now streaming on Hotstar, breaks new ground with its comedic touch to trauma"

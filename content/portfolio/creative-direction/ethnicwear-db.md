@@ -1,5 +1,6 @@
 ---
 title: Amazon Designer Boutique
+order: 1
 slug: creative-direction--ethnicwear-db
 source_path: /creative-direction/ethnicwear-db
 lede: "Showcase the width of collections across different product lines (saris, lehengas, shararas)"

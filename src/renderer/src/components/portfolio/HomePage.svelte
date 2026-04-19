@@ -1,6 +1,7 @@
 <script>
   import Layout from './Layout.svelte'
   import Link from '../Link.svelte'
+  import { RECOMMENDATIONS } from '../../../../../content/portfolio/_recommendations.js'
 
   const IMG = (id) => `/portfolio/images/${id}`
 
@@ -125,6 +126,22 @@
       </div>
     </section>
   {/each}
+
+  <section id="recommendations" class="category-section recommendations">
+    <h2 class="category-heading">Recommendations</h2>
+    <div class="recs-grid">
+      {#each RECOMMENDATIONS as r}
+        <blockquote class="rec">
+          <div class="rec-mark">”</div>
+          <p class="rec-quote">{r.quote}</p>
+          <footer class="rec-author">
+            <div class="rec-name">{r.author}</div>
+            <div class="rec-role">{r.role}</div>
+          </footer>
+        </blockquote>
+      {/each}
+    </div>
+  </section>
 </Layout>
 
 <style>
@@ -293,6 +310,58 @@
     .tiles-2,
     .tiles-3 {
       grid-template-columns: 1fr;
+    }
+  }
+
+  .recommendations {
+    scroll-margin-top: 2rem;
+  }
+  .recs-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem 3rem;
+    margin-top: 1rem;
+  }
+  .rec {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 1.25rem;
+    margin: 0;
+    padding: 0;
+  }
+  .rec-mark {
+    font-family: Georgia, serif;
+    font-size: 3.2rem;
+    line-height: 1;
+    color: var(--p-accent);
+    transform: translateY(-0.2rem) scaleX(-1);
+    grid-row: 1 / 3;
+    align-self: start;
+  }
+  .rec-quote {
+    margin: 0 0 1rem;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: var(--p-text);
+  }
+  .rec-author {
+    font-size: 0.82rem;
+    grid-column: 2;
+  }
+  .rec-name {
+    font-weight: 500;
+    color: var(--p-text);
+    margin-bottom: 0.15rem;
+  }
+  .rec-role {
+    color: var(--p-muted);
+    line-height: 1.4;
+  }
+
+  @media (max-width: 900px) {
+    .recs-grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
     }
   }
 </style>

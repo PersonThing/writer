@@ -101,7 +101,20 @@
   :global(.portfolio-root .piece-body .md-audio) {
     width: 100%;
     display: block;
-    margin: 1rem 0;
+    margin: 1.5rem 0;
+    /* Tell browser native controls to render in dark mode — Chrome/Safari
+       use this to draw light buttons over a transparent background. */
+    color-scheme: dark;
+    background: transparent;
+  }
+  /* In Chromium, override the default filled background so our page
+     shows through the control. */
+  :global(.portfolio-root .piece-body .md-audio::-webkit-media-controls-enclosure) {
+    background: transparent;
+    border-radius: 0;
+  }
+  :global(.portfolio-root .piece-body .md-audio::-webkit-media-controls-panel) {
+    background: transparent;
   }
 
   :global(.portfolio-root .piece-body h1) {

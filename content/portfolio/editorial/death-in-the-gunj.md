@@ -1,5 +1,6 @@
 ---
 title: Death In The Gunj
+order: 6
 slug: editorial--death-in-the-gunj
 source_path: /editorial/death-in-the-gunj
 lede: "Toxic masculinity; is it real or just a feminist ploy to get you to join the bandwagon?"

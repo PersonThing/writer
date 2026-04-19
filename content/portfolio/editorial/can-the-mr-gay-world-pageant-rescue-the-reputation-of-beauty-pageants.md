@@ -1,5 +1,6 @@
 ---
 title: The Mr GAY World Pageant
+order: 7
 slug: editorial--can-the-mr-gay-world-pageant-rescue-the-reputation-of-beauty-pageants
 source_path: /editorial/can-the-mr-gay-world-pageant-rescue-the-reputation-of-beauty-pageants
 hero: /portfolio/images/editorial--can-the-mr-gay-world-pageant-rescue-the-reputation-of-beauty-pageants--01.webp

@@ -1,5 +1,6 @@
 ---
 title: "Masculinity, One Closet at a Time"
+order: 4
 slug: editorial--lets-talk-about-masculinity-one-closet-at-a-time
 source_path: /editorial/lets-talk-about-masculinity-one-closet-at-a-time
 hero: /portfolio/images/editorial--lets-talk-about-masculinity-one-closet-at-a-time--01.png

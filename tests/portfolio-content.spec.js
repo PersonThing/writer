@@ -83,6 +83,36 @@ test.describe('portfolio content rendering', () => {
     expect(count).toBeGreaterThanOrEqual(4)
   })
 
+  test('poetry category lists pieces in live-site order', async ({ page }) => {
+    await page.goto('/poetry')
+    const titles = await page.locator('.piece-row .meta h3').allTextContents()
+    // Top 3 must match prod ordering: On Writing, Hannah Banana, My Dad Socks & Gulzar
+    expect(titles[0]).toMatch(/On Writing/i)
+    expect(titles[1]).toMatch(/Hannah Banana/i)
+    expect(titles[2]).toMatch(/Dad/i)
+  })
+
+  test('home has a Recommendations section with 4 quotes', async ({ page }) => {
+    await page.goto('/')
+    const recs = page.locator('#recommendations .rec')
+    await expect(recs).toHaveCount(4)
+    await expect(page.locator('#recommendations .rec .rec-name').first()).toBeVisible()
+  })
+
+  test('Recommendations nav link scrolls to the home section', async ({ page }) => {
+    await page.goto('/')
+    await page.getByRole('link', { name: 'Recommendations' }).click()
+    // URL stays at "/" (hash anchor is just a scroll target, not a route change)
+    const section = page.locator('#recommendations')
+    // After smooth-scroll, the section should be in the viewport.
+    await page.waitForTimeout(500)
+    const inView = await section.evaluate((el) => {
+      const r = el.getBoundingClientRect()
+      return r.top < window.innerHeight && r.bottom > 0
+    })
+    expect(inView).toBe(true)
+  })
+
   test('footer has snail, 3 social icons, and current-year copyright', async ({ page }) => {
     await page.goto('/')
     const footer = page.locator('.site-footer')

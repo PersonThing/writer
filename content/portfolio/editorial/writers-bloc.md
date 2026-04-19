@@ -1,5 +1,6 @@
 ---
 title: "Author Advaita Kala on her debut novel, Almost Single"
+order: 11
 slug: editorial--writers-bloc
 source_path: /editorial/writers-bloc
 ---

@@ -1,5 +1,6 @@
 ---
 title: Bespoke for the masses
+order: 6
 slug: fashion-editorial--bespoke-for-the-masses
 source_path: /fashion-editorial/bespoke-for-the-masses
 hero: /portfolio/images/fashion-editorial--bespoke-for-the-masses--01.png

@@ -1,5 +1,6 @@
 ---
 title: Clothing — An exercise in mythmaking
+order: 11
 slug: fashion-editorial--clothing---an-exercise-in-mythmaking
 source_path: /fashion-editorial/clothing---an-exercise-in-mythmaking
 lede: "Fashion is like God, it impacts you even if you don’t believe in it."

@@ -1,5 +1,6 @@
 ---
 title: The 3 Saviours of FAKE NEWS Busting.
+order: 2
 slug: editorial--as-news-gets-compromised-for-clicks-3-saviours-rise-to-the-challenge
 source_path: /editorial/as-news-gets-compromised-for-clicks-3-saviours-rise-to-the-challenge
 hero: /portfolio/images/editorial--as-news-gets-compromised-for-clicks-3-saviours-rise-to-the-challenge--01.png

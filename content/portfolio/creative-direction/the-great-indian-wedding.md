@@ -1,5 +1,6 @@
 ---
 title: The Great Indian Wedding
+order: 5
 slug: creative-direction--the-great-indian-wedding
 source_path: /creative-direction/the-great-indian-wedding
 ---
