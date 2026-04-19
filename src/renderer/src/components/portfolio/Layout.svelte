@@ -2,6 +2,7 @@
   import Link from '../Link.svelte'
   import { onMount } from 'svelte'
   import { router } from '../../lib/router.svelte.js'
+  import { asset } from '../../lib/asset.js'
 
   let { children } = $props()
 
@@ -97,7 +98,7 @@
   <footer class="site-footer">
     <div class="site-footer-inner">
       <a class="footer-email" href="mailto:shigorika@gmail.com">
-        <img class="footer-snail" src="/portfolio/chrome/snail.png" alt="" />
+        <img class="footer-snail" src={asset('/portfolio/chrome/snail.png')} alt="" />
         <span class="footer-email-text">
           <span class="footer-email-lead">Email me at</span>
           <span class="footer-email-addr">shigorika@gmail.com</span>
@@ -106,13 +107,13 @@
 
       <nav class="footer-socials" aria-label="Social">
         <a href="https://www.linkedin.com/in/shigorika/" target="_blank" rel="noreferrer" aria-label="LinkedIn">
-          <img src="/portfolio/chrome/linkedin.png" alt="" />
+          <img src={asset('/portfolio/chrome/linkedin.png')} alt="" />
         </a>
         <a href="https://www.instagram.com/schadenfreud" target="_blank" rel="noreferrer" aria-label="Instagram">
-          <img src="/portfolio/chrome/instagram.png" alt="" />
+          <img src={asset('/portfolio/chrome/instagram.png')} alt="" />
         </a>
         <a href="https://thebluestocking.substack.com/" target="_blank" rel="noreferrer" aria-label="Substack">
-          <img src="/portfolio/chrome/substack.png" alt="" />
+          <img src={asset('/portfolio/chrome/substack.png')} alt="" />
         </a>
       </nav>
 

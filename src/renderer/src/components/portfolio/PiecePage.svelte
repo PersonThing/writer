@@ -3,6 +3,7 @@
   import Link from '../Link.svelte'
   import { parseMarkdown } from '../../lib/markdown.js'
   import { getPage } from '../../lib/content.js'
+  import { asset } from '../../lib/asset.js'
 
   let { category, slug } = $props()
 
@@ -54,7 +55,7 @@
 
       {#if hero}
         <figure class="hero">
-          <img src={hero} alt={piece.title} />
+          <img src={asset(hero)} alt={piece.title} />
         </figure>
       {/if}
 

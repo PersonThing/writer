@@ -7,6 +7,7 @@
   import { onMount } from 'svelte'
   import { RECOMMENDATIONS } from '@content/portfolio/_recommendations.js'
   import { getHomeSections } from '@lib/content.js'
+  import { asset } from '@lib/asset.js'
 
   const HERO = '/portfolio/images/663ee7_ce193cf08c5e4528a9c4c7c14414bd2c~mv2.jpg'
   // One lead piece plus up to three secondary pieces per category.
@@ -64,7 +65,7 @@
 
 <Layout>
   <section class="k-hero">
-    <img class="k-bg" src={HERO} alt="" />
+    <img class="k-bg" src={asset(HERO)} alt="" />
     <div class="k-hero-content">
       <h1 class="headline">
         I am a <span class="role-slot">
@@ -125,7 +126,7 @@
               <Link href={p.url} class="tail-card">
                 <div class="tail-image">
                   {#if p.thumbnail}
-                    <img src={p.thumbnail} alt={p.title} loading="lazy" />
+                    <img src={asset(p.thumbnail)} alt={p.title} loading="lazy" />
                   {/if}
                 </div>
                 <div class="tail-meta">
@@ -141,7 +142,7 @@
           <Link href={hero.url} class="feature-lead">
             <div class="feature-image">
               {#if hero.thumbnail}
-                <img src={hero.thumbnail} alt={hero.title} loading="lazy" />
+                <img src={asset(hero.thumbnail)} alt={hero.title} loading="lazy" />
               {/if}
             </div>
             <div class="feature-text">
@@ -158,7 +159,7 @@
                 <Link href={t.url} class="tail-card">
                   <div class="tail-image">
                     {#if t.thumbnail}
-                      <img src={t.thumbnail} alt={t.title} loading="lazy" />
+                      <img src={asset(t.thumbnail)} alt={t.title} loading="lazy" />
                     {/if}
                   </div>
                   <div class="tail-meta">

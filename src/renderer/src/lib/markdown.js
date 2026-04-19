@@ -9,12 +9,14 @@
  *   ::: audio /path.m4a               → <audio controls ...>
  */
 
+import { asset } from './asset.js'
+
 function escAttr(s) {
   return String(s).replace(/"/g, '&quot;')
 }
 
 function renderStandaloneImage(alt, src) {
-  return `<figure class="md-figure"><img src="${escAttr(src)}" alt="${escAttr(alt)}" loading="lazy"></figure>`
+  return `<figure class="md-figure"><img src="${escAttr(asset(src))}" alt="${escAttr(alt)}" loading="lazy"></figure>`
 }
 
 function parseDirective(line) {
@@ -32,12 +34,12 @@ function parseDirective(line) {
 }
 
 function renderVideo({ src, poster }) {
-  const posterAttr = poster ? ` poster="${escAttr(poster)}"` : ''
-  return `<video class="md-video" controls playsinline preload="metadata" src="${escAttr(src)}"${posterAttr}></video>`
+  const posterAttr = poster ? ` poster="${escAttr(asset(poster))}"` : ''
+  return `<video class="md-video" controls playsinline preload="metadata" src="${escAttr(asset(src))}"${posterAttr}></video>`
 }
 
 function renderAudio({ src }) {
-  return `<audio class="md-audio" controls preload="metadata" src="${escAttr(src)}"></audio>`
+  return `<audio class="md-audio" controls preload="metadata" src="${escAttr(asset(src))}"></audio>`
 }
 
 export function parseMarkdown(md) {

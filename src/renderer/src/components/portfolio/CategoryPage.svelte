@@ -3,6 +3,7 @@
   import Link from '../Link.svelte'
   import { parseMarkdown } from '../../lib/markdown.js'
   import { getCategoryLanding, getCategoryCatalog } from '../../lib/content.js'
+  import { asset } from '../../lib/asset.js'
 
   let { category } = $props()
 
@@ -37,7 +38,7 @@
           <Link href={piece.url} class="piece-row">
             <div class="thumb">
               {#if piece.thumbnail}
-                <img src={piece.thumbnail} alt={piece.title} loading="lazy" />
+                <img src={asset(piece.thumbnail)} alt={piece.title} loading="lazy" />
               {/if}
             </div>
             <div class="meta">

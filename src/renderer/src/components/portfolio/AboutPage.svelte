@@ -6,6 +6,7 @@
   import { parseMarkdown } from '@lib/markdown.js'
   import { getPage } from '@lib/content.js'
   import { parseAbout } from '@lib/about-sections.js'
+  import { asset } from '@lib/asset.js'
 
   const page = getPage('/about')
   const parsed = parseAbout(page?.body || '')
@@ -46,14 +47,14 @@
         <nav class="ed-socials" aria-label="Social links">
           {#each SOCIALS as s}
             <a href={s.href} target="_blank" rel="noreferrer" aria-label={s.label}>
-              <img src={s.icon} alt="" />
+              <img src={asset(s.icon)} alt="" />
             </a>
           {/each}
         </nav>
       </div>
       <figure class="ed-portrait">
         <img
-          src="/portfolio/images/663ee7_b220f43509264034b686cd84c50d3835~mv2.png"
+          src={asset('/portfolio/images/663ee7_b220f43509264034b686cd84c50d3835~mv2.png')}
           alt="Portrait of Shigorika"
         />
         <figcaption>© Sarah Morris</figcaption>
