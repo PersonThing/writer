@@ -28,6 +28,7 @@
   import PublishedPaperPage from './components/portfolio/PublishedPaperPage.svelte'
   import NotFoundPage from './components/portfolio/NotFoundPage.svelte'
 
+  const STATIC_BUILD = import.meta.env.VITE_STATIC_BUILD === '1'
   let isWriter = $derived(isWriterPath(router.pathname))
   let portfolioMatch = $derived(!isWriter ? matchPortfolio(router.pathname) : null)
 
@@ -66,7 +67,15 @@
   })
 </script>
 
-{#if isWriter}
+{#if isWriter && STATIC_BUILD}
+  <div class="writer-unavailable">
+    <div class="writer-unavailable-card">
+      <h1>Writer</h1>
+      <p>This deployment is the public portfolio only.</p>
+      <p>The writer app isn't available here.</p>
+    </div>
+  </div>
+{:else if isWriter}
   <div class="app-root">
     {#if auth.loading}
       <div class="loading">Loading...</div>
@@ -135,6 +144,32 @@
     height: 100%;
     display: flex;
     flex-direction: column;
+  }
+  .writer-unavailable {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+  }
+  .writer-unavailable-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 2rem 2.5rem;
+    text-align: center;
+    max-width: 420px;
+  }
+  .writer-unavailable-card h1 {
+    font-family: var(--font-serif);
+    color: var(--accent);
+    margin: 0 0 0.8rem;
+    font-size: 1.6rem;
+  }
+  .writer-unavailable-card p {
+    color: var(--muted);
+    margin: 0.3rem 0;
+    font-size: 0.9rem;
   }
   .app-content {
     flex: 1;

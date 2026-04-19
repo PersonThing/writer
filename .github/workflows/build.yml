@@ -37,8 +37,10 @@ jobs:
       - run: npm test
 
   deploy:
+    # Railway deploy disabled for now — writer backend is not yet provisioned.
+    # Re-enable by removing `if: false` once Railway is set up.
+    if: false
     needs: test
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

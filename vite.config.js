@@ -9,6 +9,7 @@ const contentDir = path.resolve(projectRoot, 'content')
 
 export default defineConfig({
   root: 'src/renderer',
+  base: './',
   plugins: [svelte()],
   resolve: {
     alias: {
