@@ -2,13 +2,9 @@
 title: "Medea's Ideas"
 slug: poetry--medeas-ideas
 source_path: /poetry/medeas-ideas
-images: 
-  - "/portfolio/images/663ee7_660154972e7b41f8b3b9c71cc5c91947~mv2.png"
+lede: Every two fortnights
+hero: /portfolio/images/poetry--medeas-ideas--01.png
 ---
-
-# Medea's Ideas
-
-Every two fortnights
 
 the clock is set right.
 

@@ -2,14 +2,9 @@
 title: Hannah Banana
 slug: poetry--hannah-banana
 source_path: /poetry/hannah-banana
-images: 
-  - "/portfolio/images/663ee7_987702b503f84824a810d95918c3b38a~mv2.png"
-  - "/portfolio/images/663ee7_9b3c8f4150f745c095a9017c8478eadc~mv2.png"
+lede: Hannah
+hero: /portfolio/images/poetry--hannah-banana--01.png
 ---
-
-# Hannah Banana
-
-Hannah
 
 Banana
 
@@ -54,6 +49,8 @@ Where did you learn to love like that?
 To wear your heart on your sleeve
 
 And your pain as a mild peeve
+
+![](/portfolio/images/poetry--hannah-banana--02.png)
 
 How much space is there
 

@@ -2,13 +2,9 @@
 title: "Home & Hell"
 slug: poetry--home-and-hell
 source_path: /poetry/home-and-hell
-images: 
-  - "/portfolio/images/663ee7_593fdb73b9bd4b579ec9d8e78bc742a9~mv2.png"
+lede: "It decays as much as it grows;"
+hero: /portfolio/images/poetry--home-and-hell--01.png
 ---
-
-# Home & Hell
-
-It decays as much as it grows;
 
 the old gathers dust
 

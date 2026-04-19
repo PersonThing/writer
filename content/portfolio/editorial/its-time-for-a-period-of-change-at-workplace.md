@@ -2,13 +2,9 @@
 title: Time For a Period Change at Work
 slug: editorial--its-time-for-a-period-of-change-at-workplace
 source_path: /editorial/its-time-for-a-period-of-change-at-workplace
-images: 
-  - "/portfolio/images/663ee7_f44e73db98c24a9f8ea420578c995067~mv2.png"
+lede: "A firm Culture Machine gave women leave on the first day of their period, attracting attention"
+hero: /portfolio/images/editorial--its-time-for-a-period-of-change-at-workplace--01.png
 ---
-
-# Time For a Period Change at Work
-
-A firm Culture Machine gave women leave on the first day of their period, attracting attention
 
 A digital entertainment company in Mumbai called Culture Machine put their money where their mouth is. As an employer of 75 women, they decided to give First day Of Period (FOP) leave. Men, and certain women, all over social media collectively lost it.
 

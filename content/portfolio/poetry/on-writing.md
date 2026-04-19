@@ -2,13 +2,9 @@
 title: On Writing
 slug: poetry--on-writing
 source_path: /poetry/on-writing
-images: 
-  - "/portfolio/images/663ee7_46d6bfab8bcc4420bbb2bb75a795988a~mv2.png"
+lede: A pen lies gently
+hero: /portfolio/images/poetry--on-writing--01.png
 ---
-
-# On Writing
-
-A pen lies gently
 
 in wait, an old dog
 

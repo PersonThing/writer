@@ -2,11 +2,8 @@
 title: "You don’t need to be a wizard to pull off a cape this winter"
 slug: fashion-editorial--you-dont-need-to-be-a-wizard-to-pull-off-a-cape-this-winter
 source_path: /fashion-editorial/you-dont-need-to-be-a-wizard-to-pull-off-a-cape-this-winter
-images: 
-  - "/portfolio/images/663ee7_b10f3f0e1ba64995ad8a821ff939e429~mv2.png"
+hero: /portfolio/images/fashion-editorial--you-dont-need-to-be-a-wizard-to-pull-off-a-cape-this-winter--01.png
 ---
-
-# You don’t need to be a wizard to pull off a cape this winter
 
 The onset of winter sends many of us beach bunnies into hibernation. Who wants to exchange the coziness of the blanket, the warm glow of the heater, the comfort of the nest, for the mere tom-toming of boots at the Sunday polo match? Just because it is the only two months one shall get to wear them. Stepping out means drowning oneself in swathes of fabric and coming up for air every once in a while through all those layers. The Caped Crusader to the rescue! Style and comfort, the strangest bedfellows, come together to grant small mercies in this marvellous invention. Every two or three years, the cape makes an appearance on the runways and disappears as nonchalantly as it arrived.
 

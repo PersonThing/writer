@@ -3,7 +3,7 @@ import { test, expect } from './fixtures.js'
 test.describe('portfolio content rendering', () => {
   test('piece page H1 matches the source title', async ({ page }) => {
     await page.goto('/fashion-editorial/azzedine-alaia--master-and-maverick')
-    await expect(page.locator('article.piece .piece-body h1').first()).toContainText(
+    await expect(page.locator('article.piece .piece-head h1')).toContainText(
       /Azzedine Alaia: Master & Maverick/i,
     )
   })
@@ -52,5 +52,43 @@ test.describe('portfolio content rendering', () => {
     const body = page.locator('article.piece .piece-body')
     const paragraphs = await body.locator('p').count()
     expect(paragraphs).toBeGreaterThan(3)
+  })
+
+  test('copywriting video page renders a <video> element', async ({ page, request }) => {
+    await page.goto('/copywriting/grand-seiko-film')
+    const video = page.locator('article.piece .piece-body video').first()
+    await expect(video).toBeVisible()
+    const src = await video.getAttribute('src')
+    expect(src).toMatch(/^\/portfolio\/videos\/.+\.mp4$/)
+    const res = await request.head(src)
+    expect(res.status()).toBe(200)
+  })
+
+  test('ek-sher poem renders an <audio> element', async ({ page }) => {
+    await page.goto('/poetry/ek-sher')
+    const audio = page.locator('article.piece .piece-body audio').first()
+    await expect(audio).toBeVisible()
+  })
+
+  test('other poems do NOT render audio (stock loop filtered)', async ({ page }) => {
+    await page.goto('/poetry/on-writing')
+    const audioCount = await page.locator('article.piece audio').count()
+    expect(audioCount).toBe(0)
+  })
+
+  test('creative-direction gallery page has multiple inline images', async ({ page }) => {
+    await page.goto('/creative-direction/ethnicwear-db')
+    const images = page.locator('article.piece .piece-body img')
+    const count = await images.count()
+    expect(count).toBeGreaterThanOrEqual(4)
+  })
+
+  test('footer has snail, 3 social icons, and current-year copyright', async ({ page }) => {
+    await page.goto('/')
+    const footer = page.locator('.site-footer')
+    await expect(footer.locator('.footer-snail')).toBeVisible()
+    await expect(footer.locator('.footer-socials a')).toHaveCount(3)
+    const year = new Date().getFullYear()
+    await expect(footer).toContainText(`© ${year} Shigorika`)
   })
 })

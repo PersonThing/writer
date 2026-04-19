@@ -2,13 +2,9 @@
 title: Coming-of-rage with I May Destroy You
 slug: editorial--weekend-watch-coming-of-rage-with-i-may-destroy-you
 source_path: /editorial/weekend-watch-coming-of-rage-with-i-may-destroy-you
-images: 
-  - "/portfolio/images/663ee7_4af351a4600b45cf9db26f24e7d55327~mv2.png"
+lede: "BAFTA winner Michaela Coel’s 'I May Destroy You', now streaming on Hotstar, breaks new ground with its comedic touch to trauma"
+hero: /portfolio/images/editorial--weekend-watch-coming-of-rage-with-i-may-destroy-you--01.png
 ---
-
-# Coming-of-rage with I May Destroy You
-
-BAFTA winner Michaela Coel’s 'I May Destroy You', now streaming on Hotstar, breaks new ground with its comedic touch to trauma
 
 * Arabella (played by BAFTA winner Michaela Coel, also the show’s creator), of the colourful hair and habits, is a rising literary star of the London Twitterati scene
 

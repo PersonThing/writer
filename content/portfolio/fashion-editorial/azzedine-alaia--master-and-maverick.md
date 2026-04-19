@@ -1,14 +1,10 @@
 ---
 title: "Azzedine Alaia: Master & Maverick"
 slug: fashion-editorial--azzedine-alaia--master-and-maverick
-source_path: "/fashion-editorial/azzedine-alaia:-master-and-maverick"
-images: 
-  - "/portfolio/images/663ee7_08f7f8e6db7e4d47a29dc73dbf8dfb84~mv2.png"
+source_path: /fashion-editorial/azzedine-alaia:-master-and-maverick
+lede: The death of an iconic designer who refused to play by the rules has left a vacuum in the fashion world
+hero: /portfolio/images/fashion-editorial--azzedine-alaia--master-and-maverick--01.png
 ---
-
-# Azzedine Alaia: Master & Maverick
-
-The death of an iconic designer who refused to play by the rules has left a vacuum in the fashion world
 
 Cinema is the medium for the masses, not fashion, certainly not high fashion. More people interface with the work of a director than a designer, and yet, there are designers who find themselves at the centre of a small but influential section of the world. A world guarded by the aesthete-police who tells you what to eat, what to wear, how to hold a glass and so on.
 

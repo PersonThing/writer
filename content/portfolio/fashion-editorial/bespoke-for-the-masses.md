@@ -2,11 +2,8 @@
 title: Bespoke for the masses
 slug: fashion-editorial--bespoke-for-the-masses
 source_path: /fashion-editorial/bespoke-for-the-masses
-images: 
-  - "/portfolio/images/663ee7_f34605cf0aac448c8587fe0240ad4122~mv2.png"
+hero: /portfolio/images/fashion-editorial--bespoke-for-the-masses--01.png
 ---
-
-# Bespoke for the masses
 
 A burgeoning middle-class is lapping up global fast fashion, marked by standard sizing and functional clothing. Now, a new breed of Indian designers is daring to cut the cloth differently, in a nod to the country’s rich fabric traditions
 

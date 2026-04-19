@@ -2,10 +2,7 @@
 title: Weaving tradition and modernity
 slug: fashion-editorial--weaving-tradition-and-modernity
 source_path: /fashion-editorial/weaving-tradition-and-modernity
-images: []
 ---
-
-# Weaving tradition and modernity
 
 Banaras is the Beginning of Everything, both Life and Death. The mighty Ganga, ever-present, becomes a metaphor for the space between these two dots. One comes here and is ensnared, into the way of the Banarasi - ever ready to chat, the river is mother, and chai is always included.
 

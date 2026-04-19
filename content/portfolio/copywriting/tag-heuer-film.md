@@ -2,13 +2,10 @@
 title: Tag Heuer Film
 slug: copywriting--tag-heuer-film
 source_path: /copywriting/tag-heuer-film
-images: 
-  - "/portfolio/images/663ee7_cdc05794877b4042982898cacac325d7f000.jpg"
+lede: Copy
 ---
 
-# Tag Heuer Film
-
-## Copy
+::: video /portfolio/videos/663ee7_cdc05794877b4042982898cacac325d7.mp4 :::
 
 Is a car, a watch, a person
 

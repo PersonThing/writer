@@ -37,8 +37,19 @@
   }
   :global(.portfolio-root .about .body h3) {
     font-size: 1rem;
-    font-weight: 400;
-    margin: 1.5rem 0 0.4rem;
+    font-weight: 500;
+    margin: 1.8rem 0 0.5rem;
+    padding-left: 1.5rem;
+  }
+  :global(.portfolio-root .about .body ul) {
+    list-style: disc;
+    padding-left: 3rem;
+    margin: 0 0 1rem;
+    color: var(--p-muted);
+  }
+  :global(.portfolio-root .about .body ul li) {
+    margin: 0.2rem 0;
+    line-height: 1.6;
   }
   :global(.portfolio-root .about .body p) {
     margin: 0 0 1rem;

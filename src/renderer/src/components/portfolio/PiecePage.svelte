@@ -8,7 +8,7 @@
 
   const piece = $derived(getPage(`/${category}/${slug}`))
   const rendered = $derived(piece ? parseMarkdown(piece.body) : '')
-  const hero = $derived(piece?.images?.[0] || null)
+  const hero = $derived(piece?.hero || null)
   const categoryLabel = $derived(
     category
       .split('-')
@@ -29,6 +29,13 @@
           <img src={hero} alt={piece.title} />
         </figure>
       {/if}
+
+      <header class="piece-head">
+        <h1>{piece.title}</h1>
+        {#if piece.lede}
+          <p class="lede">{piece.lede}</p>
+        {/if}
+      </header>
 
       <div class="piece-body">{@html rendered}</div>
     </article>
@@ -53,12 +60,48 @@
   }
 
   .hero {
-    margin: 0 0 2.5rem;
+    margin: 0 0 2rem;
   }
   .hero img {
     width: 100%;
     height: auto;
     display: block;
+  }
+  .piece-head {
+    margin: 0 0 2rem;
+  }
+  .piece-head h1 {
+    font-size: 2.1rem;
+    font-weight: 400;
+    margin: 0 0 0.75rem;
+    line-height: 1.25;
+  }
+  .lede {
+    font-size: 1.1rem;
+    color: var(--p-muted);
+    font-style: italic;
+    margin: 0;
+  }
+
+  :global(.portfolio-root .piece-body .md-figure) {
+    margin: 1.5rem 0;
+  }
+  :global(.portfolio-root .piece-body .md-figure img) {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  :global(.portfolio-root .piece-body .md-video) {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    display: block;
+    margin: 1.5rem 0;
+  }
+  :global(.portfolio-root .piece-body .md-audio) {
+    width: 100%;
+    display: block;
+    margin: 1rem 0;
   }
 
   :global(.portfolio-root .piece-body h1) {

@@ -2,11 +2,8 @@
 title: All Hail The Taxi
 slug: editorial--all-hail-the-taxi
 source_path: /editorial/all-hail-the-taxi
-images: 
-  - "/portfolio/images/663ee7_71b86525980c4a3990c7a0247b07bc59~mv2.png"
+hero: /portfolio/images/editorial--all-hail-the-taxi--01.png
 ---
-
-# All Hail The Taxi
 
 The year was 2005 and I, an unsuspecting 18-year-old, had just moved to the big bad city. My accoutrements were a license with the kind of photo you wouldn’t wish on your nemesis and the scarlet letter L (for loser or Learner, as you deem fit) burnt into the back of my white steed. The world was my oyster, which I, with my Maruti Zen, was going to open.
 

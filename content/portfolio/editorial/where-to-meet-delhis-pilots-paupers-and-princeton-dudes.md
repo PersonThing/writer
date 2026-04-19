@@ -2,11 +2,8 @@
 title: How To Meet A Guy in 10 Ways
 slug: editorial--where-to-meet-delhis-pilots-paupers-and-princeton-dudes
 source_path: /editorial/where-to-meet-delhis-pilots-paupers-and-princeton-dudes
-images: 
-  - "/portfolio/images/663ee7_5ea4d3448ba24fbe8c0406cfe77dc5ce~mv2.png"
+hero: /portfolio/images/editorial--where-to-meet-delhis-pilots-paupers-and-princeton-dudes--01.png
 ---
-
-# How To Meet A Guy in 10 Ways
 
 This city is like an old woman. She has her secrets and she has seen better days, which she will reveal to you by and by, if only you remain faithful. Like all torrid affairs, there will be times you will want out. Her moods won’t help. Snobby, giddy, activist, delirious, bureaucratic, pretentious.
 

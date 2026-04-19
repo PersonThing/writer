@@ -2,26 +2,20 @@
 title: The 3 Saviours of FAKE NEWS Busting.
 slug: editorial--as-news-gets-compromised-for-clicks-3-saviours-rise-to-the-challenge
 source_path: /editorial/as-news-gets-compromised-for-clicks-3-saviours-rise-to-the-challenge
-images: 
-  - "/portfolio/images/663ee7_368c7b4d2d69484294d27c1d938d5f06~mv2.png"
-  - "/portfolio/images/663ee7_08c0f64d642f4c2f942e80721b574f0a~mv2.png"
-  - "/portfolio/images/663ee7_6ce16691a7694db099e202e404bcc263~mv2.png"
-  - "/portfolio/images/663ee7_a93fe731ee1a4d3fb51c0dfe6d74cf2d~mv2.png"
-  - "/portfolio/images/663ee7_f1e733d106ea43ad918989f0e8de9bb5~mv2.png"
-  - "/portfolio/images/663ee7_d74bdd074a8f409fb40c2f98dfb3922c~mv2.png"
-  - "/portfolio/images/663ee7_db6579354006468d98f05e1b62b466f4~mv2.png"
-  - "/portfolio/images/663ee7_e189d3991c844363b2b8ff1272b1a0c0~mv2.png"
-  - "/portfolio/images/663ee7_333319011c26421d80e538baf492796d~mv2.png"
-  - "/portfolio/images/663ee7_ccf9f4b65f99473c8f6c73abeee685c1~mv2.png"
+hero: /portfolio/images/editorial--as-news-gets-compromised-for-clicks-3-saviours-rise-to-the-challenge--01.png
 ---
-
-# The 3 Saviours of FAKE NEWS Busting.
 
 The holy trinity of busting the fake news racket in India came into prominence around the same time; during Demonetisation, when fake rumours had reached their peak. Pratik Sinha of the now famous altnews.in, Shamma Oliyath of check4spam.com and Pankaj Jain of Social Media Hoax Slayer are largely considered the gatekeepers of news on digital media in India. They have come forward to fill a void of verifi-ability over virality in an age when news channels have been given a reality TV makeover.
 
+![](/portfolio/images/editorial--as-news-gets-compromised-for-clicks-3-saviours-rise-to-the-challenge--02.png)
+
 “Nov 2016 was a huge month for traffic”, says Shammas Oliyath, founder of Check4spam. He was making a list of the number of stories they did for Demonetisation; he gave up after 20. Sinha of altnews.in says something similar, “This fake GPS chip thing; how many news channels carried it? This was an issue in national interest.” A rumour such as this went countrywide — forget about investigative journalism; news channels jumped on the bandwagon, aiding fake news rather than preventing it. “Only after print media reported that RBI has not confirmed any of these details did a news channel carry it. But by the time the news had already spread,” says Sinha.
 
+![](/portfolio/images/editorial--as-news-gets-compromised-for-clicks-3-saviours-rise-to-the-challenge--03.png)
+
 Getting information on the phone does not need much. Anybody with a phone and internet connection is a consumer. Whatsapp and its provision of total privacy is a double-edged sword. Oliyath says, “End to end prescription means where something originates cannot be found out. Perhaps Whatsapp should not strip its texts of all its metadata (a date/ time tag or a location tag) but this is something that the company will have to regulate at their own level.”
+
+![](/portfolio/images/editorial--as-news-gets-compromised-for-clicks-3-saviours-rise-to-the-challenge--04.png)
 
 Till now fake news has been responsible for multiple riots and lynchings in Jharkhand and Bengal. False news also led Paresh Rawal to believe and criticise author Arundhati Roy on Twitter. It is being used extensively for polarising the general public. But is it the planted news that is responsible or if such weak information can cause people to do this? Does this indicate a violent tendency already existing among the people?
 
@@ -31,9 +25,13 @@ You would be hard pressed to find a fake news website that is not right-wing” 
 
 “They have figured out how to make money, they know that the prevalent trend is right wing so they will write about it even if it has nothing to do with their personal ideology. And the ideology will change depending on what is trending in the coming years.”
 
+![](/portfolio/images/editorial--as-news-gets-compromised-for-clicks-3-saviours-rise-to-the-challenge--05.png)
+
 Pankaj Jain, of Social Media Hoax Slayer, explains. “There is a page called I Support Indian Army. Now if this is the name what do you expect on the page? Information and updates of the Indian army, right? What they do is, out of 10, 6 posts will be about the Indian army and 3–4 will be from some small website — either about political stuff related to the right wing, or ‘aapko diabetes hai kya? Do hafte mein theek karein’, etc.”
 
 Even Shakespeare knew one thing about going viral, which is “bad news travels faster than good” and social media thrives on that. Killing a cow, a woman being beaten up (by Muslims or Hindus depending on the spin they want to give) or a video of beheading originally in Guatemala; the more heinous the activity the faster it travels.
+
+![](/portfolio/images/editorial--as-news-gets-compromised-for-clicks-3-saviours-rise-to-the-challenge--06.png)
 
 Big Brother Domination
 
@@ -63,6 +61,12 @@ Cowboys Of The Information Highway
 
 While both Oliyath and Jain started out after getting sick of fake forwards, Sinha had already been doing this for a while; Demonetisation just catapulted him into more visibility — some silver lining indeed. But how do they, on their shoe string budget and skeletal teams, manage to check the facts of a story when news channels with entire departments dedicated to this can’t?
 
+![](/portfolio/images/editorial--as-news-gets-compromised-for-clicks-3-saviours-rise-to-the-challenge--07.png)
+
+![](/portfolio/images/editorial--as-news-gets-compromised-for-clicks-3-saviours-rise-to-the-challenge--08.png)
+
+![](/portfolio/images/editorial--as-news-gets-compromised-for-clicks-3-saviours-rise-to-the-challenge--09.png)
+
 Oliyath says, “It is because we put up the story whenever we have time, so we are not in a race with anyone to break the story first”. Sinha also says “Look at the 2 most popular news channels right now. There is no journalistic value left, they take a video from the online space and make it primetime news.”
 
 Also, there are no consequences. If a channel runs a fake video, or a fake news story, it’s forgotten the next day. “News channels don’t call each other out on false news. Everyone has too many skeletons in the closet with each other.”
@@ -74,6 +78,8 @@ While they may be the self-appointed cowboys of the information highway, they ha
 The Way Forward
 
 Also there are different kinds of fake news. At the time of GST there were obviously fake offers from companies posing as Amazon and Flipkart, but people were fooled. “Someone with a background in IT can understand their modus operandi; they ask you to download an app that too not even from Google store”, Oliyath says, “…but the normal public cannot.” This is where this essential fake news busting comes in handy.
+
+![](/portfolio/images/editorial--as-news-gets-compromised-for-clicks-3-saviours-rise-to-the-challenge--10.png)
 
 While this is tantamount to impersonation for fraud and should be penalised, the law is still playing catch up. The 267th law commission report deals directly with ‘Hate Speech’, and how it can be used to incite violence online but it is more concerned with defining what can be deemed offensive than curtailing such offensive behaviour.
 

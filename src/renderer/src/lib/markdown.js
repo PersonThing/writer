@@ -2,8 +2,44 @@
  * Minimal markdown renderer — no external dependencies.
  * Handles: bold, italic, strikethrough, inline code, links, headings (h1-h3),
  * horizontal rules, unordered lists, ordered lists, blockquotes,
- * paragraphs, and hard line breaks (trailing backslash).
+ * paragraphs, hard line breaks (trailing backslash), and three block-level
+ * media tokens used by portfolio pieces:
+ *   ![alt](/path/to.jpg)              → <figure><img ...></figure>
+ *   ::: video /path.mp4 poster=/p.jpg → <video controls ...>
+ *   ::: audio /path.m4a               → <audio controls ...>
  */
+
+function escAttr(s) {
+  return String(s).replace(/"/g, '&quot;')
+}
+
+function renderStandaloneImage(alt, src) {
+  return `<figure class="md-figure"><img src="${escAttr(src)}" alt="${escAttr(alt)}" loading="lazy"></figure>`
+}
+
+function parseDirective(line) {
+  // ::: kind arg1 key=val key=val :::
+  const m = line.match(/^::: (video|audio)\s+(\S+)\s*(.*?)\s*:::$/)
+  if (!m) return null
+  const [, kind, src, restRaw] = m
+  const rest = {}
+  for (const pair of restRaw.split(/\s+/).filter(Boolean)) {
+    const eq = pair.indexOf('=')
+    if (eq === -1) continue
+    rest[pair.slice(0, eq)] = pair.slice(eq + 1)
+  }
+  return { kind, src, ...rest }
+}
+
+function renderVideo({ src, poster }) {
+  const posterAttr = poster ? ` poster="${escAttr(poster)}"` : ''
+  return `<video class="md-video" controls playsinline preload="metadata" src="${escAttr(src)}"${posterAttr}></video>`
+}
+
+function renderAudio({ src }) {
+  return `<audio class="md-audio" controls preload="metadata" src="${escAttr(src)}"></audio>`
+}
+
 export function parseMarkdown(md) {
   if (!md) return ''
 
@@ -50,6 +86,25 @@ export function parseMarkdown(md) {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]
     const trimmed = line.trim()
+
+    // ::: video / ::: audio directive (block-level)
+    if (trimmed.startsWith('::: ')) {
+      const dir = parseDirective(trimmed)
+      if (dir) {
+        closeAll()
+        if (dir.kind === 'video') out.push(renderVideo(dir))
+        else if (dir.kind === 'audio') out.push(renderAudio(dir))
+        continue
+      }
+    }
+
+    // Standalone image line: ![alt](src) on its own
+    const imgM = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)$/)
+    if (imgM) {
+      closeAll()
+      out.push(renderStandaloneImage(imgM[1], imgM[2]))
+      continue
+    }
 
     // Horizontal rule
     if (/^(-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {

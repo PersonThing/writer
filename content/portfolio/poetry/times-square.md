@@ -2,13 +2,9 @@
 title: Times Square
 slug: poetry--times-square
 source_path: /poetry/times-square
-images: 
-  - "/portfolio/images/663ee7_d6e0faf0e7a14dac9f23cf924fac6c18~mv2.png"
+lede: "We were white-washed by Times Square,"
+hero: /portfolio/images/poetry--times-square--01.png
 ---
-
-# Times Square
-
-We were white-washed by Times Square,
 
 as if man had willed
 

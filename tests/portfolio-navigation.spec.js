@@ -45,7 +45,7 @@ test.describe('portfolio navigation', () => {
 
   test('deep-link to a piece loads correctly (SPA fallback)', async ({ page }) => {
     await page.goto('/fashion-editorial/azzedine-alaia--master-and-maverick')
-    await expect(page.locator('article.piece .piece-body h1')).toContainText(/Azzedine Alaia/i)
+    await expect(page.locator('article.piece .piece-head h1')).toContainText(/Azzedine Alaia/i)
   })
 
   test('unknown path renders the not-found page', async ({ page }) => {

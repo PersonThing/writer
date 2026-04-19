@@ -2,13 +2,10 @@
 title: Grand Seiko Film
 slug: copywriting--grand-seiko-film
 source_path: /copywriting/grand-seiko-film
-images: 
-  - "/portfolio/images/663ee7_4d37a8eab8914955a2d0488e4c3f3354f000.jpg"
+lede: Copy
 ---
 
-# Grand Seiko Film
-
-## Copy
+::: video /portfolio/videos/663ee7_4d37a8eab8914955a2d0488e4c3f3354.mp4 :::
 
 Hands, tick-tock, and time moves along.
 

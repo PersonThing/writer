@@ -123,6 +123,8 @@ function toEntry(file, raw) {
     routePath,
     slug: frontmatter.slug || withoutLeading || 'home',
     title: frontmatter.title || 'Untitled',
+    lede: frontmatter.lede || '',
+    hero: frontmatter.hero || '',
     images: Array.isArray(frontmatter.images) ? frontmatter.images : [],
     body,
     category,

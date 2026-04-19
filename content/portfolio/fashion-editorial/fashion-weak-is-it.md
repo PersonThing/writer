@@ -2,11 +2,8 @@
 title: "Fashion Weak, Is It?"
 slug: fashion-editorial--fashion-weak-is-it
 source_path: /fashion-editorial/fashion-weak-is-it
-images: 
-  - "/portfolio/images/663ee7_a6798de174b647e78c6624988f6798fc~mv2.png"
+hero: /portfolio/images/fashion-editorial--fashion-weak-is-it--01.png
 ---
-
-# Fashion Weak, Is It?
 
 Fashion weeks are becoming less about the excitement surrounding the unveiling of the season’s new collection and more about the people who have come to witness it. It is hijacked by those who come to bask in its glow — to be seen on the front row or in the VIP Lounge, and to network with fellow fashion fraternity folks.
 

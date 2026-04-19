@@ -72,14 +72,27 @@
   </main>
 
   <footer class="site-footer">
-    <div>
-      <a href="mailto:shigorika@gmail.com">shigorika@gmail.com</a>
-    </div>
-    <div class="socials">
-      <a href="https://www.linkedin.com/in/shigorika" target="_blank" rel="noreferrer">LinkedIn</a>
-      <a href="https://www.instagram.com/schadenfreud" target="_blank" rel="noreferrer">Instagram</a>
-      <a href="https://thebluestocking.substack.com" target="_blank" rel="noreferrer">Substack</a>
-    </div>
+    <a class="footer-email" href="mailto:shigorika@gmail.com">
+      <img class="footer-snail" src="/portfolio/chrome/snail.png" alt="" />
+      <span class="footer-email-text">
+        <span class="footer-email-lead">Email me at</span>
+        <span class="footer-email-addr">shigorika@gmail.com</span>
+      </span>
+    </a>
+
+    <nav class="footer-socials" aria-label="Social">
+      <a href="https://www.linkedin.com/in/shigorika/" target="_blank" rel="noreferrer" aria-label="LinkedIn">
+        <img src="/portfolio/chrome/linkedin.png" alt="" />
+      </a>
+      <a href="https://www.instagram.com/schadenfreud" target="_blank" rel="noreferrer" aria-label="Instagram">
+        <img src="/portfolio/chrome/instagram.png" alt="" />
+      </a>
+      <a href="https://thebluestocking.substack.com/" target="_blank" rel="noreferrer" aria-label="Substack">
+        <img src="/portfolio/chrome/substack.png" alt="" />
+      </a>
+    </nav>
+
+    <div class="footer-copy">© {new Date().getFullYear()} Shigorika. All rights reserved.</div>
   </footer>
 </div>
 
@@ -208,20 +221,65 @@
   .site-footer {
     border-top: 1px solid var(--p-border);
     padding: 2rem 3rem;
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 2rem;
     font-size: 0.82rem;
     color: var(--p-muted);
-    flex-wrap: wrap;
     margin-top: 4rem;
   }
-  :global(.portfolio-root .site-footer a:hover) {
-    color: var(--p-accent);
+  .footer-email {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    color: inherit;
+    text-decoration: none;
   }
-  .socials {
+  .footer-email:hover {
+    color: var(--p-text);
+  }
+  .footer-snail {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+  }
+  .footer-email-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.4;
+  }
+  .footer-email-lead {
+    font-size: 0.8rem;
+    color: var(--p-muted);
+  }
+  .footer-email-addr {
+    font-size: 0.85rem;
+    color: var(--p-text);
+  }
+
+  .footer-socials {
     display: flex;
     gap: 1.2rem;
+    justify-self: center;
+  }
+  .footer-socials a {
+    display: inline-flex;
+    width: 26px;
+    height: 26px;
+    transition: opacity 0.15s;
+  }
+  .footer-socials a:hover {
+    opacity: 0.75;
+  }
+  .footer-socials img {
+    width: 100%;
+    height: 100%;
+  }
+
+  .footer-copy {
+    justify-self: end;
+    color: var(--p-muted);
   }
 
   @media (max-width: 800px) {
@@ -257,7 +315,14 @@
       min-width: 0;
     }
     .site-footer {
+      grid-template-columns: 1fr;
+      justify-items: center;
+      text-align: center;
       padding: 2rem 1.25rem;
+      gap: 1.2rem;
+    }
+    .footer-copy {
+      justify-self: center;
     }
   }
 </style>

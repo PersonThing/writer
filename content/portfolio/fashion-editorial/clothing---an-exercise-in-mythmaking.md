@@ -2,12 +2,8 @@
 title: Clothing — An exercise in mythmaking
 slug: fashion-editorial--clothing---an-exercise-in-mythmaking
 source_path: /fashion-editorial/clothing---an-exercise-in-mythmaking
-images: []
+lede: "Fashion is like God, it impacts you even if you don’t believe in it."
 ---
-
-# Clothing — An exercise in mythmaking
-
-Fashion is like God, it impacts you even if you don’t believe in it.
 
 The best advice I got as a young scribe is “don’t be a writer, be writing” but as one grew up, the world changed. You had to dress the part to be believable to others, and this belief of others reinforced yours. It was an acknowledgement from the reflection, that you yourself set in motion; ‘so dark the con of man.’
 

@@ -11,8 +11,8 @@ await sleep(2500)
 const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
 
-async function captureFull(path, outFile) {
-  await page.goto('http://localhost:3456' + path, { waitUntil: 'domcontentloaded' })
+async function captureFull(routePath, outFile) {
+  await page.goto('http://localhost:3456' + routePath, { waitUntil: 'domcontentloaded' })
   await sleep(1000)
   await page.evaluate(async () => {
     for (let y = 0; y < 5000; y += 400) {
@@ -26,9 +26,10 @@ async function captureFull(path, outFile) {
 }
 
 await captureFull('/', '/tmp/local-home.png')
-await captureFull('/fashion-editorial', '/tmp/local-fashion.png')
-await captureFull('/fashion-editorial/azzedine-alaia--master-and-maverick', '/tmp/local-piece.png')
 await captureFull('/about', '/tmp/local-about.png')
+await captureFull('/copywriting/grand-seiko-film', '/tmp/local-seiko.png')
+await captureFull('/creative-direction/ethnicwear-db', '/tmp/local-ethnicwear.png')
+await captureFull('/poetry/ek-sher', '/tmp/local-eksher.png')
 
 await browser.close()
 server.kill()
