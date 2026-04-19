@@ -2,12 +2,13 @@
   import Layout from './Layout.svelte'
   import Link from '../Link.svelte'
   import { parseMarkdown } from '../../lib/markdown.js'
-  import { getCategoryLanding, getCategoryPages } from '../../lib/content.js'
+  import { getCategoryLanding, getCategoryCatalog } from '../../lib/content.js'
 
   let { category } = $props()
 
   const landing = $derived(getCategoryLanding(category))
-  const pieces = $derived(getCategoryPages(category))
+  const section = $derived(getCategoryCatalog(category))
+  const pieces = $derived(section?.pieces || [])
 
   // Show only the first non-heading paragraph of the landing body as the
   // intro — the rest is mostly a duplicate of the piece list.
@@ -19,22 +20,12 @@
       .filter((p) => p && !p.startsWith('#'))
     return paragraphs[0] ? parseMarkdown(paragraphs[0]) : ''
   })
-
-  function subtitle(piece) {
-    // First non-heading line of the body is usually a one-line caption
-    const lines = piece.body.split('\n').map((l) => l.trim()).filter(Boolean)
-    for (const line of lines) {
-      if (line.startsWith('#')) continue
-      return line.slice(0, 180)
-    }
-    return ''
-  }
 </script>
 
 <Layout>
   <article class="category">
     <header class="cat-header">
-      <h1>{landing?.title || category}</h1>
+      <h1>{landing?.title || section?.label || category}</h1>
       {#if intro}
         <div class="intro">{@html intro}</div>
       {/if}
@@ -43,15 +34,17 @@
     <ul class="piece-list">
       {#each pieces as piece}
         <li>
-          <Link href={piece.routePath} class="piece-row">
+          <Link href={piece.url} class="piece-row">
             <div class="thumb">
-              {#if piece.images[0]}
-                <img src={piece.images[0]} alt={piece.title} loading="lazy" />
+              {#if piece.thumbnail}
+                <img src={piece.thumbnail} alt={piece.title} loading="lazy" />
               {/if}
             </div>
             <div class="meta">
               <h3>{piece.title}</h3>
-              <p>{subtitle(piece)}</p>
+              {#if piece.description}
+                <p>{piece.description}</p>
+              {/if}
             </div>
           </Link>
         </li>
@@ -62,9 +55,9 @@
 
 <style>
   .category {
-    max-width: 72rem;
+    max-width: var(--p-content-max);
     margin: 0 auto;
-    padding: 3rem 3rem 4rem;
+    padding: 3rem var(--p-content-padding) 4rem;
   }
   .cat-header {
     margin-bottom: 2.5rem;

@@ -2,7 +2,6 @@
 title: Grand Seiko Film
 slug: copywriting--grand-seiko-film
 source_path: /copywriting/grand-seiko-film
-lede: Copy
 ---
 
 ::: video /portfolio/videos/663ee7_4d37a8eab8914955a2d0488e4c3f3354.mp4 :::

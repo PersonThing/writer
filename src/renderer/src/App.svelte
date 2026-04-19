@@ -2,7 +2,9 @@
   import { project } from './lib/stores/project.svelte.js'
   import { ui } from './lib/stores/ui.svelte.js'
   import { auth } from './lib/stores/auth.svelte.js'
+  import { editor } from './lib/stores/editor.svelte.js'
   import { router, matchPortfolio, isWriterPath } from './lib/router.svelte.js'
+  import { computeDocTitle } from './lib/doc-title.svelte.js'
 
   // Writer components (auth-gated, path /writer/*)
   import TabBar from './components/writer/TabBar.svelte'
@@ -37,6 +39,13 @@
     // The `dark` class is a writer-only theme toggle. Remove it on portfolio
     // pages so the portfolio's own styles don't fight with it.
     document.documentElement.classList.toggle('dark', isWriter && ui.darkMode)
+  })
+
+  $effect(() => {
+    const activeFileName = editor.activePane?.filePath
+      ? project.displayName(editor.activePane.filePath)
+      : null
+    document.title = computeDocTitle(router.pathname, { activeFileName })
   })
 
   let writerInitialized = false

@@ -2,7 +2,6 @@
 title: Tag Heuer Film
 slug: copywriting--tag-heuer-film
 source_path: /copywriting/tag-heuer-film
-lede: Copy
 ---
 
 ::: video /portfolio/videos/663ee7_cdc05794877b4042982898cacac325d7.mp4 :::

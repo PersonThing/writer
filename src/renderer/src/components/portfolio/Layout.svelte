@@ -49,40 +49,42 @@
 
 <div class="portfolio-root">
   <header class="top-nav">
-    <Link href="/" class="wordmark">Shigorika</Link>
+    <div class="top-nav-inner">
+      <Link href="/" class="wordmark">Shigorika</Link>
 
-    <button
-      class="hamburger"
-      aria-label="Menu"
-      onclick={() => (mobileOpen = !mobileOpen)}
-    >
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
+      <button
+        class="hamburger"
+        aria-label="Menu"
+        onclick={() => (mobileOpen = !mobileOpen)}
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
 
-    <nav class:open={mobileOpen}>
-      <div class="work-menu">
-        <button
-          class="nav-link work-trigger"
-          class:active={isWorkActive}
-          onclick={() => (workOpen = !workOpen)}
-        >
-          Work
-          <span class="chevron">▾</span>
-        </button>
-        {#if workOpen}
-          <div class="work-dropdown" role="menu">
-            {#each WORK_CATEGORIES as { path, label }}
-              <Link href={path} class="work-dropdown-item">{label}</Link>
-            {/each}
-          </div>
-        {/if}
-      </div>
-      <a href="/#recommendations" class="nav-link" onclick={handleRecsClick}>Recommendations</a>
-      <Link href="/about" class="nav-link">About</Link>
-      <Link href="/contact" class="nav-link">Contact</Link>
-    </nav>
+      <nav class:open={mobileOpen}>
+        <div class="work-menu">
+          <button
+            class="nav-link work-trigger"
+            class:active={isWorkActive}
+            onclick={() => (workOpen = !workOpen)}
+          >
+            Work
+            <span class="chevron">▾</span>
+          </button>
+          {#if workOpen}
+            <div class="work-dropdown" role="menu">
+              {#each WORK_CATEGORIES as { path, label }}
+                <Link href={path} class="work-dropdown-item">{label}</Link>
+              {/each}
+            </div>
+          {/if}
+        </div>
+        <a href="/#recommendations" class="nav-link" onclick={handleRecsClick}>Recommendations</a>
+        <Link href="/about" class="nav-link">About</Link>
+        <Link href="/contact" class="nav-link">Contact</Link>
+      </nav>
+    </div>
   </header>
 
   <main class="page-main">
@@ -90,27 +92,29 @@
   </main>
 
   <footer class="site-footer">
-    <a class="footer-email" href="mailto:shigorika@gmail.com">
-      <img class="footer-snail" src="/portfolio/chrome/snail.png" alt="" />
-      <span class="footer-email-text">
-        <span class="footer-email-lead">Email me at</span>
-        <span class="footer-email-addr">shigorika@gmail.com</span>
-      </span>
-    </a>
+    <div class="site-footer-inner">
+      <a class="footer-email" href="mailto:shigorika@gmail.com">
+        <img class="footer-snail" src="/portfolio/chrome/snail.png" alt="" />
+        <span class="footer-email-text">
+          <span class="footer-email-lead">Email me at</span>
+          <span class="footer-email-addr">shigorika@gmail.com</span>
+        </span>
+      </a>
 
-    <nav class="footer-socials" aria-label="Social">
-      <a href="https://www.linkedin.com/in/shigorika/" target="_blank" rel="noreferrer" aria-label="LinkedIn">
-        <img src="/portfolio/chrome/linkedin.png" alt="" />
-      </a>
-      <a href="https://www.instagram.com/schadenfreud" target="_blank" rel="noreferrer" aria-label="Instagram">
-        <img src="/portfolio/chrome/instagram.png" alt="" />
-      </a>
-      <a href="https://thebluestocking.substack.com/" target="_blank" rel="noreferrer" aria-label="Substack">
-        <img src="/portfolio/chrome/substack.png" alt="" />
-      </a>
-    </nav>
+      <nav class="footer-socials" aria-label="Social">
+        <a href="https://www.linkedin.com/in/shigorika/" target="_blank" rel="noreferrer" aria-label="LinkedIn">
+          <img src="/portfolio/chrome/linkedin.png" alt="" />
+        </a>
+        <a href="https://www.instagram.com/schadenfreud" target="_blank" rel="noreferrer" aria-label="Instagram">
+          <img src="/portfolio/chrome/instagram.png" alt="" />
+        </a>
+        <a href="https://thebluestocking.substack.com/" target="_blank" rel="noreferrer" aria-label="Substack">
+          <img src="/portfolio/chrome/substack.png" alt="" />
+        </a>
+      </nav>
 
-    <div class="footer-copy">© {new Date().getFullYear()} Shigorika. All rights reserved.</div>
+      <div class="footer-copy">© {new Date().getFullYear()} Shigorika. All rights reserved.</div>
+    </div>
   </footer>
 </div>
 
@@ -126,16 +130,25 @@
 
   .portfolio-root {
     --p-bg: #000;
-    --p-text: #f3f1ec;
-    --p-muted: #9c968a;
+    --p-text: #ffffff;
+    --p-muted: #b3b3b3;
     --p-border: #2a2721;
     --p-accent: #d9b673;
+
+    /* Shared content dimensions. Backgrounds span the page; content
+       inside these widths keeps left/right edges aligned. */
+    --p-content-max: 78rem;
+    --p-content-padding: 3rem;
+
+    /* Type system mirrors the live Wix site. */
+    --p-font-display: 'Syne', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --p-font-body: 'Questrial', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 
     min-height: 100vh;
     background: var(--p-bg);
     color: var(--p-text);
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    font-weight: 300;
+    font-family: var(--p-font-body);
+    font-weight: 400;
     line-height: 1.6;
     display: flex;
     flex-direction: column;
@@ -147,17 +160,23 @@
   }
 
   .top-nav {
+    padding: 1rem 0;
+    position: relative;
+  }
+  .top-nav-inner {
+    max-width: var(--p-content-max);
+    margin: 0 auto;
+    padding: 0 var(--p-content-padding);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1.5rem 3rem;
     gap: 2rem;
-    position: relative;
   }
   :global(.portfolio-root .wordmark) {
-    font-size: 1.4rem;
-    font-weight: 400;
-    letter-spacing: 0.02em;
+    font-family: var(--p-font-display);
+    font-size: 1.7rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
   }
 
   nav {
@@ -238,14 +257,19 @@
 
   .site-footer {
     border-top: 1px solid var(--p-border);
-    padding: 2rem 3rem;
+    padding: 2rem 0;
+    font-size: 0.82rem;
+    color: var(--p-muted);
+    margin-top: 4rem;
+  }
+  .site-footer-inner {
+    max-width: var(--p-content-max);
+    margin: 0 auto;
+    padding: 0 var(--p-content-padding);
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: 2rem;
-    font-size: 0.82rem;
-    color: var(--p-muted);
-    margin-top: 4rem;
   }
   .footer-email {
     display: flex;
@@ -301,8 +325,8 @@
   }
 
   @media (max-width: 800px) {
-    .top-nav {
-      padding: 1rem 1.25rem;
+    .top-nav-inner {
+      padding: 0 1.25rem;
     }
     .hamburger {
       display: inline-flex;
@@ -332,11 +356,11 @@
       box-shadow: none;
       min-width: 0;
     }
-    .site-footer {
+    .site-footer-inner {
       grid-template-columns: 1fr;
       justify-items: center;
       text-align: center;
-      padding: 2rem 1.25rem;
+      padding: 0 1.25rem;
       gap: 1.2rem;
     }
     .footer-copy {

@@ -1,99 +1,30 @@
 <script>
   import Layout from './Layout.svelte'
   import Link from '../Link.svelte'
-  import { RECOMMENDATIONS } from '../../../../../content/portfolio/_recommendations.js'
-
-  const IMG = (id) => `/portfolio/images/${id}`
+  import { RECOMMENDATIONS } from '@content/portfolio/_recommendations.js'
+  import { getHomeSections } from '@lib/content.js'
 
   // Hero image from the live site (the red-wall portrait)
-  const HERO = IMG('663ee7_ce193cf08c5e4528a9c4c7c14414bd2c~mv2.jpg')
+  const HERO = '/portfolio/images/663ee7_ce193cf08c5e4528a9c4c7c14414bd2c~mv2.jpg'
 
-  // Sections in the exact order and with the exact tile images used on shigorika.com.
-  // Each tile's image is the prod thumbnail (via stable Wix media ID), NOT the
-  // first image in the piece's markdown frontmatter.
-  const SECTIONS = [
-    {
-      label: 'Copywriting',
-      slug: 'copywriting',
-      blurb:
-        'Watches Of Switzerland collaborates with its brand partners Grand Seiko and Tag Heuer for its custom content program called Anytime Anywhere. I lead its distribution across the in-house social media pages and on-site copy presence.',
-      viewMore: null, // no category landing page
-      tiles: [
-        { href: '/copywriting/grand-seiko-film', title: 'Grand Seiko Film',  img: IMG('663ee7_052cb7c61d0648339e38852fa79551af~mv2.jpg') },
-        { href: '/copywriting/tag-heuer-film',   title: 'Tag Heuer Film',    img: IMG('663ee7_6ae55d6c83094ba2bc24b5e13ac87e29~mv2.jpg') },
-      ],
-    },
-    {
-      label: 'Creative Direction',
-      slug: 'creative-direction',
-      blurb:
-        'End-to-end delivery from concept to shoot to merchandising in accordance with the themes of the annual content calendar to surface the high performing inventory across the 14 different product categories.',
-      viewMore: '/creative-direction',
-      tiles: [
-        { href: '/creative-direction/ethnicwear-db',      title: 'Amazon Designer Boutique', img: IMG('663ee7_a5097ef05be94683bbb17a74fb7aaa03~mv2.jpg') },
-        { href: '/creative-direction/style-in-the-city',  title: 'Style in the City',        img: IMG('663ee7_19c73452b3574e2096fb6f467db582a1~mv2.jpg') },
-        { href: '/creative-direction/seasonal-campaigns', title: 'Seasonal Campaigns',       img: IMG('663ee7_9dabb2e6f8184452a79b5fbaeefeb474~mv2.jpg') },
-      ],
-    },
-    {
-      label: 'Fashion Editorial',
-      slug: 'fashion-editorial',
-      blurb:
-        "Op-Eds and Columns written for The Hindu, the-Sunday-guardian, Harper's Bazaar on trends impacting the Indian sub-continent. Also includes Trend Forecasts for Amazon India with certain parts redacted for confidentiality.",
-      viewMore: '/fashion-editorial',
-      tiles: [
-        { href: '/fashion-editorial/azzedine-alaia--master-and-maverick',                       title: 'Azzedine Alaia: Master & Maverick',                  img: IMG('663ee7_08f7f8e6db7e4d47a29dc73dbf8dfb84~mv2.png') },
-        { href: '/fashion-editorial/you-dont-need-to-be-a-wizard-to-pull-off-a-cape-this-winter', title: "You don't need to be a wizard to pull off a cape this winter", img: IMG('663ee7_b10f3f0e1ba64995ad8a821ff939e429~mv2.png') },
-        { href: '/fashion-editorial/fashion-weak-is-it',                                         title: 'Fashion Weak, Is It?',                               img: IMG('663ee7_a6798de174b647e78c6624988f6798fc~mv2.png') },
-      ],
-    },
-    {
-      label: 'Editorial',
-      slug: 'editorial',
-      blurb:
-        'Cultural critique of the Indian zeitgeist, ranging from 2010s fashion weeks to more recent op-eds.',
-      viewMore: '/editorial',
-      tiles: [
-        { href: '/editorial/weekend-watch-coming-of-rage-with-i-may-destroy-you',                        title: 'Coming-of-rage with I May Destroy You', img: IMG('663ee7_4af351a4600b45cf9db26f24e7d55327~mv2.png') },
-        { href: '/editorial/as-news-gets-compromised-for-clicks-3-saviours-rise-to-the-challenge',       title: 'As news gets compromised for clicks, 3 saviours rise', img: IMG('663ee7_368c7b4d2d69484294d27c1d938d5f06~mv2.png') },
-        { href: '/editorial/its-time-for-a-period-of-change-at-workplace',                               title: "It's time for a period of change at workplace", img: IMG('663ee7_f44e73db98c24a9f8ea420578c995067~mv2.png') },
-      ],
-    },
-    {
-      label: 'Poetry',
-      slug: 'poetry',
-      blurb:
-        'Published in Outlook Magazine 2022 in New Delhi, and in Abobo Zine 2023 in New York, this is a growing section. You can also find them directly on my Substack.',
-      viewMore: '/poetry',
-      tiles: [
-        { href: '/poetry/on-writing',              title: 'On Writing',              img: IMG('663ee7_46d6bfab8bcc4420bbb2bb75a795988a~mv2.png') },
-        { href: '/poetry/hannah-banana',           title: 'Hannah Banana',           img: IMG('663ee7_987702b503f84824a810d95918c3b38a~mv2.png') },
-        { href: '/poetry/my-dad-socks-and-gulzar', title: 'My Dad, Socks & Gulzar',  img: IMG('663ee7_4f807ce6e43a458193f2d4caaabe9359~mv2.png') },
-      ],
-    },
-    {
-      label: 'Paper',
-      slug: 'published-paper',
-      blurb: 'Published academic work.',
-      viewMore: null,
-      tiles: [
-        { href: '/published-paper', title: 'The Evolution of the Fashion Image', img: IMG('663ee7_2d3cbdd7d9af4ada844a80785e538770~mv2.jpg') },
-      ],
-    },
-  ]
+  // Homepage sections come from the catalog: each category contributes its
+  // top N pieces with their metadata (thumbnail, title, description).
+  const SECTIONS = getHomeSections(3)
 </script>
 
 <Layout>
   <section class="hero">
     <img src={HERO} alt="" class="hero-bg" />
-    <div class="hero-inner">
-      <h1 class="hero-title">Fashion Editor · Content Strategist · Poet</h1>
-      <p class="hero-sub">
-        She's interviewed a terrorist, run point for Amazon at India Fashion Week,
-        written the lyrics of a Bollywood song… and rarely refers to herself in
-        the third person.
-      </p>
-      <Link href="/about" class="hero-cta">More about my journey</Link>
+    <div class="hero-content">
+      <div class="hero-inner">
+        <h1 class="hero-title">Fashion Editor · Content Strategist · Poet</h1>
+        <p class="hero-sub">
+          She's interviewed a terrorist, run point for Amazon at India Fashion Week,
+          written the lyrics of a Bollywood song… and rarely refers to herself in
+          the third person.
+        </p>
+        <Link href="/about" class="hero-cta">More about my journey</Link>
+      </div>
     </div>
   </section>
 
@@ -107,11 +38,13 @@
     <section class="category-section">
       <h2 class="category-heading">{s.label}</h2>
       <div class="category-row">
-        <div class="category-tiles tiles-{s.tiles.length}">
-          {#each s.tiles as tile}
-            <Link href={tile.href} class="tile">
+        <div class="category-tiles tiles-{s.pieces.length}">
+          {#each s.pieces as tile}
+            <Link href={tile.url} class="tile">
               <div class="tile-image">
-                <img src={tile.img} alt={tile.title} loading="lazy" />
+                {#if tile.thumbnail}
+                  <img src={tile.thumbnail} alt={tile.title} loading="lazy" />
+                {/if}
               </div>
               <div class="tile-title">{tile.title}</div>
             </Link>
@@ -147,9 +80,9 @@
 <style>
   .hero {
     position: relative;
-    min-height: 420px;
+    min-height: 560px;
     display: flex;
-    align-items: center;
+    align-items: stretch;
     overflow: hidden;
     border-bottom: 1px solid var(--p-border);
   }
@@ -161,13 +94,23 @@
     object-fit: cover;
     opacity: 0.9;
   }
-  .hero-inner {
+  .hero-content {
     position: relative;
-    max-width: 70rem;
     width: 100%;
+    max-width: var(--p-content-max);
     margin: 0 auto;
-    padding: 3rem 3rem;
-    background: rgba(0, 0, 0, 0.25);
+    padding: 0 var(--p-content-padding);
+    display: flex;
+    align-items: stretch;
+  }
+  .hero-inner {
+    max-width: 32rem;
+    width: 100%;
+    padding: 3rem;
+    background: rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
   .hero-title {
     font-size: 2rem;
@@ -194,10 +137,12 @@
   }
 
   .stats {
+    max-width: var(--p-content-max);
+    margin: 0 auto;
     display: flex;
     justify-content: center;
     gap: 4rem;
-    padding: 3rem 3rem 4rem;
+    padding: 3rem var(--p-content-padding) 4rem;
     flex-wrap: wrap;
   }
   .stats div {
@@ -217,9 +162,9 @@
   }
 
   .category-section {
-    max-width: 78rem;
+    max-width: var(--p-content-max);
     margin: 0 auto;
-    padding: 2.5rem 3rem;
+    padding: 2.5rem var(--p-content-padding);
   }
   .category-heading {
     font-size: 1.3rem;
@@ -287,7 +232,14 @@
   }
 
   @media (max-width: 900px) {
+    .hero {
+      min-height: 420px;
+    }
+    .hero-content {
+      padding: 0;
+    }
     .hero-inner {
+      max-width: 100%;
       padding: 2rem 1.25rem;
     }
     .stats,
@@ -323,20 +275,19 @@
     margin-top: 1rem;
   }
   .rec {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    column-gap: 1.25rem;
+    position: relative;
     margin: 0;
-    padding: 0;
+    padding: 0 0 0 3.4rem;
   }
   .rec-mark {
+    position: absolute;
+    top: 0;
+    left: 0;
     font-family: Georgia, serif;
     font-size: 3.2rem;
     line-height: 1;
     color: var(--p-accent);
     transform: translateY(-0.2rem) scaleX(-1);
-    grid-row: 1 / 3;
-    align-self: start;
   }
   .rec-quote {
     margin: 0 0 1rem;
@@ -346,7 +297,6 @@
   }
   .rec-author {
     font-size: 0.82rem;
-    grid-column: 2;
   }
   .rec-name {
     font-weight: 500;

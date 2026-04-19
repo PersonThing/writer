@@ -20,6 +20,8 @@ const modules = import.meta.glob('../../../../content/portfolio/**/*.md', {
   import: 'default',
 })
 
+import { CATALOG, HOME_CATEGORY_ORDER } from '@content/portfolio/_catalog.js'
+
 // ── Frontmatter parser (minimal, matches what extract-content.mjs emits) ──
 // Supported:
 //   key: value          (scalar)
@@ -169,4 +171,62 @@ export function getCategoriesWithItems() {
     if (e.category && e.subSlug) cats.add(e.category)
   }
   return [...cats].sort()
+}
+
+// ── Catalog-backed API ────────────────────────────────────────────────────
+// The homepage and category list pages render from CATALOG (metadata) joined
+// against the markdown catalog (body/lede/etc). If a piece has no thumbnail
+// in CATALOG, fall back to its first body image.
+function firstLineOfBody(body) {
+  for (const raw of body.split('\n')) {
+    const line = raw.trim()
+    if (!line || line.startsWith('#') || line.startsWith('!')) continue
+    return line.slice(0, 200)
+  }
+  return ''
+}
+
+function enrichPiece(categorySlug, catalogEntry) {
+  const routePath = catalogEntry.href || `/${categorySlug}/${catalogEntry.slug}`
+  const md = byRoute.get(routePath) || null
+  const thumbnail =
+    catalogEntry.thumbnail ||
+    (md?.images && md.images[0]) ||
+    (md?.hero) ||
+    null
+  const description =
+    catalogEntry.description ||
+    md?.lede ||
+    (md ? firstLineOfBody(md.body) : '')
+  return {
+    id: catalogEntry.slug || catalogEntry.href,
+    slug: catalogEntry.slug,
+    title: catalogEntry.title || md?.title || 'Untitled',
+    description,
+    thumbnail,
+    url: routePath,
+    category: categorySlug,
+  }
+}
+
+export function getCategoryCatalog(categorySlug) {
+  const section = CATALOG[categorySlug]
+  if (!section) return null
+  return {
+    slug: categorySlug,
+    label: section.label,
+    blurb: section.blurb,
+    viewMore: section.viewMore,
+    pieces: section.pieces.map((p) => enrichPiece(categorySlug, p)),
+  }
+}
+
+// Homepage sections: one entry per category in HOME_CATEGORY_ORDER, with the
+// first `limit` pieces (default 3).
+export function getHomeSections(limit = 3) {
+  return HOME_CATEGORY_ORDER.map((slug) => {
+    const section = getCategoryCatalog(slug)
+    if (!section) return null
+    return { ...section, pieces: section.pieces.slice(0, limit) }
+  }).filter(Boolean)
 }

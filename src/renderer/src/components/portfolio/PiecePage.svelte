@@ -7,7 +7,6 @@
   let { category, slug } = $props()
 
   const piece = $derived(getPage(`/${category}/${slug}`))
-  const rendered = $derived(piece ? parseMarkdown(piece.body) : '')
   const hero = $derived(piece?.hero || null)
   const categoryLabel = $derived(
     category
@@ -15,11 +14,40 @@
       .map((w) => w[0].toUpperCase() + w.slice(1))
       .join(' '),
   )
+
+  // Copywriting pieces have a distinct shape: media + verse (the "copy")
+  // first, then a `## Brief` section. Split them so the verse can be
+  // typeset as a pull-quote while the brief renders as normal prose.
+  // Also pull any leading `::: video :::` / `![]()` block out of the copy
+  // so the media sits full-width above, not inside the quoted copy.
+  const split = $derived.by(() => {
+    if (!piece) return { media: '', copy: '', rest: '' }
+    const body = piece.body || ''
+    if (category !== 'copywriting') return { media: '', copy: '', rest: parseMarkdown(body) }
+
+    const briefIdx = body.search(/^##\s/m)
+    const top = briefIdx === -1 ? body : body.slice(0, briefIdx)
+    const rest = briefIdx === -1 ? '' : body.slice(briefIdx)
+
+    // Lift a leading media directive (video/image) out of the copy block.
+    const mediaMatch = top.match(/^(\s*(?:::: [^\n]+? :::|!\[[^\]]*\]\([^)]+\))\s*\n+)/)
+    const media = mediaMatch ? mediaMatch[1] : ''
+    // Trim zero-width-space / whitespace-only trailing "paragraphs" left
+    // over from the Wix export so the copy block ends tight.
+    const copyRaw = mediaMatch ? top.slice(mediaMatch[0].length) : top
+    const copy = copyRaw.replace(/(?:^|\n)[\s\u200B\u200C\u200D\uFEFF\u00A0]+(?=\n|$)/g, '').replace(/\s+$/, '')
+
+    return {
+      media: parseMarkdown(media),
+      copy: parseMarkdown(copy),
+      rest: parseMarkdown(rest),
+    }
+  })
 </script>
 
 <Layout>
   {#if piece}
-    <article class="piece">
+    <article class="piece" class:piece-copywriting={category === 'copywriting'}>
       <div class="breadcrumb">
         <Link href={`/${category}`}>← {categoryLabel}</Link>
       </div>
@@ -37,7 +65,20 @@
         {/if}
       </header>
 
-      <div class="piece-body">{@html rendered}</div>
+      {#if category === 'copywriting'}
+        {#if split.media}
+          <div class="piece-body">{@html split.media}</div>
+        {/if}
+        <aside class="copy-block">
+          <span class="copy-eyebrow">Copy</span>
+          <div class="copy-text">{@html split.copy}</div>
+        </aside>
+        {#if split.rest}
+          <div class="piece-body">{@html split.rest}</div>
+        {/if}
+      {:else}
+        <div class="piece-body">{@html split.rest}</div>
+      {/if}
     </article>
   {:else}
     <div class="empty"><p>Piece not found.</p></div>
@@ -169,6 +210,48 @@
     padding: 0.1rem 0.3rem;
     border-radius: 2px;
     font-size: 0.92em;
+  }
+
+  /* Copywriting pieces: dramatize the verse that forms the actual "copy". */
+  .copy-block {
+    position: relative;
+    margin: 2.5rem 0;
+    padding: 2.5rem 2.5rem 2.5rem 3.25rem;
+    background: linear-gradient(
+      180deg,
+      rgba(217, 182, 115, 0.04),
+      rgba(217, 182, 115, 0) 70%
+    );
+    border-left: 2px solid var(--p-accent);
+  }
+  .copy-eyebrow {
+    position: absolute;
+    top: 1rem;
+    left: 3.25rem;
+    font-family: var(--p-font-body);
+    font-size: 0.7rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--p-accent);
+  }
+  .copy-text {
+    margin-top: 0.75rem;
+  }
+  :global(.portfolio-root .copy-text p) {
+    font-family: var(--p-font-display);
+    font-size: 1.6rem;
+    line-height: 1.35;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.6rem;
+    color: var(--p-text);
+  }
+  :global(.portfolio-root .copy-text p:last-child) {
+    margin-bottom: 0;
+  }
+  /* Wix paragraphs with a stray zero-width joiner render as empty p's —
+     preserve the spacing but keep them invisible. */
+  :global(.portfolio-root .copy-text p:empty) {
+    min-height: 0.6rem;
   }
 
   .empty {

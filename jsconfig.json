@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/renderer/src/*"],
+      "@components/*": ["src/renderer/src/components/*"],
+      "@lib/*": ["src/renderer/src/lib/*"],
+      "@content/*": ["content/*"]
+    },
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "target": "esnext",
+    "checkJs": false,
+    "allowJs": true
+  },
+  "include": ["src/renderer/src/**/*", "content/**/*", "vite.config.js"]
+}
