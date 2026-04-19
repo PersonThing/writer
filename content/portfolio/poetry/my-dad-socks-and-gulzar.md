@@ -12,8 +12,6 @@ I go to him often, with problems big and small but especially when I have painte
 
 This, #deargentlereader, is not a usual #desi dad.
 
-![](/portfolio/images/poetry--my-dad-socks-and-gulzar--02.png)
-
 I remember fretting over trying to capture a feeling that I was repeatedly failing at: when we visit our friends’ homes we always take our shoes off at the door. So, you’re left with a raggedy-ass, millennial ankle-sock hanging on for dear life, turning brown at the base, at homes of fellow young people who were not fastidious about floor cleaning. Those of us who pop one foot out of the blanket while sleeping know the feeling of needing to breathe with our feet. The sock forms a layer of separation between you and the floor and I don’t know which party is it protecting more.
 
 I was feeling so suffocated in these homes, I should have had my own by now. Like my father’s, with cool marble floors on hot tropical afternoons and my bare feet run amok on these floors.
@@ -21,32 +19,20 @@ I was feeling so suffocated in these homes, I should have had my own by now. Lik
 I wanted to equate the feeling of free naked feet with a sense of belonging and home. Father dear pips up: This is exactly like that #Gulzar song –
 
 Duje ke ghar yun lagta hai
-
 Mozey pehne baitha hun
-
 Nange paon aangan mein
-
 Kab baithunga kab ghar hoga
-
 Deewaron ki chinta hoti hai
-
 deewaron mein kab dar hoga
 
 (translated) (I have sacrificed grammar for rhyme scheme, do not come for me)
 
 In other homes I feel like
-
 I am sitting with my socks on,
-
 when will I be sat
-
 in my own courtyard, bare-feet.
-
 Worrying about walls, when will
-
 I make my home in it.
-
-![](/portfolio/images/poetry--my-dad-socks-and-gulzar--03.png)
 
 For a writer, I am really struggling with putting more feelings into words. Like how did this guy steal this idea from my head, 40 years ago! How the hell will I ever write anything to match up to Gulzar! He’s done it so succinctly and gracefully, should I even bother pursuing this anymore or just give up and move on to other to-be-enlivened carcasses of ideas and why oh why did my father have to tell me!?!?
 
@@ -57,5 +43,3 @@ But if it weren’t for my dad, would I have been a writer at all? I mean, my si
 Happy Father’s Day my dear papa. I continue to inherit all your eccentricities – reading habits, arrogance, undying courage, steadiness of purpose, dust allergies and oratory.
 
 …and watch out #Gulzar Sahab I am coming for you!
-
-![](/portfolio/images/poetry--my-dad-socks-and-gulzar--04.png)

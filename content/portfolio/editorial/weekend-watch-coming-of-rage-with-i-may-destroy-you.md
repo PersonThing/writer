@@ -8,9 +8,7 @@ hero: /portfolio/images/editorial--weekend-watch-coming-of-rage-with-i-may-destr
 ---
 
 * Arabella (played by BAFTA winner Michaela Coel, also the show’s creator), of the colourful hair and habits, is a rising literary star of the London Twitterati scene
-
 * I May Destroy You is not one of those shows you play in the back while you browse through your phone — it demands to be dealt with, like past trauma
-
 * We never pity Arabella, because she takes control of the narrative, even when she is breaking down
 
 Female rage seems to be elegantly exploding on our viewing screens. While Fleabag and Girls were a severely honest look at our gendered experience, I May Destroy You, an HBO-BBC series of 12 episodes now available on Hotstar, is an inadvertent look at it.

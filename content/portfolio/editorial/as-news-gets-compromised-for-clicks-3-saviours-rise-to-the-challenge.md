@@ -20,7 +20,7 @@ Getting information on the phone does not need much. Anybody with a phone and in
 
 Till now fake news has been responsible for multiple riots and lynchings in Jharkhand and Bengal. False news also led Paresh Rawal to believe and criticise author Arundhati Roy on Twitter. It is being used extensively for polarising the general public. But is it the planted news that is responsible or if such weak information can cause people to do this? Does this indicate a violent tendency already existing among the people?
 
-It’s All About The Money
+## It’s All About The Money
 
 You would be hard pressed to find a fake news website that is not right-wing” says Sinha, but the reason is far more insidious than we can imagine. “It has less to do with ideology and more to do with economics. These are young people in their mid 20s or early 30s who know how the FB ecosystem works. They know what sort of content and title and preview images to post to drive traffic.”
 
@@ -34,7 +34,7 @@ Even Shakespeare knew one thing about going viral, which is “bad news travels 
 
 ![](/portfolio/images/editorial--as-news-gets-compromised-for-clicks-3-saviours-rise-to-the-challenge--06.png)
 
-Big Brother Domination
+## Big Brother Domination
 
 As Facebook, Twitter, and Whatsapp become the gatekeepers of information in the digital age, their company policy will determine how information is shared, consumed and treated and in a way, these large MNCs can now play moral police at a world level. But Fake News has got to them too and it’s bad for business.
 
@@ -42,7 +42,7 @@ While Facebook has taken over Google when it comes to directing traffic, Faceboo
 
 Some algorithms also lead to answers that deny the holocaust, auto-complete “Are jews…” queries to “Are Jews evil?” etc. But Google is cognizant of the problem. As Sinha informs, “Google News (the American version) has a space on the right hand side for fact checking. Google is looking for partners in different countries because they want fact checking, because fake news not only hurts business, it hurts everybody.”
 
-Good Money Versus Bad
+## Good Money Versus Bad
 
 Social media, for all its disadvantages, at least makes newsmakers independent from corporate sponsorships. SM Hoax Slayer, AltNews and Check4spam all use Google Adsense, among other advert networks that control what sort of ads come on the website. So one sponsor or investor cannot have a direct say in whether a story runs, in case of conflict of interest. “Also in case of the web, it is easier to go from one sponsor to the other,” says Sinha.
 
@@ -50,7 +50,7 @@ But a Google Adsense and the like can only cover operative costs at best. None o
 
 Oliyath never plans to go commercial because he is afraid “the interests of the sponsor will start reflecting on the kind of work we do”. Even if he were to leave his current job and do this full time it wouldn’t pay as much. Surprise kids: Activism is not lucrative. Sinha of alt.news is looking at crowd-funding options because he is beginning to do this full time. Jain, of SM Hoax Slayer runs his own business. So even though they are doing real work and creating real value that fills a huge gap in the information business, crusaders don’t make a profit, they barely survive.
 
-Speaking Truth To Power
+## Speaking Truth To Power
 
 Also, reportage costs money. Most media houses re-report news; investigative journalism needs resources. In the battle of the field versus the desk, it is much easier to rehash stories and get the clicks than conduct a full report. Especially since re-hashed articles don’t hurt anyone.
 
@@ -58,7 +58,7 @@ But “Journalism is printing what someone else does not want printed, everythin
 
 And how is this dirty job done? Check4spam has an all India number on which people post news they want clarified. SM Hoax slayer responds to Facebook and Twitter requests and they are inundated with hundreds of messages on a daily basis. “Most of them are asking to clarify the same news” Oliyath says. He manages to reply directly to 50–60 people during his lunch hour. A sound knowledge of tech and software tools make this possible. Check4spam has two people at the helm and a volunteer group on whatsapp where people help out based on their availability. Sinha has a partner, plus a couple of freelance writers and contributors. He himself specialises in investigating fake videos. Jain is the lone ranger at SM Hoax Slayer.
 
-Cowboys Of The Information Highway
+## Cowboys Of The Information Highway
 
 While both Oliyath and Jain started out after getting sick of fake forwards, Sinha had already been doing this for a while; Demonetisation just catapulted him into more visibility — some silver lining indeed. But how do they, on their shoe string budget and skeletal teams, manage to check the facts of a story when news channels with entire departments dedicated to this can’t?
 
@@ -76,7 +76,7 @@ Jain of SM Hoax Slayer has busted 1600 stories till now, out of which he was wro
 
 While they may be the self-appointed cowboys of the information highway, they have the faith of the people and they are proving themselves as they go along, with an integrity that cannot be taught despite best company policies.
 
-The Way Forward
+## The Way Forward
 
 Also there are different kinds of fake news. At the time of GST there were obviously fake offers from companies posing as Amazon and Flipkart, but people were fooled. “Someone with a background in IT can understand their modus operandi; they ask you to download an app that too not even from Google store”, Oliyath says, “…but the normal public cannot.” This is where this essential fake news busting comes in handy.
 

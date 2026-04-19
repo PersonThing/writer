@@ -140,12 +140,21 @@ export function parseMarkdown(md) {
       continue
     }
 
-    // Blockquote
-    const bqm = trimmed.match(/^>\s?(.*)/)
+    // Blockquote. Input has already been HTML-escaped, so a literal
+    // leading `>` from the source arrives here as `&gt;`.
+    const bqm = trimmed.match(/^(?:>|&gt;)\s?(.*)/)
     if (bqm) {
       closePara(); closeUl(); closeOl()
       if (!inBlockquote) { out.push(`<blockquote data-source-line="${i}">`); inBlockquote = true }
-      out.push(inline(bqm[1]) + ' ')
+      // Render an empty line inside a blockquote as a paragraph break
+      // so author-crafted byline rows (`> quote` / `>` / `> — Name`) keep
+      // their vertical spacing.
+      const content = bqm[1]
+      if (content.trim() === '') {
+        out.push('<br><br>')
+      } else {
+        out.push(inline(content) + ' ')
+      }
       continue
     }
 
@@ -158,14 +167,20 @@ export function parseMarkdown(md) {
     // Close lists/blockquote if we hit regular text
     closeUl(); closeOl(); closeBlockquote()
 
-    // Paragraph text
+    // Paragraph text. A lone newline between two content lines becomes a
+    // <br> so poetry can be authored one line per line with stanzas
+    // separated by blank lines. Trailing `\` on a line is still honoured
+    // as an explicit hard break.
     const hardBreak = trimmed.slice(-1) === '\\'
     const text = hardBreak ? trimmed.slice(0, -1).trimEnd() : trimmed
+    const wasInPara = inPara
     if (!inPara) {
       out.push(`<p data-source-line="${i}">`)
       inPara = true
     }
-    out.push(inline(text) + (hardBreak ? '<br>' : ' '))
+    if (wasInPara) out.push('<br>')
+    out.push(inline(text))
+    if (hardBreak) out.push('<br>')
   }
 
   closeAll()

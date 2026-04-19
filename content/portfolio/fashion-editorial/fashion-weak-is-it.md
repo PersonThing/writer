@@ -10,7 +10,7 @@ Fashion weeks are becoming less about the excitement surrounding the unveiling o
 
 The weeks appear a scam these days ; a sophisticated version of the emperor’s new clothes, where you wait in anticipation for some pageantry and nod along with the first ‘expert’. This situation begs the question whether fashion weeks are still relevant, or have they become a victim of their own superficiality.
 
-Style over substance
+## Style over substance
 
 “ No fashion week existed 20 years ago. At the most, designers could participate in trunk shows; they could carry their product abroad and sell only what was available with them. There was no systematic way in which designers could show their collections. The whole process started in India when the Fashion and Design Council of India (FDCI) and its members decided to create a platform,” says Sunil Sethi, present chairman of the FDCI.
 
@@ -22,7 +22,7 @@ Brands like Burberry and Tom Ford have adjusted their shows to match the retail 
 
 In the end, it is the design that loses out. “If everyone has it, no one wants it and if everyone has a copy, you want it even less.” So in line with the international trend they have “already made the switch”. Tahiliani’s stand-alone store displays their Spring/Summer collection at the store in February, but “you can’t expect the same sort of press coverage” as international brands.
 
-A new relevance
+## A new relevance
 
 A lot of the focus has shifted from the buyer to the press. Aakanksha Jain, fashion editor at L’officiel India, believes this may not necessarily be a negative thing. “It is not only a fashion event. It’s a media event, a lifestyle event. Be it Amazon, Lakme or the many other showcases, you have everything from restaurants to a photo exhibit, make-up artists and models. There are more stakes involved than just those of the designer.”
 

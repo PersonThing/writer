@@ -105,15 +105,43 @@ export const CATALOG = {
         title: 'Fashion Weak, Is It?',
         thumbnail: IMG('663ee7_a6798de174b647e78c6624988f6798fc~mv2.png'),
       },
-      { slug: 'manish-arora-at-paris-fashion-week', title: 'Manish Arora at Paris Fashion Week' },
-      { slug: 'bazaar-runway',                      title: 'Runway Trend Report F/W 2012' },
+      {
+        slug: 'manish-arora-at-paris-fashion-week',
+        title: 'Manish Arora at Paris Fashion Week',
+        thumbnail: IMG('663ee7_291ca3aca9484ebb8a4d641ba901b7f3~mv2.jpg'),
+      },
+      {
+        slug: 'bazaar-runway',
+        title: 'Runway Trend Report F/W 2012',
+        thumbnail: IMG('663ee7_4e138ba304cf44a5a42fe0fb1ea3f744~mv2.jpg'),
+      },
       { slug: 'bespoke-for-the-masses',             title: 'Bespoke for the masses' },
       { slug: 'lecoanet-hemant-4-decades-in-fashion', title: 'Lecoanet Hemant: 4 Decades In Fashion' },
-      { slug: 'up-close-with-danilo-venturi',       title: 'Up Close With Danilo Venturi' },
-      { slug: 'trend-forecast-ss18',                title: 'Trend Forecast SS18' },
-      { slug: 'trend-forecast-aw18',                title: 'Trend Forecast AW18' },
-      { slug: 'clothing---an-exercise-in-mythmaking', title: 'Clothing — An exercise in mythmaking' },
-      { slug: 'weaving-tradition-and-modernity',    title: 'Weaving tradition and modernity' },
+      {
+        slug: 'up-close-with-danilo-venturi',
+        title: 'Up Close With Danilo Venturi',
+        thumbnail: IMG('663ee7_54788c9143894fbdba153b6c16b91aec~mv2.jpg'),
+      },
+      {
+        slug: 'trend-forecast-ss18',
+        title: 'Trend Forecast SS18',
+        thumbnail: IMG('663ee7_175fbb891f9544c3b44d072f4be413c1~mv2.jpg'),
+      },
+      {
+        slug: 'trend-forecast-aw18',
+        title: 'Trend Forecast AW18',
+        thumbnail: IMG('663ee7_54ec806f4ef24746b8cd8de9ca41f4c6~mv2.png'),
+      },
+      {
+        slug: 'clothing---an-exercise-in-mythmaking',
+        title: 'Clothing — An exercise in mythmaking',
+        thumbnail: IMG('663ee7_a5c37190ab074d3dbd99cead935ae3e6~mv2.jpg'),
+      },
+      {
+        slug: 'weaving-tradition-and-modernity',
+        title: 'Weaving tradition and modernity',
+        thumbnail: IMG('663ee7_4b235ba585894e38ab3839ee0d3910fc~mv2.jpg'),
+      },
     ],
   },
 
@@ -144,8 +172,16 @@ export const CATALOG = {
       { slug: 'can-the-mr-gay-world-pageant-rescue-the-reputation-of-beauty-pageants', title: 'The Mr GAY World Pageant' },
       { slug: 'all-hail-the-taxi',                                title: 'All Hail The Taxi' },
       { slug: 'where-to-meet-delhis-pilots-paupers-and-princeton-dudes', title: 'How To Meet A Guy in 10 Ways' },
-      { slug: 'how-to-get-filthy-rich-in-rising-asia',            title: 'Author Interview — Mohsin Hamid' },
-      { slug: 'writers-bloc',                                     title: 'Author Advaita Kala on her debut novel' },
+      {
+        slug: 'how-to-get-filthy-rich-in-rising-asia',
+        title: 'Author Interview — Mohsin Hamid',
+        thumbnail: IMG('663ee7_6d60ade8867241d09f103a71528c6d70~mv2.png'),
+      },
+      {
+        slug: 'writers-bloc',
+        title: 'Author Advaita Kala on her debut novel',
+        thumbnail: IMG('663ee7_2fd90ab760ce47e4a425d62f1698cf2a~mv2.png'),
+      },
     ],
   },
 
@@ -173,7 +209,11 @@ export const CATALOG = {
       { slug: 'medeas-ideas',  title: "Medea's Ideas" },
       { slug: 'home-and-hell', title: 'Home & Hell' },
       { slug: 'times-square',  title: 'Times Square' },
-      { slug: 'ek-sher',       title: 'Ek Sher' },
+      {
+        slug: 'ek-sher',
+        title: 'Ek Sher',
+        thumbnail: '/portfolio/images/poetry--ek-sher--01.png',
+      },
     ],
   },
 
