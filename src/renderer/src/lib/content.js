@@ -180,7 +180,12 @@ export function getCategoriesWithItems() {
 function firstLineOfBody(body) {
   for (const raw of body.split('\n')) {
     const line = raw.trim()
-    if (!line || line.startsWith('#') || line.startsWith('!')) continue
+    // Skip blanks, headings, images, and ::: video / ::: audio directives
+    // — those aren't useful as a description snippet.
+    if (!line) continue
+    if (line.startsWith('#')) continue
+    if (line.startsWith('!')) continue
+    if (line.startsWith(':::')) continue
     return line.slice(0, 200)
   }
   return ''

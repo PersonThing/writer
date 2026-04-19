@@ -63,9 +63,11 @@
       </button>
 
       <nav class:open={mobileOpen}>
-        <div class="work-menu">
+        <Link href="/" class="nav-link">Home</Link>
+
+        <div class="dropdown-menu work-menu">
           <button
-            class="nav-link work-trigger"
+            class="nav-link dropdown-trigger"
             class:active={isWorkActive}
             onclick={() => (workOpen = !workOpen)}
           >
@@ -73,13 +75,14 @@
             <span class="chevron">▾</span>
           </button>
           {#if workOpen}
-            <div class="work-dropdown" role="menu">
+            <div class="dropdown-panel" role="menu">
               {#each WORK_CATEGORIES as { path, label }}
-                <Link href={path} class="work-dropdown-item">{label}</Link>
+                <Link href={path} class="dropdown-item">{label}</Link>
               {/each}
             </div>
           {/if}
         </div>
+
         <a href="/#recommendations" class="nav-link" onclick={handleRecsClick}>Recommendations</a>
         <Link href="/about" class="nav-link">About</Link>
         <Link href="/contact" class="nav-link">Contact</Link>
@@ -186,7 +189,7 @@
     font-size: 0.9rem;
   }
   :global(.portfolio-root .nav-link),
-  .work-trigger {
+  .dropdown-trigger {
     background: transparent;
     border: none;
     color: inherit;
@@ -198,9 +201,9 @@
     transition: opacity 0.15s;
   }
   :global(.portfolio-root .nav-link:hover),
-  .work-trigger:hover,
+  .dropdown-trigger:hover,
   :global(.portfolio-root .nav-link.active),
-  .work-trigger.active {
+  .dropdown-trigger.active {
     opacity: 1;
   }
   .chevron {
@@ -209,28 +212,29 @@
     opacity: 0.7;
   }
 
-  .work-menu {
+  .dropdown-menu {
     position: relative;
   }
-  .work-dropdown {
+  .dropdown-panel {
     position: absolute;
     top: calc(100% + 0.5rem);
     left: 0;
     background: #111;
     border: 1px solid var(--p-border);
     padding: 0.5rem 0;
-    min-width: 200px;
+    min-width: 220px;
     z-index: 50;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
   }
-  :global(.portfolio-root .work-dropdown-item) {
+  :global(.portfolio-root .dropdown-item) {
     display: block;
     padding: 0.55rem 1.2rem;
     font-size: 0.88rem;
     opacity: 0.85;
+    white-space: nowrap;
     transition: background 0.12s, opacity 0.12s;
   }
-  :global(.portfolio-root .work-dropdown-item:hover) {
+  :global(.portfolio-root .dropdown-item:hover) {
     background: #1c1a15;
     opacity: 1;
   }
@@ -348,7 +352,7 @@
     nav.open {
       display: flex;
     }
-    .work-dropdown {
+    .dropdown-panel {
       position: static;
       background: transparent;
       border: none;

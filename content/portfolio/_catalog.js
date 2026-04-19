@@ -120,7 +120,7 @@ export const CATALOG = {
   editorial: {
     label: 'Editorial',
     blurb:
-      'Cultural critique of the Indian zeitgeist, ranging from 2010s fashion weeks to more recent op-eds.',
+      'Cultural critique of the Indian zeitgeist ranging from 2010s to 2018. Includes political & feminist criticism, author interviews and pop-culture commentary.',
     viewMore: '/editorial',
     pieces: [
       {
@@ -152,7 +152,7 @@ export const CATALOG = {
   poetry: {
     label: 'Poetry',
     blurb:
-      'Published in Outlook Magazine 2022 in New Delhi, and in Abobo Zine 2023 in New York, this is a growing section. You can also find them directly on my Substack.',
+      'Published in Outlook Magazine 2022 in New Delhi, and in Abobo Zine 2023 in New York, this is a growing section of the different works to come. You can also find them directly on my Substack',
     viewMore: '/poetry',
     pieces: [
       {
@@ -179,7 +179,8 @@ export const CATALOG = {
 
   'published-paper': {
     label: 'Paper',
-    blurb: 'Published academic work.',
+    blurb:
+      'The Evolution of the Fashion Image. PAPER presented at International Design Research Symposium, 2018 at the National Institute of Design, Ahmedabad.',
     viewMore: null,
     pieces: [
       {
