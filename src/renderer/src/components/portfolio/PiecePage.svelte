@@ -4,6 +4,8 @@
   import { parseMarkdown } from '../../lib/markdown.js'
   import { getPage } from '../../lib/content.js'
   import { asset } from '../../lib/asset.js'
+  import { parseCreativeDirection } from '../../lib/cd-parse.js'
+  import CdPiece from './CdPiece.svelte'
 
   let { category, slug } = $props()
 
@@ -14,6 +16,14 @@
       .split('-')
       .map((w) => w[0].toUpperCase() + w.slice(1))
       .join(' '),
+  )
+
+  // Creative-direction pieces have a distinct layout (brief notes +
+  // asymmetric image column). Parse once and render via CdPiece.
+  const cdParsed = $derived(
+    category === 'creative-direction' && piece
+      ? parseCreativeDirection(piece.body || '')
+      : null,
   )
 
   // Copywriting pieces have a distinct shape: media + verse (the "copy")
@@ -48,39 +58,53 @@
 
 <Layout>
   {#if piece}
-    <article class="piece" class:piece-copywriting={category === 'copywriting'}>
-      <div class="breadcrumb">
-        <Link href={`/${category}`}>← {categoryLabel}</Link>
+    {#if category === 'creative-direction' && cdParsed}
+      <div class="cd-shell-head">
+        <div class="breadcrumb">
+          <Link href={`/${category}`}>← {categoryLabel}</Link>
+        </div>
       </div>
+      <CdPiece
+        notes={cdParsed.notes}
+        images={cdParsed.images}
+        title={piece.title}
+        {categoryLabel}
+      />
+    {:else}
+      <article class="piece" class:piece-copywriting={category === 'copywriting'}>
+        <div class="breadcrumb">
+          <Link href={`/${category}`}>← {categoryLabel}</Link>
+        </div>
 
-      {#if hero}
-        <figure class="hero">
-          <img src={asset(hero)} alt={piece.title} />
-        </figure>
-      {/if}
-
-      <header class="piece-head">
-        <h1>{piece.title}</h1>
-        {#if piece.lede}
-          <p class="lede">{piece.lede}</p>
+        {#if hero}
+          <figure class="hero">
+            <img src={asset(hero)} alt={piece.title} />
+          </figure>
         {/if}
-      </header>
 
-      {#if category === 'copywriting'}
-        {#if split.media}
-          <div class="piece-body">{@html split.media}</div>
-        {/if}
-        <aside class="copy-block">
-          <span class="copy-eyebrow">Copy</span>
-          <div class="copy-text">{@html split.copy}</div>
-        </aside>
-        {#if split.rest}
+        <header class="piece-head">
+          <h1>{piece.title}</h1>
+          {#if piece.lede}
+            <p class="lede">{piece.lede}</p>
+          {/if}
+        </header>
+
+        {#if category === 'copywriting'}
+          {#if split.media}
+            <div class="piece-body">{@html split.media}</div>
+          {/if}
+          <aside class="copy-block">
+            <span class="copy-eyebrow">Copy</span>
+            <div class="copy-text">{@html split.copy}</div>
+          </aside>
+          {#if split.rest}
+            <div class="piece-body">{@html split.rest}</div>
+          {/if}
+        {:else}
           <div class="piece-body">{@html split.rest}</div>
         {/if}
-      {:else}
-        <div class="piece-body">{@html split.rest}</div>
-      {/if}
-    </article>
+      </article>
+    {/if}
   {:else}
     <div class="empty"><p>Piece not found.</p></div>
   {/if}
@@ -253,6 +277,18 @@
      preserve the spacing but keep them invisible. */
   :global(.portfolio-root .copy-text p:empty) {
     min-height: 0.6rem;
+  }
+
+  /* Creative-direction shell: breadcrumb bar above the piece body. */
+  .cd-shell-head {
+    max-width: var(--p-content-max);
+    margin: 0 auto;
+    padding: 2rem var(--p-content-padding) 0.5rem;
+  }
+  .cd-shell-head .breadcrumb {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--p-muted);
   }
 
   .empty {

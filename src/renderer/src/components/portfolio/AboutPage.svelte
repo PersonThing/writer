@@ -62,10 +62,9 @@
     </header>
 
     <div class="ed-rule">
-      <span>Curriculum</span>
-      <span>Vol. XVI</span>
+      <span>Editorial · Brand · Verse</span>
       <span>New York · Paris · New Delhi</span>
-      <span>2007 —</span>
+      <span>Since 2007</span>
     </div>
 
     <div class="ed-cols">
