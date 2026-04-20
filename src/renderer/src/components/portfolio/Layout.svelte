@@ -8,6 +8,9 @@
 
   let workOpen = $state(false)
   let mobileOpen = $state(false)
+  // Auto-hide header: hidden when the user scrolls down past the hero,
+  // revealed the moment they scroll up.
+  let navHidden = $state(false)
 
   const WORK_CATEGORIES = [
     { path: '/copywriting', label: 'Copywriting', hasLanding: false },
@@ -44,12 +47,51 @@
       if (!e.target.closest('.work-menu')) workOpen = false
     }
     document.addEventListener('mousedown', onDocClick)
-    return () => document.removeEventListener('mousedown', onDocClick)
+
+    // Auto-hide scroll logic. Keep the bar pinned when the user is at
+    // the very top, when a dropdown is open, or when the mobile nav is
+    // expanded; otherwise hide on downward scroll and reveal on upward.
+    let lastY = window.scrollY
+    let accumUp = 0
+    let accumDown = 0
+    let ticking = false
+    const SHOW_TOP = 10            // always show above this scroll position
+    const HIDE_AFTER = 160         // don't hide until past this far down
+    const DOWN_DELTA = 8           // px of sustained downward scroll to trigger hide
+    const UP_DELTA = 6             // px of upward scroll to trigger show
+
+    function update() {
+      ticking = false
+      const y = window.scrollY
+      const dy = y - lastY
+      lastY = y
+
+      if (y <= SHOW_TOP) { navHidden = false; accumUp = accumDown = 0; return }
+      if (workOpen || mobileOpen) { navHidden = false; accumUp = accumDown = 0; return }
+
+      if (dy > 0) {
+        accumDown += dy; accumUp = 0
+        if (accumDown > DOWN_DELTA && y > HIDE_AFTER) navHidden = true
+      } else if (dy < 0) {
+        accumUp += -dy; accumDown = 0
+        if (accumUp > UP_DELTA) navHidden = false
+      }
+    }
+
+    function onScroll() {
+      if (!ticking) { requestAnimationFrame(update); ticking = true }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+
+    return () => {
+      document.removeEventListener('mousedown', onDocClick)
+      window.removeEventListener('scroll', onScroll)
+    }
   })
 </script>
 
 <div class="portfolio-root">
-  <header class="top-nav">
+  <header class="top-nav" class:top-nav-hidden={navHidden}>
     <div class="top-nav-inner">
       <Link href="/" class="wordmark">Shigorika</Link>
 
@@ -164,8 +206,22 @@
   }
 
   .top-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
     padding: 1rem 0;
-    position: relative;
+    background: var(--p-bg);
+    transform: translate3d(0, 0, 0);
+    transition: transform 0.28s ease;
+    will-change: transform;
+  }
+  .top-nav-hidden {
+    transform: translate3d(0, -100%, 0);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .top-nav { transition: none; }
   }
   .top-nav-inner {
     max-width: var(--p-content-max);
@@ -258,6 +314,9 @@
 
   .page-main {
     flex: 1;
+    /* Reserve space under the fixed top nav so the first content
+       block isn't covered. ~64px matches the nav's padding + line-box. */
+    padding-top: 64px;
   }
 
   .site-footer {

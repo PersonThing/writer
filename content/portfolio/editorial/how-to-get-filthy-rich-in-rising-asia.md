@@ -1,8 +1,43 @@
 ---
-title: Author Interview - Mohsin Hamid: How to get filthy rich in rising Asia
+title: "How to Get Filthy Rich in Rising Asia"
 order: 10
 slug: editorial--how-to-get-filthy-rich-in-rising-asia
 source_path: /editorial/how-to-get-filthy-rich-in-rising-asia
+lede: "The book like the author, is not shy to mince words, but behind the razzle-dazzle of the cheery yellow hardback and the sunny disposition, is the story of a common man who thrives, loves and loses. From being short listed for the Man Booker in 2007 to having his debut novel being made into a tele-series in Pakistan, Mohsin Hamid has been there and done that and FirstCity Books would elect no one else to tell us How to Get Filthy Rich in Rising Asia."
 ---
 
-![](/portfolio/images/editorial--how-to-get-filthy-rich-in-rising-asia--01.png)
+“In a way this novel is a long postmodern secular Sufi ghazal — there is a beloved, who is addressed in the second person and there are no names. It’s a love story and it’s about the potential of love to allow transcendence in the face of mortality” — a very unorthodox description of a book that has been making waves, especially for its unusual format. Written in the second person, it establishes an intimate relation instantly as it addresses a ‘you’; the story becomes immediate and littered with your mother, your siblings, your hopes and ambitions.
+
+The book begins with find(ing) _you, huddled, shivering, on the packed earth under your mother’s cot one cold, dewy morning_. You manage to move to the city, a turn of events brought on by your mother’s exhortations and go to school. From joining an aggressive student union to getting a sales job in a not-so-legitimate enterprise, the city that surprised you once has made you street smart.
+
+The author, by picking important events in ‘your’ life, has managed to surmise an entire lifetime in a slim 200 page volume. “That’s the way compression works and I am very interested in it”, says Hamid. “It works because human beings have this ability to reassemble information, you can just give a few points and we see a line, you can give just a couple of facial expressions and we feel a sense of trust or fear from someone. We are able to take little bits of information and create lots of meaning out of it.”
+
+Hamid always acknowledges the reader and leaves room for interpretation, making all his work more interactive than a book generally manages to be. “In _Moth Smoke_ you are cast as this judge and all these characters are going to tell you a story and you have to decide. In _The Reluctant Fundamentalist_ you are hearing a conversation that you only get half of. You are trying to guess at the other half and you are destabilised and in the end it does not end, you have to end it. And in this one (_How to Get Rich…_) there is a blurring that takes place.
+
+> There is ‘you’ — a character, there is ‘you’ — a reader, there is a narrator and there is me writing this book
+
+There is a narrator and there is me writing this book and these four different things move. The narrator sometimes feels like it’s you — the character, sometimes it’s me — the writer. And the ‘you’ is sometimes a character, sometimes the reader.”
+
+“I think that the self is illusory, whether it’s Hindu theology or Sufi Islam or modern cognitive neuroscience and functional magnetic imaging of brains show us that we fabricate this thing. I am a writer and I am 41, I am a father and I am in Delhi and I like this and I like that but it’s also a fabrication in a way. I think the self is a story that we tell, about what we are, to allow ourselves to function but we never entirely believe in it. There is a moment when you are driving in your car and somebody else is driving in a car and your eyes meet across the street and you have a little recognition of each other and a smile is exchanged. You never see each other in your lives, in that moment are you a married man and a father, or are you just a boy and a girl who happen to see each other and have a moment of somehow… happiness in that. That’s it, you never speak and you never see each other. My novels are invitations to play.”
+
+He sketches the characters in a few strokes and encourages the reader to provide information from their imagination, where there is less of it in the book. “Each reader brings their own story to the characters they are reading.” He goes into a charming episode with his daughter where she is pretending to be a shark one day and he is supposed to be scared of her. Or a jelly fish, or even a cloud. “It’s just as adults we increasingly deny ourselves permission to do that in a way my daughter doesn’t. She does it all the time — and I do it professionally.”
+
+Constantly playing with the ‘self help’ genre — he is spoofing it in the beginning, the rigid format making for hilarious pairing with a bildungsroman and a love story all rolled into one. He keeps up the façade throughout with chapters named ‘Befriend a Bureaucrat’ ‘Don’t Fall in Love’ ‘Be Prepared to Use Violence’ ‘Learn from a Master’ — essential directives towards achieving the final goal, that of becoming Filthy Rich. Just as you get used to the long running joke, he turns it on its head and starts dispensing real advice the way one would expect a self-help book to.
+
+_The idea of self in the land of the self-help is slippery one. And slippery can be good. Slippery can be pleasurable. Slippery can provide access to what would chafe if entered dry._ “The problem with the self-help form is that it’s a narcissistic form — how to make six-pack abs… but we know by religious mystical ascetic self-help forms that it can also be self-mitigation — the opposite of narcissism.” The novel is ostensibly about instructions on how to get rich but casts a shadow on something else — how do we become comfortable with life being out of our control. “I thought I will build the superstructure to explore the shadow that I cast.”
+
+Hamid’s excellence lies in sentence construction, snarky observations of lopsided urbanisation and misanthropic commentary. It has a sort of wry humour which makes you smile not while reading it but later when you remember and savour or shake off. Its crudeness is like a secret that exists between you and the book. _Nothing compresses the time frame needed to leap from my-s\*\*t-just-sits-there-till-it-rains-poverty to which-of-my-toilets-shall-I-use affluence like an apprenticeship._
+
+> “When you read a book it’s like injecting heroin and you’ve injected this other person’s thoughts in the same place and suddenly two people’s thoughts are in the same place”
+
+The deliberate crudeness to the novel, which the author accepts and even champions, is according to him, as much part of the human register as is delicacy and gentleness and there is no reason for preferring one over the other. Even the word ‘filthy’ according to him is ‘a good word’. The notion of filthy lucre, the origin of the expression is that the elements of wealth stick to your skin. The term “encapsulates the dual nature of our attitude towards richness, it is something so desirable and also implies that horrors have been perpetrated”.
+
+In fact, a little crudeness is necessary in the beginning lest one starts suspecting the motives of an especially nice stranger/novel. “Crudeness is a distancing thing. If this book takes four hours to read, it is in the last five-ten minutes that we (reader/character and writer/narrator) are friends because we’ve had a relationship.” His concern is that over the concise 200 pages that surmise the life of our protagonist, a relationship is formed, a relationship, perhaps helped by this crudeness, that is sincere. And slowly as you start taking away the joys of this boy we’ve seen grow up, struggle and make it — like a Renaissance hero who reaches his peak and crumbles, we are hoping that destiny or the author, is going to be kind to him.
+
+_As my writer’s fingers key and your reader’s eyes flick, you stand at the eighth decade of your life, substantially bald, mostly thin, resolutely erect._ There is a deliberateness to the entire book reminiscent of Neruda where he too paints a picture of someone sitting down to write (_Tonight I can write the saddest lines_), clearly implicating that this is fiction, and yet despite the constant reminders you can’t help the immediacy.
+
+“When you read a book it’s like injecting heroin and you’ve injected this other person’s thoughts in the same place and suddenly two people’s thoughts are in the same place. It’s a very intimate experience and you know in that moment of intimacy funny stuff happens.”
+
+![How to Get Filthy Rich in Rising Asia — by Mohsin Hamid, Penguin, ₹499](/portfolio/images/editorial--how-to-get-filthy-rich-in-rising-asia--01.png)
+
+_(Extracts in italics from the book. For the FirstCity Books review of How to Get Filthy Rich in Rising Asia, turn to page 52.)_
