@@ -8,8 +8,8 @@
  * `matchRoute()` is a lightweight matcher for portfolio URLs. The root App
  * consumes `pathname` and branches on it with `{#if}` / `matchRoute()`.
  *
- * GH Pages preview quirk: when served at `personthing.github.io/writer/`,
- * `location.pathname` is prefixed with `/writer` (the repo name). We strip
+ * GH Pages preview quirk: when served at `personthing.github.io/shigorika/`,
+ * `location.pathname` is prefixed with `/shigorika` (the repo name). We strip
  * that prefix on read and re-attach it on push so route matching sees clean
  * app-absolute paths. On the custom domain the prefix is empty and this is
  * a no-op.
@@ -17,7 +17,7 @@
 
 const ROUTE_PREFIX =
   typeof location !== 'undefined' && location.hostname === 'personthing.github.io'
-    ? '/writer'
+    ? '/shigorika'
     : ''
 
 function stripPrefix(path) {
