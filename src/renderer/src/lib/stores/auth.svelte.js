@@ -27,7 +27,11 @@ class AuthStore {
   }
 
   signIn() {
-    window.location.href = '/auth/google'
+    // Preserve the current in-app path so we come back to it after
+    // Google redirects through /auth/google/callback.
+    const next = window.location.pathname + window.location.search
+    const params = new URLSearchParams({ next })
+    window.location.href = `/auth/google?${params.toString()}`
   }
 
   async signInAs(email) {

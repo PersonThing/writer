@@ -64,10 +64,18 @@ export function requireAuth(req, res, next) {
 // ── Routes ─────────────────────────────────────────────────────────────────
 export function mountAuth(app) {
   app.get('/auth/google', (req, res) => {
+    // Preserve the caller's in-app path through OAuth's state parameter
+    // so the callback can land them back where they started. Only
+    // accept same-origin app-relative paths (leading `/`, no scheme) to
+    // prevent open-redirect vulnerabilities.
+    const raw = typeof req.query.next === 'string' ? req.query.next : '/'
+    const next = raw.startsWith('/') && !raw.startsWith('//') ? raw : '/'
+    const state = Buffer.from(next, 'utf8').toString('base64url')
     const url = oauth.generateAuthUrl({
       access_type: 'online',
       scope: ['openid', 'email', 'profile'],
       prompt: 'select_account',
+      state,
     })
     res.redirect(url)
   })
@@ -122,7 +130,14 @@ export function mountAuth(app) {
       }
 
       req.session.userId = user.id
-      req.session.save(() => res.redirect('/'))
+      // Decode the same-origin path we stashed in state; fall back to `/`
+      // if absent or malformed.
+      let next = '/'
+      try {
+        const decoded = Buffer.from(req.query.state || '', 'base64url').toString('utf8')
+        if (decoded.startsWith('/') && !decoded.startsWith('//')) next = decoded
+      } catch {}
+      req.session.save(() => res.redirect(next))
     } catch (e) {
       console.error('OAuth callback error:', e)
       res.status(500).send('Auth failed')
