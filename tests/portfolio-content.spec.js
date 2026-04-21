@@ -32,15 +32,15 @@ test.describe('portfolio content rendering', () => {
   test('top nav has wordmark + Work dropdown + About + Contact', async ({ page }) => {
     await page.goto('/about')
     await expect(page.locator('.wordmark')).toBeVisible()
-    await expect(page.locator('.work-trigger')).toHaveText(/Work/)
+    await expect(page.locator('.work-menu .dropdown-trigger')).toHaveText(/Work/)
     await expect(page.getByRole('link', { name: 'About' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Contact' })).toBeVisible()
   })
 
   test('Work dropdown opens and lists all categories', async ({ page }) => {
     await page.goto('/')
-    await page.locator('.work-trigger').click()
-    const dropdown = page.locator('.work-dropdown')
+    await page.locator('.work-menu .dropdown-trigger').click()
+    const dropdown = page.locator('.work-menu .dropdown-panel')
     await expect(dropdown).toBeVisible()
     await expect(dropdown.locator('a')).toHaveCount(6)
     await expect(dropdown.getByText('Fashion Editorial')).toBeVisible()
@@ -78,7 +78,9 @@ test.describe('portfolio content rendering', () => {
 
   test('creative-direction gallery page has multiple inline images', async ({ page }) => {
     await page.goto('/creative-direction/ethnicwear-db')
-    const images = page.locator('article.piece .piece-body img')
+    // Creative-direction pieces render via CdPiece.svelte with a
+    // sidebar + gallery column; grab images from the gallery only.
+    const images = page.locator('.cd-a-gallery img')
     const count = await images.count()
     expect(count).toBeGreaterThanOrEqual(4)
   })
@@ -94,9 +96,11 @@ test.describe('portfolio content rendering', () => {
 
   test('home has a Recommendations section with 4 quotes', async ({ page }) => {
     await page.goto('/')
-    const recs = page.locator('#recommendations .rec')
+    const recs = page.locator('#recommendations .pull')
     await expect(recs).toHaveCount(4)
-    await expect(page.locator('#recommendations .rec .rec-name').first()).toBeVisible()
+    await expect(
+      page.locator('#recommendations .pull figcaption strong').first(),
+    ).toBeVisible()
   })
 
   test('Recommendations nav link scrolls to the home section', async ({ page }) => {
@@ -104,13 +108,16 @@ test.describe('portfolio content rendering', () => {
     await page.getByRole('link', { name: 'Recommendations' }).click()
     // URL stays at "/" (hash anchor is just a scroll target, not a route change)
     const section = page.locator('#recommendations')
-    // After smooth-scroll, the section should be in the viewport.
-    await page.waitForTimeout(500)
-    const inView = await section.evaluate((el) => {
-      const r = el.getBoundingClientRect()
-      return r.top < window.innerHeight && r.bottom > 0
-    })
-    expect(inView).toBe(true)
+    // The smooth scroll is async; poll until the section enters the
+    // viewport (default 5s timeout).
+    await expect
+      .poll(async () =>
+        section.evaluate((el) => {
+          const r = el.getBoundingClientRect()
+          return r.top < window.innerHeight && r.bottom > 0
+        }),
+      )
+      .toBe(true)
   })
 
   test('footer has snail, 3 social icons, and current-year copyright', async ({ page }) => {

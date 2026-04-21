@@ -13,7 +13,7 @@ export const test = base.extend({
   // tests log in with fresh cookies anyway.
   db: async ({}, use) => {
     await pool.query(
-      'TRUNCATE users, stories, files, statuses RESTART IDENTITY CASCADE',
+      'TRUNCATE users, stories, files, folders, statuses RESTART IDENTITY CASCADE',
     )
     await use(pool)
   },

@@ -66,6 +66,20 @@ app.post('/api/scan-directory', async (req, res) => {
       dirSet.add(parts.slice(0, i).join('/'))
     }
   }
+
+  // Union persisted empty folders. Also expand their ancestor prefixes
+  // so `createFolder('a/b/c')` reveals `a`, `a/b`, and `a/b/c`.
+  const folderRows = await db
+    .select({ path: schema.folders.path })
+    .from(schema.folders)
+    .where(eq(schema.folders.userId, userId))
+  for (const r of folderRows) {
+    const parts = r.path.split('/')
+    for (let i = 1; i <= parts.length; i++) {
+      dirSet.add(parts.slice(0, i).join('/'))
+    }
+  }
+
   const dirs = {}
   for (const d of dirSet) dirs[d] = true
 
@@ -142,9 +156,31 @@ app.post('/api/rename-file', async (req, res) => {
   }
 })
 
-app.post('/api/create-folder', (req, res) => {
-  // Folders are implicit (derived from file path prefixes). No-op for API compatibility.
-  res.json({ ok: true })
+app.post('/api/create-folder', async (req, res) => {
+  const userId = req.session.userId
+  let { name, path: parentPath } = req.body || {}
+  if (typeof name !== 'string' || !name.trim()) {
+    return res.status(400).json({ error: 'name is required' })
+  }
+  // Allow the client to pass either a plain name (treated as top-level)
+  // or a full slash-separated path. A `path` field, if present, becomes
+  // the parent prefix and `name` is appended.
+  const cleanName = name.trim().replace(/^\/+|\/+$/g, '')
+  const cleanParent = (parentPath || '').trim().replace(/^\/+|\/+$/g, '')
+  const fullPath = cleanParent ? `${cleanParent}/${cleanName}` : cleanName
+  if (!fullPath) return res.status(400).json({ error: 'invalid folder path' })
+
+  try {
+    await db
+      .insert(schema.folders)
+      .values({ userId, path: fullPath })
+      .onConflictDoNothing({
+        target: [schema.folders.userId, schema.folders.path],
+      })
+    res.json({ ok: true, path: fullPath })
+  } catch (e) {
+    res.status(500).json({ error: e.message })
+  }
 })
 
 app.post('/api/copy-file', async (req, res) => {
@@ -217,18 +253,43 @@ app.post('/api/rename-folder', async (req, res) => {
   const { oldPath, newPath } = req.body
   const userId = req.session.userId
   try {
-    await db
-      .update(schema.files)
-      .set({
-        path: sql`${newPath} || substr(${schema.files.path}, ${oldPath.length + 1})`,
-        modifiedAt: sql`now()`,
-      })
-      .where(
-        and(
-          eq(schema.files.userId, userId),
-          like(schema.files.path, `${oldPath}/%`),
-        ),
-      )
+    await db.transaction(async (tx) => {
+      // Rewrite any file paths under the old prefix.
+      await tx
+        .update(schema.files)
+        .set({
+          path: sql`${newPath} || substr(${schema.files.path}, ${oldPath.length + 1})`,
+          modifiedAt: sql`now()`,
+        })
+        .where(
+          and(
+            eq(schema.files.userId, userId),
+            like(schema.files.path, `${oldPath}/%`),
+          ),
+        )
+      // Rewrite any persisted folder entries under the old prefix
+      // (covers both the folder itself and its nested descendants).
+      await tx
+        .update(schema.folders)
+        .set({
+          path: sql`${newPath} || substr(${schema.folders.path}, ${oldPath.length + 1})`,
+        })
+        .where(
+          and(
+            eq(schema.folders.userId, userId),
+            like(schema.folders.path, `${oldPath}/%`),
+          ),
+        )
+      await tx
+        .update(schema.folders)
+        .set({ path: newPath })
+        .where(
+          and(
+            eq(schema.folders.userId, userId),
+            eq(schema.folders.path, oldPath),
+          ),
+        )
+    })
     res.json({ ok: true })
   } catch (e) {
     if (e.cause?.code === '23505')
@@ -279,13 +340,31 @@ app.post('/api/delete-folder', async (req, res) => {
   const userId = req.session.userId
   if (!folderPath) return res.status(400).json({ error: 'path is required' })
 
-  // Always delete files whose path is under the prefix.
+  // Files under the prefix.
   await db
     .delete(schema.files)
     .where(
       and(
         eq(schema.files.userId, userId),
         like(schema.files.path, `${folderPath}/%`),
+      ),
+    )
+
+  // Persisted folder entries: the folder itself + any nested descendants.
+  await db
+    .delete(schema.folders)
+    .where(
+      and(
+        eq(schema.folders.userId, userId),
+        eq(schema.folders.path, folderPath),
+      ),
+    )
+  await db
+    .delete(schema.folders)
+    .where(
+      and(
+        eq(schema.folders.userId, userId),
+        like(schema.folders.path, `${folderPath}/%`),
       ),
     )
 

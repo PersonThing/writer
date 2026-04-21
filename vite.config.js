@@ -7,9 +7,14 @@ const projectRoot = path.dirname(fileURLToPath(import.meta.url))
 const rendererSrc = path.resolve(projectRoot, 'src/renderer/src')
 const contentDir = path.resolve(projectRoot, 'content')
 
+// On GH Pages the app is served under a subpath (/shigorika/), so we need
+// relative asset URLs. Everywhere else (local dev, Railway) the app is at
+// the origin root — absolute URLs work on every route including /writer/*.
+const isStaticBuild = process.env.VITE_STATIC_BUILD === '1'
+
 export default defineConfig({
   root: 'src/renderer',
-  base: './',
+  base: isStaticBuild ? './' : '/',
   plugins: [svelte()],
   resolve: {
     alias: {

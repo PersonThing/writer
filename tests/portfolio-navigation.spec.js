@@ -20,8 +20,10 @@ test.describe('portfolio navigation', () => {
     const before = navCount
 
     // Open Work dropdown, then click Fashion Editorial
-    await page.locator('.work-trigger').click()
-    await page.locator('.work-dropdown a', { hasText: 'Fashion Editorial' }).click()
+    await page.locator('.work-menu .dropdown-trigger').click()
+    await page
+      .locator('.work-menu .dropdown-panel a', { hasText: 'Fashion Editorial' })
+      .click()
     await expect(page).toHaveURL('/fashion-editorial')
     // history.pushState fires framenavigated too, so one navigation
     expect(navCount - before).toBeLessThanOrEqual(1)

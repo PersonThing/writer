@@ -58,6 +58,26 @@ export const files = pgTable(
   }),
 )
 
+// Persists user-created empty folders so they survive even before any
+// file exists in them. Folders with files are still derived implicitly
+// from files.path prefixes; this table is the union partner that keeps
+// freshly-created empty folders visible.
+export const folders = pgTable(
+  'folders',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    path: text('path').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    userPathUnique: uniqueIndex('folders_user_path_idx').on(t.userId, t.path),
+    userIdx: index('folders_user_idx').on(t.userId),
+  }),
+)
+
 export const statuses = pgTable(
   'statuses',
   {
