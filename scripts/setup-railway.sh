@@ -70,17 +70,26 @@ railway up --detach
 # redirect URI in place for local dev.
 
 # ──────────────────────────────────────────────────────────────────────
-# 7. Create a Railway project token for CI
+# 7. Create a Railway project token for CI (manual, dashboard)
 # ──────────────────────────────────────────────────────────────────────
-# Flag names vary by CLI version — check `railway tokens --help` if the
-# --name flag is rejected.
-RAILWAY_TOKEN=$(railway tokens create --name "gh-actions")
-echo "$RAILWAY_TOKEN"       # sanity-check it looks like a token
+# The v4 Railway CLI dropped the token-creation command, and going
+# through the GraphQL API still requires an account token from the
+# dashboard first — so it's fastest to just do this in the UI.
+#
+#   1. Open the project → Settings → Tokens.
+#   2. Click "Create Token", name it `gh-actions`, choose the
+#      `production` environment.
+#   3. Copy the token value (shown only once).
+#   4. Paste it at the prompt in step 8.
 
 # ──────────────────────────────────────────────────────────────────────
 # 8. Push the token to GitHub Secrets (enables the Actions workflow)
 # ──────────────────────────────────────────────────────────────────────
+# Reads the token from stdin so it never lands in shell history or a
+# local file.
+read -s -p "Paste Railway project token: " RAILWAY_TOKEN; echo
 gh secret set RAILWAY_TOKEN --body "$RAILWAY_TOKEN"
+unset RAILWAY_TOKEN
 
 # ──────────────────────────────────────────────────────────────────────
 # 9. Trigger the CI deploy to confirm end-to-end

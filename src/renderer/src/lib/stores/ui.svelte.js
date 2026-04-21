@@ -9,6 +9,7 @@ export const ui = $state({
   ctxX: 0,
   ctxY: 0,
   ctxPath: null,
+  ctxKind: 'file', // 'file' | 'folder'
 
   // Toast
   toastVisible: false,
@@ -48,18 +49,20 @@ export function toggleSidebar() {
 }
 
 // ── Context menu ─────────────────────────────────────────────────────────
-export function showContextMenu(x, y, path) {
+export function showContextMenu(x, y, path, kind = 'file') {
   const vw = window.innerWidth
   const vh = window.innerHeight
   ui.ctxX = x + 190 > vw ? vw - 200 : x
   ui.ctxY = y + 230 > vh ? vh - 240 : y
   ui.ctxPath = path
+  ui.ctxKind = kind
   ui.ctxVisible = true
 }
 
 export function hideContextMenu() {
   ui.ctxVisible = false
   ui.ctxPath = null
+  ui.ctxKind = 'file'
 }
 
 // ── Toast ────────────────────────────────────────────────────────────────

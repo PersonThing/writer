@@ -65,6 +65,45 @@
     await project.scanAll()
   }
 
+  // ── Folder actions ─────────────────────────────────────────────────────
+
+  function handleFolderRename() {
+    if (!ui.ctxPath) return
+    const path = ui.ctxPath
+    hideContextMenu()
+    // FileList owns the inline-rename UI for folders; signal it to
+    // enter rename mode for this folder.
+    window.dispatchEvent(
+      new CustomEvent('start-folder-rename', { detail: { path } }),
+    )
+  }
+
+  async function handleFolderDelete() {
+    if (!ui.ctxPath) return
+    const path = ui.ctxPath
+    const name = path.split('/').pop()
+    hideContextMenu()
+    if (
+      !(await modalConfirm(
+        `Delete folder "${name}" and everything inside it? This cannot be undone.`,
+      ))
+    ) {
+      return
+    }
+    try {
+      await api.deleteFolder(path)
+      // Close any open panes whose files lived under this folder.
+      for (const pane of [...editor.panes]) {
+        if (pane.filePath === path || pane.filePath.startsWith(path + '/')) {
+          editor.closePane(pane.id)
+        }
+      }
+      await project.scanAll()
+    } catch (e) {
+      await modalAlert('Could not delete folder: ' + e.message)
+    }
+  }
+
   function handleWindowClick(e) {
     if (ui.ctxVisible) hideContextMenu()
   }
@@ -113,7 +152,21 @@
   })
 </script>
 
-{#if ui.ctxVisible}
+{#if ui.ctxVisible && ui.ctxKind === 'folder'}
+  <div
+    class="ctx-menu"
+    bind:this={menuEl}
+    style="left: {ui.ctxX}px; top: {ui.ctxY}px"
+    onclick={(e) => e.stopPropagation()}
+  >
+    <div class="ctx-item" onclick={handleFolderRename}>
+      <span class="ctx-icon">{@html iconPencil()}</span> Rename folder
+    </div>
+    <div class="ctx-item ctx-delete" onclick={handleFolderDelete}>
+      <span class="ctx-icon">{@html iconTrash()}</span> Delete folder
+    </div>
+  </div>
+{:else if ui.ctxVisible}
   {@const m = ui.ctxPath
     ? project.getMeta(ui.ctxPath)
     : { status: '', quality: 0 }}

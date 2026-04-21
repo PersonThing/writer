@@ -163,6 +163,133 @@ test.describe('writer UI — upload button', () => {
   })
 })
 
+test.describe('writer UI — folder right-click menu', () => {
+  async function signInWithFolder(page, asUser, folder = 'inbox') {
+    const alice = await asUser('alice@test.local')
+    await alice.post('/api/create-folder', { data: { name: folder } })
+    await page.goto('/writer')
+    await page.locator('.test-signin-btn', { hasText: 'alice@test.local' }).click()
+    await page.waitForURL('/writer/poetry', { timeout: 5000 })
+    await expect(
+      page.locator('.folder-name', { hasText: folder }),
+    ).toBeVisible({ timeout: 5000 })
+    return alice
+  }
+
+  test('right-click on a folder opens a folder-specific menu (Rename + Delete)', async ({
+    db,
+    page,
+    asUser,
+  }) => {
+    await signInWithFolder(page, asUser)
+
+    await page
+      .locator('.folder-header', { has: page.locator('.folder-name', { hasText: 'inbox' }) })
+      .click({ button: 'right' })
+
+    const menu = page.locator('.ctx-menu')
+    await expect(menu).toBeVisible()
+    await expect(menu.getByText(/Rename folder/)).toBeVisible()
+    await expect(menu.getByText(/Delete folder/)).toBeVisible()
+    // Status / Quality sections from the file menu are NOT shown.
+    await expect(menu.getByText('Status')).toHaveCount(0)
+    await expect(menu.getByText('Quality')).toHaveCount(0)
+  })
+
+  test('choosing Rename enters inline rename mode and commits', async ({
+    db,
+    page,
+    asUser,
+  }) => {
+    const alice = await signInWithFolder(page, asUser, 'old-name')
+
+    await page
+      .locator('.folder-header', {
+        has: page.locator('.folder-name', { hasText: 'old-name' }),
+      })
+      .click({ button: 'right' })
+    await page.locator('.ctx-menu').getByText(/Rename folder/).click()
+
+    const input = page.locator('.folder-header .rename-input')
+    await expect(input).toBeVisible({ timeout: 2000 })
+    await input.fill('renamed')
+    await input.press('Enter')
+
+    await expect(
+      page.locator('.folder-name', { hasText: 'renamed' }),
+    ).toBeVisible({ timeout: 3000 })
+    await expect(
+      page.locator('.folder-name', { hasText: 'old-name' }),
+    ).toHaveCount(0)
+
+    const scan = await (await alice.post('/api/scan-directory')).json()
+    expect(scan.dirs['renamed']).toBe(true)
+    expect(scan.dirs['old-name']).toBeUndefined()
+  })
+
+  test('choosing Delete confirms and removes the folder (with its files)', async ({
+    db,
+    page,
+    asUser,
+  }) => {
+    const alice = await asUser('alice@test.local')
+    await alice.post('/api/write-file', {
+      data: { path: 'doomed/inside.md', content: 'bye' },
+    })
+    await page.goto('/writer')
+    await page.locator('.test-signin-btn', { hasText: 'alice@test.local' }).click()
+    await page.waitForURL('/writer/poetry', { timeout: 5000 })
+
+    await expect(
+      page.locator('.folder-name', { hasText: 'doomed' }),
+    ).toBeVisible({ timeout: 5000 })
+
+    await page
+      .locator('.folder-header', {
+        has: page.locator('.folder-name', { hasText: 'doomed' }),
+      })
+      .click({ button: 'right' })
+    await page.locator('.ctx-menu').getByText(/Delete folder/).click()
+
+    // Confirmation modal
+    await expect(page.locator('.modal-message')).toContainText('doomed')
+    await page.locator('.modal-actions .btn-primary').click()
+
+    await expect(page.locator('.folder-name', { hasText: 'doomed' })).toHaveCount(
+      0,
+      { timeout: 3000 },
+    )
+    const scan = await (await alice.post('/api/scan-directory')).json()
+    expect(scan.dirs['doomed']).toBeUndefined()
+    expect(scan.files['doomed/inside.md']).toBeUndefined()
+  })
+
+  test('Delete can be cancelled, folder stays intact', async ({
+    db,
+    page,
+    asUser,
+  }) => {
+    const alice = await signInWithFolder(page, asUser, 'keeper')
+
+    await page
+      .locator('.folder-header', {
+        has: page.locator('.folder-name', { hasText: 'keeper' }),
+      })
+      .click({ button: 'right' })
+    await page.locator('.ctx-menu').getByText(/Delete folder/).click()
+
+    await expect(page.locator('.modal-message')).toBeVisible()
+    // Click the cancel button (non-primary) — first button in actions.
+    await page.locator('.modal-actions .btn-small').first().click()
+
+    await expect(
+      page.locator('.folder-name', { hasText: 'keeper' }),
+    ).toBeVisible()
+    const scan = await (await alice.post('/api/scan-directory')).json()
+    expect(scan.dirs['keeper']).toBe(true)
+  })
+})
+
 test.describe('writer UI — drag-drop bubbling regression', () => {
   // Regression: dropping a file onto a subfolder also triggered the outer
   // list-level drop handler, double-uploading the file — once into the

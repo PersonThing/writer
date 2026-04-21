@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from 'svelte'
   import { project } from '../../lib/stores/project.svelte.js'
   import { editor } from '../../lib/stores/editor.svelte.js'
   import { showContextMenu, modalPrompt, modalAlert } from '../../lib/stores/ui.svelte.js'
@@ -17,6 +18,19 @@
   function hasExternalFiles(e) {
     return Array.from(e.dataTransfer?.types || []).includes('Files')
   }
+
+  // ContextMenu.svelte dispatches this event when the user picks
+  // "Rename folder" — we hold the inline-rename state locally, so we
+  // enter edit mode in response.
+  onMount(() => {
+    function onStartFolderRename(e) {
+      const path = e.detail?.path
+      if (path) startFolderRename(path)
+    }
+    window.addEventListener('start-folder-rename', onStartFolderRename)
+    return () =>
+      window.removeEventListener('start-folder-rename', onStartFolderRename)
+  })
 
   // Build tree from filteredFiles
   let tree = $derived.by(() => {
@@ -61,6 +75,12 @@
   function handleContext(e, path) {
     e.preventDefault()
     showContextMenu(e.clientX, e.clientY, path)
+  }
+
+  function handleFolderContext(e, folderPath) {
+    e.preventDefault()
+    e.stopPropagation()
+    showContextMenu(e.clientX, e.clientY, folderPath, 'folder')
   }
 
   function isCurrentFile(path) {
@@ -290,6 +310,7 @@
       ondragover={(e) => handleDragOverFolder(e, folderPath)}
       ondragleave={() => { if (dragOverFolder === folderPath) dragOverFolder = null }}
       ondrop={(e) => handleDropOnFolder(e, folderPath)}
+      oncontextmenu={(e) => handleFolderContext(e, folderPath)}
     >
       <button class="folder-toggle" onclick={() => toggleFolder(folderPath)}>
         {isCollapsed ? '▸' : '▾'}
