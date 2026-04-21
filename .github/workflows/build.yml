@@ -37,20 +37,17 @@ jobs:
       - run: npm test
 
   deploy:
-    # Railway deploy disabled for now — writer backend is not yet provisioned.
-    # Re-enable by removing `if: false` once Railway is set up.
-    if: false
+    # Deploys the full Express server (portfolio + writer + API) to Railway.
+    # Railway's builder runs `npm ci && npm run build` itself; we only need
+    # to push a fresh tree up.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 20 }
-      - run: npm ci
-      - run: npm run build
       - name: Install Railway CLI
         run: curl -fsSL https://railway.com/install.sh | sh
       - name: Deploy to Railway
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway up --service writer --detach
+        run: railway up --service shigorika --detach
