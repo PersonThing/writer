@@ -1,9 +1,9 @@
 <script>
-  import * as api from '../../lib/api.js'
   import { project } from '../../lib/stores/project.svelte.js'
   import { editor } from '../../lib/stores/editor.svelte.js'
-  import { showContextMenu, modalPrompt, modalAlert, showToast } from '../../lib/stores/ui.svelte.js'
+  import { showContextMenu, modalPrompt, modalAlert } from '../../lib/stores/ui.svelte.js'
   import { iconGripDots } from '../../lib/icons.js'
+  import { handleFileUploads } from '../../lib/upload.js'
 
   let draggedPath = $state(null)
   let dragOverFolder = $state(null)
@@ -14,14 +14,6 @@
   let renameFolderValue = $state('')
   let collapsedFolders = $state(new Set())
 
-  const ALLOWED_EXTS = ['md', 'txt', 'docx']
-  function extOf(name) {
-    const i = name.lastIndexOf('.')
-    return i >= 0 ? name.slice(i + 1).toLowerCase() : ''
-  }
-  function isAllowedFile(file) {
-    return ALLOWED_EXTS.includes(extOf(file.name))
-  }
   function hasExternalFiles(e) {
     return Array.from(e.dataTransfer?.types || []).includes('Files')
   }
@@ -104,44 +96,23 @@
 
   function handleDragOverFolder(e, folderPath) {
     e.preventDefault()
+    // Stop the outer list's dragover/drop from also firing — without
+    // this the event bubbles to the list-level handler and a file
+    // dropped on a subfolder also gets uploaded to the root.
+    e.stopPropagation()
     e.dataTransfer.dropEffect = hasExternalFiles(e) ? 'copy' : 'move'
     dragOverFolder = folderPath
   }
 
   async function handleDropOnFolder(e, folderPath) {
     e.preventDefault()
+    e.stopPropagation()
 
     // External drop from Finder/Explorer
     if (hasExternalFiles(e) && e.dataTransfer.files?.length) {
-      const files = Array.from(e.dataTransfer.files)
-      const accepted = files.filter(isAllowedFile)
-      const rejected = files.filter((f) => !isAllowedFile(f))
       dragOverFolder = null
       externalDragActive = false
-
-      if (rejected.length) {
-        await modalAlert(
-          `Skipped ${rejected.length} unsupported file(s):\n` +
-            rejected.map((f) => f.name).join('\n') +
-            `\n\nAllowed: .${ALLOWED_EXTS.join(', .')}`,
-        )
-      }
-      if (!accepted.length) return
-
-      try {
-        const results = await api.uploadFiles(accepted, folderPath)
-        await project.scanAll()
-        const saved = results.filter((r) => r.saved).length
-        const errors = results.filter((r) => r.error && !r.skipped)
-        if (saved) showToast(`Uploaded ${saved} file${saved === 1 ? '' : 's'}`)
-        if (errors.length) {
-          await modalAlert(
-            'Errors:\n' + errors.map((r) => `${r.original}: ${r.error}`).join('\n'),
-          )
-        }
-      } catch (err) {
-        await modalAlert('Upload failed: ' + err.message)
-      }
+      await handleFileUploads(Array.from(e.dataTransfer.files), folderPath)
       return
     }
 

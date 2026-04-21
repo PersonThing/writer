@@ -7,12 +7,15 @@
     iconRefresh,
     iconGear,
     iconFolder,
+    iconUpload,
   } from '../../lib/icons.js'
   import { modalPrompt } from '../../lib/stores/ui.svelte.js'
+  import { handleFileUploads, ALLOWED_EXTS } from '../../lib/upload.js'
   import FileList from './FileList.svelte'
   import StoryList from './StoryList.svelte'
 
   let isStories = $derived(ui.activeTab === 'short-stories')
+  let uploadInput = $state(null)
 
   async function rescan() {
     await project.scanAll()
@@ -24,6 +27,20 @@
     if (!name || !name.trim()) return
     await project.createFolder(name.trim())
   }
+
+  function openFilePicker() {
+    uploadInput?.click()
+  }
+
+  async function onFilesPicked(e) {
+    const files = Array.from(e.target.files || [])
+    // Reset the native input so re-picking the same file re-fires change.
+    e.target.value = ''
+    if (!files.length) return
+    await handleFileUploads(files, '')
+  }
+
+  const acceptAttr = ALLOWED_EXTS.map((x) => '.' + x).join(',')
 </script>
 
 <aside class="sidebar" class:collapsed={ui.sidebarCollapsed}>
@@ -56,6 +73,17 @@
       <button class="sb-icon-btn" title="New folder" onclick={newFolder}
         >{@html iconFolder()}</button
       >
+      <button class="sb-icon-btn" title="Upload files" onclick={openFilePicker}
+        >{@html iconUpload()}</button
+      >
+      <input
+        class="sb-upload-input"
+        type="file"
+        multiple
+        accept={acceptAttr}
+        bind:this={uploadInput}
+        onchange={onFilesPicked}
+      />
       <div style="flex:1"></div>
       <button
         class="sb-collapse-btn"
@@ -308,5 +336,9 @@
     color: inherit;
     opacity: 0.6;
     font-size: 0.65rem;
+  }
+  /* The native file input is hidden; the upload icon button opens it via .click(). */
+  .sb-upload-input {
+    display: none;
   }
 </style>

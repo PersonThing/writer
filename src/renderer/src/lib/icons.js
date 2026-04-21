@@ -10,6 +10,10 @@ export function iconFolder(size = 16) {
   return `<svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5V12a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1H8L6.5 3H3a1 1 0 0 0-1 1.5Z"/></svg>`
 }
 
+export function iconUpload(size = 16) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10V2"/><polyline points="5 5 8 2 11 5"/><path d="M3 11v2a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-2"/></svg>`
+}
+
 export function iconGear(size = 16) {
   return `<svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.5"/><path d="M8 1.5l.7 1.8a4.5 4.5 0 0 1 1.7 1l1.8-.4 1 1.7-1.1 1.4a4.5 4.5 0 0 1 0 2l1.1 1.4-1 1.7-1.8-.4a4.5 4.5 0 0 1-1.7 1L8 14.5l-.7-1.8a4.5 4.5 0 0 1-1.7-1l-1.8.4-1-1.7 1.1-1.4a4.5 4.5 0 0 1 0-2L2.8 5.6l1-1.7 1.8.4a4.5 4.5 0 0 1 1.7-1L8 1.5Z"/></svg>`
 }
