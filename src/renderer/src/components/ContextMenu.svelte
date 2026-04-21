@@ -24,10 +24,12 @@
 
   async function handleRename() {
     if (!ui.ctxPath) return
+    // Capture the path before hideContextMenu() clears it.
+    const path = ui.ctxPath
     hideContextMenu()
-    const pane = editor.panes.find((p) => p.filePath === ui.ctxPath)
+    const pane = editor.panes.find((p) => p.filePath === path)
     if (!pane) {
-      await editor.openFile(ui.ctxPath)
+      await editor.openFile(path)
     }
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent('focus-heading'))

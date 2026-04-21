@@ -19,6 +19,11 @@ class EditorStore {
   draggedPaneId = $state(null)
   dragOverPaneId = $state(null)
 
+  // Format markers active at the current cursor/selection in the active
+  // pane. Populated by EditorPane on selection/content changes; read by
+  // EditorArea's shared toolbar to highlight the matching buttons.
+  activeFormats = $state(new Set())
+
   // ── Derived (getters) ─────────────────────────────────────────────────
   get activePane() {
     return this.panes.find((p) => p.id === this.activePaneId) || null

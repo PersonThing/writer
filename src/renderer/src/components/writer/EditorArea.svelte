@@ -99,6 +99,27 @@
     { fmt: 'dup-line', label: '&#10697;', tip: 'Duplicate line (Ctrl+D)' },
     null,
     { fmt: 'case', label: 'Aa', tip: 'Cycle case (Shift+F3)' },
+    null,
+    {
+      fmt: 'color-red',
+      label: '<span class="fmt-color-swatch" style="background:#d94a4a"></span>',
+      tip: 'Red text',
+    },
+    {
+      fmt: 'color-green',
+      label: '<span class="fmt-color-swatch" style="background:#3aa152"></span>',
+      tip: 'Green text',
+    },
+    {
+      fmt: 'color-blue',
+      label: '<span class="fmt-color-swatch" style="background:#3d7acb"></span>',
+      tip: 'Blue text',
+    },
+    {
+      fmt: 'color-yellow',
+      label: '<span class="fmt-color-swatch" style="background:#d6b03a"></span>',
+      tip: 'Yellow text',
+    },
   ]
 
   function dispatchFormat(fmt) {
@@ -139,6 +160,7 @@
           {:else}
             <button
               class="fmt-btn"
+              class:active={editor.activeFormats.has(btn.fmt)}
               data-tip={btn.tip}
               onclick={() => dispatchFormat(btn.fmt)}
             >
@@ -330,6 +352,19 @@
     background: var(--accent-light);
     border-color: var(--border);
     color: var(--accent);
+  }
+  .fmt-btn.active {
+    background: var(--accent-light);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .fmt-btn :global(.fmt-color-swatch) {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    vertical-align: -2px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
   }
   .fmt-sep {
     width: 1px;

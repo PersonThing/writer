@@ -79,6 +79,13 @@ export function parseMarkdown(md) {
       .replace(/_(.+?)_/g, '<em>$1</em>')
       .replace(/~~(.+?)~~/g, '<del>$1</del>')
       .replace(/`(.+?)`/g, '<code>$1</code>')
+      // Preset color spans: [red]text[/red], [green]…[/green], etc.
+      // Deliberately restricted to a known palette so authors can't
+      // inject arbitrary styles or tag attributes.
+      .replace(
+        /\[(red|green|blue|yellow)\]([\s\S]+?)\[\/\1\]/g,
+        '<span class="md-color md-color-$1">$2</span>',
+      )
       .replace(
         /\[([^\]]+)\]\(([^)]+)\)/g,
         '<a href="$2" target="_blank" rel="noopener">$1</a>',

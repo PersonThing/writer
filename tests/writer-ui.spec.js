@@ -290,6 +290,162 @@ test.describe('writer UI — folder right-click menu', () => {
   })
 })
 
+test.describe('writer UI — right-click file rename', () => {
+  test('rename from context menu focuses the heading input', async ({
+    db,
+    page,
+    asUser,
+  }) => {
+    const alice = await asUser('alice@test.local')
+    await alice.post('/api/write-file', {
+      data: { path: 'target.md', content: 'body' },
+    })
+
+    await page.goto('/writer')
+    await page.locator('.test-signin-btn', { hasText: 'alice@test.local' }).click()
+    await page.waitForURL('/writer/poetry', { timeout: 5000 })
+
+    await page
+      .locator('.file-item', { hasText: 'target' })
+      .first()
+      .click({ button: 'right' })
+    // The file context menu has a "Rename" item alongside Duplicate / Delete.
+    // Match on trailing text so we don't collide with folder's "Rename folder".
+    await page.locator('.ctx-menu .ctx-item', { hasText: /\bRename\b$/ }).click()
+
+    // The heading input in the open editor pane should now be focused
+    // and have its value selected, ready for the user to overtype.
+    const heading = page.locator('.file-heading').first()
+    await expect(heading).toBeFocused({ timeout: 2000 })
+    const selection = await heading.evaluate((el) => ({
+      start: el.selectionStart,
+      end: el.selectionEnd,
+      value: el.value,
+    }))
+    expect(selection.start).toBe(0)
+    expect(selection.end).toBe(selection.value.length)
+    expect(selection.value).toBe('target')
+  })
+})
+
+test.describe('writer UI — markdown format buttons', () => {
+  async function openFresh(page, asUser, content = 'just one line\n') {
+    const alice = await asUser('alice@test.local')
+    await alice.post('/api/write-file', { data: { path: 'demo.md', content } })
+    await page.goto('/writer')
+    await page.locator('.test-signin-btn', { hasText: 'alice@test.local' }).click()
+    await page.waitForURL('/writer/poetry', { timeout: 5000 })
+    await page.locator('.file-item', { hasText: 'demo' }).first().click()
+    const ta = page.locator('.md-textarea').first()
+    await expect(ta).toBeVisible()
+    return { alice, ta }
+  }
+
+  test('bold with no selection wraps the current line', async ({
+    db,
+    page,
+    asUser,
+  }) => {
+    const { ta } = await openFresh(page, asUser, 'hello world\n')
+    // Move cursor somewhere inside the line.
+    await ta.focus()
+    await ta.evaluate((el) => {
+      el.selectionStart = el.selectionEnd = 5
+    })
+    await page.locator('.fmt-btn[data-tip^="Bold"]').click()
+    await expect(ta).toHaveValue('**hello world**\n')
+  })
+
+  test('bold toggles off when applied twice', async ({ db, page, asUser }) => {
+    const { ta } = await openFresh(page, asUser, 'hi\n')
+    await ta.focus()
+    await ta.evaluate((el) => {
+      el.selectionStart = el.selectionEnd = 1
+    })
+    const boldBtn = page.locator('.fmt-btn[data-tip^="Bold"]')
+    await boldBtn.click()
+    await expect(ta).toHaveValue('**hi**\n')
+    await boldBtn.click()
+    await expect(ta).toHaveValue('hi\n')
+  })
+
+  test('italic button shows active state when cursor is inside italics', async ({
+    db,
+    page,
+    asUser,
+  }) => {
+    const { ta } = await openFresh(page, asUser, '*emphasis*\n')
+    await ta.focus()
+    await ta.evaluate((el) => {
+      el.selectionStart = el.selectionEnd = 4
+    })
+    // Trigger selectionchange for the active-format detection.
+    await ta.dispatchEvent('keyup')
+
+    const italicBtn = page.locator('.fmt-btn[data-tip^="Italic"]')
+    await expect(italicBtn).toHaveClass(/active/)
+  })
+
+  test('strikethrough on a selection wraps just that selection', async ({
+    db,
+    page,
+    asUser,
+  }) => {
+    const { ta } = await openFresh(page, asUser, 'keep strike me\n')
+    await ta.focus()
+    // Select the word "strike"
+    await ta.evaluate((el) => {
+      el.selectionStart = 5
+      el.selectionEnd = 11
+    })
+    await page.locator('.fmt-btn[data-tip^="Strikethrough"]').click()
+    await expect(ta).toHaveValue('keep ~~strike~~ me\n')
+  })
+
+  test('red color button wraps the current line in [red]…[/red]', async ({
+    db,
+    page,
+    asUser,
+  }) => {
+    const { ta } = await openFresh(page, asUser, 'paint me\n')
+    await ta.focus()
+    await ta.evaluate((el) => {
+      el.selectionStart = el.selectionEnd = 0
+    })
+    await page.locator('.fmt-btn[data-tip="Red text"]').click()
+    await expect(ta).toHaveValue('[red]paint me[/red]\n')
+  })
+
+  test('color button toggles off when applied twice', async ({
+    db,
+    page,
+    asUser,
+  }) => {
+    const { ta } = await openFresh(page, asUser, 'x\n')
+    await ta.focus()
+    await ta.evaluate((el) => {
+      el.selectionStart = el.selectionEnd = 0
+    })
+    const greenBtn = page.locator('.fmt-btn[data-tip="Green text"]')
+    await greenBtn.click()
+    await expect(ta).toHaveValue('[green]x[/green]\n')
+    await greenBtn.click()
+    await expect(ta).toHaveValue('x\n')
+  })
+
+  test('preview renders color spans with the expected class', async ({
+    db,
+    page,
+    asUser,
+  }) => {
+    await openFresh(page, asUser, '[blue]ocean[/blue]\n')
+    // Ensure the preview pane is showing.
+    await page.locator('.vbtn', { hasText: 'Preview' }).click()
+    const span = page.locator('.preview-content .md-color-blue').first()
+    await expect(span).toHaveText('ocean')
+  })
+})
+
 test.describe('writer UI — drag-drop bubbling regression', () => {
   // Regression: dropping a file onto a subfolder also triggered the outer
   // list-level drop handler, double-uploading the file — once into the

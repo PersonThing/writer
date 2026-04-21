@@ -127,26 +127,132 @@
 
   function handleFocus() {
     editor.setActivePane(pane.id)
+    updateActiveFormats()
   }
 
   function handleInput(e) {
     editor.updateContent(pane.id, e.target.value)
+    updateActiveFormats()
+  }
+
+  /**
+   * Detect which inline formats apply to the current selection or
+   * current line and push the result onto editor.activeFormats so the
+   * shared toolbar can highlight matching buttons.
+   *
+   * For a zero-length selection we check the line the cursor is on
+   * (mirroring taInsert's behaviour). For a real selection we check
+   * whether the selected text starts+ends with the marker pair.
+   */
+  const INLINE_MARKERS = {
+    bold: ['**', '**'],
+    italic: ['*', '*'],
+    strikethrough: ['~~', '~~'],
+    'color-red': ['[red]', '[/red]'],
+    'color-green': ['[green]', '[/green]'],
+    'color-blue': ['[blue]', '[/blue]'],
+    'color-yellow': ['[yellow]', '[/yellow]'],
+  }
+  function updateActiveFormats() {
+    if (!textarea || !isActive) return
+    const ta = textarea
+    const selS = ta.selectionStart
+    const selE = ta.selectionEnd
+    let inner
+    if (selS !== selE) {
+      inner = ta.value.slice(selS, selE)
+    } else {
+      const r = getLineRange()
+      if (!r) return
+      inner = r.line
+    }
+    const next = new Set()
+    for (const [name, [before, after]] of Object.entries(INLINE_MARKERS)) {
+      if (
+        inner.length >= before.length + after.length &&
+        inner.startsWith(before) &&
+        inner.endsWith(after)
+      ) {
+        next.add(name)
+      }
+    }
+    editor.activeFormats = next
   }
 
   // ── Formatting helpers ─────────────────────────────────────────────────
+  /**
+   * Toggle an inline marker (e.g. ** for bold) around either the
+   * current selection or — when no selection — the whole line that
+   * the cursor is on.
+   *
+   * If the target range is already wrapped in the marker the markers
+   * are stripped (toggle off). Otherwise the markers are added.
+   *
+   * `before` / `after` are the delimiters; when they differ (like
+   * `[red]` / `[/red]`) the detection still works. `placeholder` is
+   * inserted when both the selection and the current line are empty.
+   */
   function taInsert(before, after, placeholder) {
     const ta = textarea
     if (!ta) return
-    const s = ta.selectionStart,
-      e = ta.selectionEnd
-    const sel = ta.value.slice(s, e) || placeholder || ''
-    const rep = before + sel + after
-    ta.value = ta.value.slice(0, s) + rep + ta.value.slice(e)
-    if (!ta.value.slice(s, e) && placeholder && sel === placeholder) {
-      ta.selectionStart = s + before.length
-      ta.selectionEnd = s + before.length + sel.length
+    const selS = ta.selectionStart
+    const selE = ta.selectionEnd
+
+    // If the user has a selection, operate on that. Otherwise operate
+    // on the whole current line (trim the trailing \n if present).
+    let rangeStart, rangeEnd
+    let wholeLine = false
+    if (selS !== selE) {
+      rangeStart = selS
+      rangeEnd = selE
     } else {
-      ta.selectionStart = ta.selectionEnd = s + rep.length
+      const r = getLineRange()
+      if (!r) return
+      rangeStart = r.lineStart
+      rangeEnd = r.end
+      wholeLine = true
+    }
+
+    const inner = ta.value.slice(rangeStart, rangeEnd)
+
+    // Toggle-off path: if the range already starts/ends with the
+    // markers, strip them. Works for identical delimiters (`**`) and
+    // asymmetric ones (`[red]` / `[/red]`).
+    if (
+      inner.length >= before.length + after.length &&
+      inner.startsWith(before) &&
+      inner.endsWith(after)
+    ) {
+      const stripped = inner.slice(before.length, inner.length - after.length)
+      ta.value = ta.value.slice(0, rangeStart) + stripped + ta.value.slice(rangeEnd)
+      ta.selectionStart = rangeStart
+      ta.selectionEnd = rangeStart + stripped.length
+      ta.focus()
+      editor.updateContent(pane.id, ta.value)
+      return
+    }
+
+    // Empty line / empty selection with no placeholder → do nothing
+    // rather than littering empty `**` markers.
+    if (!inner && !placeholder) return
+
+    const body = inner || placeholder || ''
+    const rep = before + body + after
+    ta.value = ta.value.slice(0, rangeStart) + rep + ta.value.slice(rangeEnd)
+
+    if (!inner && placeholder) {
+      // Empty → drop cursor between markers wrapping the placeholder,
+      // ready for the user to type over it.
+      ta.selectionStart = rangeStart + before.length
+      ta.selectionEnd = rangeStart + before.length + placeholder.length
+    } else if (wholeLine) {
+      // Line mode → select the whole wrapped line.
+      ta.selectionStart = rangeStart
+      ta.selectionEnd = rangeStart + rep.length
+    } else {
+      // Selection mode → preserve the selected body, now wrapped.
+      ta.selectionStart = rangeStart + before.length
+      ta.selectionEnd = rangeStart + before.length + body.length
     }
     ta.focus()
     editor.updateContent(pane.id, ta.value)
@@ -345,7 +451,20 @@
       case 'case':
         cycleCase()
         break
+      case 'color-red':
+        taInsert('[red]', '[/red]', 'red text')
+        break
+      case 'color-green':
+        taInsert('[green]', '[/green]', 'green text')
+        break
+      case 'color-blue':
+        taInsert('[blue]', '[/blue]', 'blue text')
+        break
+      case 'color-yellow':
+        taInsert('[yellow]', '[/yellow]', 'yellow text')
+        break
     }
+    updateActiveFormats()
   }
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────
@@ -709,8 +828,9 @@
           onpaste={handlePaste}
           onfocus={handleFocus}
           onscroll={scheduleSync}
-          onkeyup={scheduleSync}
-          onclick={scheduleSync}
+          onkeyup={() => { scheduleSync(); updateActiveFormats() }}
+          onclick={() => { scheduleSync(); updateActiveFormats() }}
+          onselect={updateActiveFormats}
           spellcheck="true"
           placeholder="Start writing..."
         ></textarea>
@@ -1022,6 +1142,10 @@
     text-decoration: line-through;
     opacity: 0.6;
   }
+  .preview-content :global(.md-color-red) { color: #d94a4a; }
+  .preview-content :global(.md-color-green) { color: #3aa152; }
+  .preview-content :global(.md-color-blue) { color: #3d7acb; }
+  .preview-content :global(.md-color-yellow) { color: #c89a2a; }
   .preview-content :global(hr) {
     border: none;
     border-top: 1px solid var(--border);
