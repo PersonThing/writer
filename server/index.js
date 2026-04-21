@@ -45,6 +45,7 @@ app.post('/api/scan-directory', async (req, res) => {
       path: schema.files.path,
       status: schema.files.status,
       quality: schema.files.quality,
+      sortOrder: schema.files.sortOrder,
       modifiedAt: schema.files.modifiedAt,
       createdAt: schema.files.createdAt,
     })
@@ -57,6 +58,7 @@ app.post('/api/scan-directory', async (req, res) => {
     files[r.path] = {
       status: r.status,
       quality: r.quality,
+      sortOrder: r.sortOrder,
       modified: r.modifiedAt.getTime(),
       created: r.createdAt.getTime(),
     }
@@ -115,13 +117,24 @@ app.post('/api/read-file', async (req, res) => {
   res.json({ content: row?.content || '' })
 })
 
+// Appends a new file at the end of the user's explicit sort order,
+// leaving room for reorderings between existing rows.
+async function nextSortOrder(tx, userId) {
+  const [row] = await tx
+    .select({ m: sql`coalesce(max(${schema.files.sortOrder}), 0)` })
+    .from(schema.files)
+    .where(eq(schema.files.userId, userId))
+  return Number(row?.m || 0) + 10
+}
+
 app.post('/api/write-file', async (req, res) => {
   const { path: filePath, content } = req.body
   const userId = req.session.userId
 
+  const nextSo = await nextSortOrder(db, userId)
   const [row] = await db
     .insert(schema.files)
-    .values({ userId, path: filePath, content })
+    .values({ userId, path: filePath, content, sortOrder: nextSo })
     .onConflictDoUpdate({
       target: [schema.files.userId, schema.files.path],
       set: { content, modifiedAt: sql`now()` },
@@ -220,6 +233,7 @@ app.post('/api/copy-file', async (req, res) => {
     i++
   }
 
+  const nextSo = await nextSortOrder(db, userId)
   const [row] = await db
     .insert(schema.files)
     .values({
@@ -227,10 +241,49 @@ app.post('/api/copy-file', async (req, res) => {
       path: candidate,
       content: src.content,
       storyId: src.storyId,
+      sortOrder: nextSo,
     })
     .returning({ path: schema.files.path })
 
   res.json({ path: row.path })
+})
+
+app.post('/api/reorder-files', async (req, res) => {
+  const { paths } = req.body || {}
+  const userId = req.session.userId
+  if (!Array.isArray(paths)) {
+    return res.status(400).json({ error: 'paths must be an array' })
+  }
+  // Empty or single-item arrays are legal no-ops.
+  if (paths.length <= 1) return res.json({ ok: true })
+
+  // De-dup defensively — a bad client could submit the same path twice.
+  const seen = new Set()
+  const unique = []
+  for (const p of paths) {
+    if (typeof p !== 'string' || seen.has(p)) continue
+    seen.add(p)
+    unique.push(p)
+  }
+
+  try {
+    await db.transaction(async (tx) => {
+      for (let i = 0; i < unique.length; i++) {
+        await tx
+          .update(schema.files)
+          .set({ sortOrder: (i + 1) * 10 })
+          .where(
+            and(
+              eq(schema.files.userId, userId),
+              eq(schema.files.path, unique[i]),
+            ),
+          )
+      }
+    })
+    res.json({ ok: true })
+  } catch (e) {
+    res.status(500).json({ error: e.message })
+  }
 })
 
 app.post('/api/move-file', async (req, res) => {
@@ -322,9 +375,10 @@ app.post('/api/create-story', async (req, res) => {
     const plotContent = `---\nnotes: []\nconnections: []\n---\n\n# Plot Board\n`
     const bibleContent = `# Story Bible\n\n## Characters\n\n## Setting\n\n## Genre & Tone\n\n## Timeline\n`
 
+    const baseSo = await nextSortOrder(db, userId)
     await db.insert(schema.files).values([
-      { userId, path: `${basePath}/_plot.md`, content: plotContent, storyId: story.id },
-      { userId, path: `${basePath}/_bible.md`, content: bibleContent, storyId: story.id },
+      { userId, path: `${basePath}/_plot.md`, content: plotContent, storyId: story.id, sortOrder: baseSo },
+      { userId, path: `${basePath}/_bible.md`, content: bibleContent, storyId: story.id, sortOrder: baseSo + 10 },
     ])
 
     res.json({ ok: true })
@@ -492,10 +546,12 @@ app.post('/api/upload-files', upload.array('files'), async (req, res) => {
         content = f.buffer.toString('utf-8')
       }
       const finalPath = await uniqueMarkdownPath(userId, targetFolder, stem)
+      const nextSo = await nextSortOrder(db, userId)
       await db.insert(schema.files).values({
         userId,
         path: finalPath,
         content,
+        sortOrder: nextSo,
       })
       results.push({ original: f.originalname, saved: finalPath })
     } catch (e) {

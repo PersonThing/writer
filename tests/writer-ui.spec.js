@@ -446,6 +446,145 @@ test.describe('writer UI — markdown format buttons', () => {
   })
 })
 
+test.describe('writer UI — sort modes', () => {
+  async function signIn(page) {
+    await page.goto('/writer')
+    await page.locator('.test-signin-btn', { hasText: 'alice@test.local' }).click()
+    await page.waitForURL('/writer/poetry', { timeout: 5000 })
+  }
+
+  test('sort row shows only My order + Status (no Name / Date)', async ({
+    db,
+    page,
+  }) => {
+    await signIn(page)
+    const sortRow = page.locator('.sort-row')
+    await expect(sortRow.locator('.sort-btn')).toHaveCount(2)
+    await expect(sortRow.locator('.sort-btn', { hasText: 'My order' })).toBeVisible()
+    await expect(sortRow.locator('.sort-btn', { hasText: 'Status' })).toBeVisible()
+    await expect(sortRow.locator('.sort-btn', { hasText: 'Name' })).toHaveCount(0)
+    await expect(sortRow.locator('.sort-btn', { hasText: 'Date' })).toHaveCount(0)
+  })
+
+  test('"My order" is the default and is highlighted', async ({ db, page }) => {
+    await signIn(page)
+    await expect(
+      page.locator('.sort-btn', { hasText: 'My order' }),
+    ).toHaveClass(/active/)
+  })
+
+  test('dragging a file row over another reorders the list (My order mode)', async ({
+    db,
+    page,
+    asUser,
+  }) => {
+    const alice = await asUser('alice@test.local')
+    // Seed three files so we can reorder them.
+    for (const p of ['aaa.md', 'bbb.md', 'ccc.md']) {
+      await alice.post('/api/write-file', { data: { path: p, content: p } })
+    }
+    await signIn(page)
+
+    // Ensure order matches seed.
+    const names = () =>
+      page.locator('.file-item .file-name').evaluateAll((els) =>
+        els.map((e) => e.textContent?.trim()),
+      )
+    await expect.poll(names).toEqual(['aaa', 'bbb', 'ccc'])
+
+    // Simulate: drag "ccc" and drop it above "aaa" by firing the
+    // relevant events on the DOM — HTML5 drag-drop can't be synthesised
+    // through Playwright's real mouse gestures reliably across platforms.
+    // We wait a rAF tick between dragstart and dragover because the
+    // real handler defers updating draggedPath via requestAnimationFrame
+    // (to avoid a re-render killing the native drag image).
+    await page.evaluate(async () => {
+      const raf = () => new Promise((r) => requestAnimationFrame(r))
+      const rows = [...document.querySelectorAll('.file-item')]
+      const src = rows.find((r) => r.textContent.includes('ccc'))
+      const tgt = rows.find((r) => r.textContent.includes('aaa'))
+      const dt = new DataTransfer()
+      dt.setData('text/plain', 'ccc.md')
+      src.dispatchEvent(new DragEvent('dragstart', {
+        bubbles: true, cancelable: true, dataTransfer: dt,
+      }))
+      await raf()
+      const r = tgt.getBoundingClientRect()
+      tgt.dispatchEvent(new DragEvent('dragover', {
+        bubbles: true, cancelable: true,
+        clientY: r.top + 2, // above midpoint → insert "before"
+        dataTransfer: dt,
+      }))
+      tgt.dispatchEvent(new DragEvent('drop', {
+        bubbles: true, cancelable: true,
+        clientY: r.top + 2, dataTransfer: dt,
+      }))
+      src.dispatchEvent(new DragEvent('dragend', {
+        bubbles: true, cancelable: true, dataTransfer: dt,
+      }))
+    })
+
+    await expect.poll(names).toEqual(['ccc', 'aaa', 'bbb'])
+
+    // Wait for the server roundtrip to persist the new order.
+    await expect
+      .poll(async () => {
+        const scan = await (await alice.post('/api/scan-directory')).json()
+        return scan.files['ccc.md'].sortOrder
+      })
+      .toBe(10)
+    const scan = await (await alice.post('/api/scan-directory')).json()
+    expect(scan.files['aaa.md'].sortOrder).toBe(20)
+    expect(scan.files['bbb.md'].sortOrder).toBe(30)
+  })
+
+  test('dragging does not reorder when Status sort is active', async ({
+    db,
+    page,
+    asUser,
+  }) => {
+    const alice = await asUser('alice@test.local')
+    for (const p of ['alpha.md', 'beta.md']) {
+      await alice.post('/api/write-file', { data: { path: p, content: p } })
+    }
+    await signIn(page)
+
+    // Switch to Status sort.
+    await page.locator('.sort-btn', { hasText: 'Status' }).click()
+
+    const beforeSo = (
+      await (await alice.post('/api/scan-directory')).json()
+    ).files
+
+    await page.evaluate(async () => {
+      const raf = () => new Promise((r) => requestAnimationFrame(r))
+      const rows = [...document.querySelectorAll('.file-item')]
+      const src = rows[1]
+      const tgt = rows[0]
+      const dt = new DataTransfer()
+      dt.setData('text/plain', src.textContent || '')
+      src.dispatchEvent(new DragEvent('dragstart', {
+        bubbles: true, cancelable: true, dataTransfer: dt,
+      }))
+      await raf()
+      const r = tgt.getBoundingClientRect()
+      tgt.dispatchEvent(new DragEvent('dragover', {
+        bubbles: true, cancelable: true, clientY: r.top + 2, dataTransfer: dt,
+      }))
+      tgt.dispatchEvent(new DragEvent('drop', {
+        bubbles: true, cancelable: true, clientY: r.top + 2, dataTransfer: dt,
+      }))
+    })
+
+    // sortOrder values unchanged.
+    const afterSo = (
+      await (await alice.post('/api/scan-directory')).json()
+    ).files
+    expect(afterSo['alpha.md'].sortOrder).toBe(beforeSo['alpha.md'].sortOrder)
+    expect(afterSo['beta.md'].sortOrder).toBe(beforeSo['beta.md'].sortOrder)
+  })
+})
+
 test.describe('writer UI — drag-drop bubbling regression', () => {
   // Regression: dropping a file onto a subfolder also triggered the outer
   // list-level drop handler, double-uploading the file — once into the

@@ -28,7 +28,7 @@ class ProjectStore {
   searchQuery = $state('')
   searchMatches = $state(null)
   activeFilter = $state('')
-  sortMode = $state('name') // 'name' | 'created' | 'status'
+  sortMode = $state('my') // 'my' | 'status'
 
   #showAppCallback = null
   #searchTimer = 0
@@ -65,25 +65,28 @@ class ProjectStore {
     const statusOrder = new Map()
     this.statuses.forEach((s, i) => statusOrder.set(s.id, i))
 
-    if (this.sortMode === 'created') {
-      allPaths.sort((a, b) => {
-        const ca = this.files.get(a)?.created || 0
-        const cb = this.files.get(b)?.created || 0
-        return cb - ca
-      })
-    } else if (this.sortMode === 'status') {
+    if (this.sortMode === 'status') {
+      // Group by status (in status-list order), then by explicit sort.
       allPaths.sort((a, b) => {
         const sa = this.getMeta(a).status || ''
         const sb = this.getMeta(b).status || ''
         const oa = sa ? (statusOrder.get(sa) ?? 999) : 1000
         const ob = sb ? (statusOrder.get(sb) ?? 999) : 1000
         if (oa !== ob) return oa - ob
+        const soa = this.files.get(a)?.sortOrder ?? 0
+        const sob = this.files.get(b)?.sortOrder ?? 0
+        if (soa !== sob) return soa - sob
         return this.displayName(a).localeCompare(this.displayName(b))
       })
     } else {
-      allPaths.sort((a, b) =>
-        this.displayName(a).localeCompare(this.displayName(b)),
-      )
+      // 'my' — user-defined explicit order; alphabetical is the fallback
+      // for any zero-valued ties.
+      allPaths.sort((a, b) => {
+        const soa = this.files.get(a)?.sortOrder ?? 0
+        const sob = this.files.get(b)?.sortOrder ?? 0
+        if (soa !== sob) return soa - sob
+        return this.displayName(a).localeCompare(this.displayName(b))
+      })
     }
 
     return allPaths.map((p) => ({
@@ -225,6 +228,31 @@ class ProjectStore {
   async createFolder(name) {
     await api.createFolder(name)
     await this.scanAll()
+  }
+
+  /**
+   * Set the explicit user order for the given list of file paths.
+   * The paths are renumbered with sortOrder values 10, 20, 30… in the
+   * order provided. Typically called with the siblings of one folder
+   * bucket after a drag-reorder drop.
+   */
+  async reorderFiles(paths) {
+    if (!Array.isArray(paths) || paths.length < 2) return
+    // Optimistic update so the UI doesn't snap back while the server
+    // roundtrips — mirrors the spacing the server applies.
+    const next = new Map(this.files)
+    paths.forEach((p, i) => {
+      const row = next.get(p)
+      if (row) next.set(p, { ...row, sortOrder: (i + 1) * 10 })
+    })
+    this.files = next
+    try {
+      await api.reorderFiles(paths)
+    } catch (e) {
+      // Pull fresh truth on failure so we don't diverge.
+      await this.scanAll()
+      throw e
+    }
   }
 
   async renameFolderOnDisk(oldPath, newPath) {

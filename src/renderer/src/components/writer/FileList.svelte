@@ -8,6 +8,8 @@
 
   let draggedPath = $state(null)
   let dragOverFolder = $state(null)
+  let dragOverFile = $state(null) // path of the row the cursor is over
+  let dragOverPosition = $state('after') // 'before' | 'after' — relative to dragOverFile
   let externalDragActive = $state(false)
   let renamingPath = $state(null)
   let renameValue = $state('')
@@ -112,6 +114,65 @@
   function handleDragEnd(e) {
     draggedPath = null
     dragOverFolder = null
+    dragOverFile = null
+  }
+
+  // Over-file dragover: figure out whether we're above or below the row's
+  // midpoint so the insertion indicator renders on the right side.
+  function handleDragOverFile(e, path) {
+    if (!draggedPath || draggedPath === path) return
+    // Only reorder in "My order" mode; any other mode would fight the sort.
+    if (project.sortMode !== 'my') return
+    e.preventDefault()
+    e.stopPropagation()
+    e.dataTransfer.dropEffect = 'move'
+    const rect = e.currentTarget.getBoundingClientRect()
+    const midY = rect.top + rect.height / 2
+    dragOverFile = path
+    dragOverPosition = e.clientY < midY ? 'before' : 'after'
+  }
+
+  async function handleDropOnFile(e, targetPath) {
+    if (!draggedPath || draggedPath === targetPath) return
+    if (project.sortMode !== 'my') return
+    e.preventDefault()
+    e.stopPropagation()
+
+    // Reorder only makes sense within the same folder bucket. If the
+    // dragged file lives somewhere else we fall back to "move into
+    // the target file's folder" so the user's intent (put it next to
+    // this file) still reads as useful.
+    const srcFolder = project.folderOf(draggedPath)
+    const dstFolder = project.folderOf(targetPath)
+    if (srcFolder !== dstFolder) {
+      await project.moveFileToFolder(draggedPath, dstFolder)
+      // After the move, the path has a new prefix; recompute for the
+      // reorder below.
+      const fileName = draggedPath.split('/').pop()
+      draggedPath = dstFolder ? `${dstFolder}/${fileName}` : fileName
+      // Ensure local state reflects the move before we compute sibling order.
+      await project.scanAll()
+    }
+
+    // Collect the siblings in their current displayed order and splice
+    // the dragged file to the correct slot around the target.
+    const siblings = project.filteredFiles
+      .map((f) => f.path)
+      .filter((p) => project.folderOf(p) === dstFolder)
+    const srcIdx = siblings.indexOf(draggedPath)
+    if (srcIdx === -1) return
+    siblings.splice(srcIdx, 1)
+    let dstIdx = siblings.indexOf(targetPath)
+    if (dstIdx === -1) return
+    if (dragOverPosition === 'after') dstIdx += 1
+    siblings.splice(dstIdx, 0, draggedPath)
+
+    dragOverFile = null
+    try {
+      await project.reorderFiles(siblings)
+    } catch (err) {
+      await modalAlert('Reorder failed: ' + err.message)
+    }
   }
 
   function handleDragOverFolder(e, folderPath) {
@@ -344,11 +405,16 @@
           class:current={isCur}
           class:open={isOpen && !isCur}
           class:dragging={draggedPath === item.path}
+          class:drop-above={dragOverFile === item.path && dragOverPosition === 'before'}
+          class:drop-below={dragOverFile === item.path && dragOverPosition === 'after'}
           draggable="true"
           role="button"
           tabindex="0"
           ondragstart={(e) => handleDragStart(e, item.path)}
           ondragend={handleDragEnd}
+          ondragover={(e) => handleDragOverFile(e, item.path)}
+          ondragleave={() => { if (dragOverFile === item.path) dragOverFile = null }}
+          ondrop={(e) => handleDropOnFile(e, item.path)}
           onclick={(e) => handleClick(e, item.path)}
           oncontextmenu={(e) => handleContext(e, item.path)}
           onkeydown={(e) => { if (e.key === 'Enter') handleClick(e, item.path) }}
@@ -395,11 +461,16 @@
       class:current={isCur}
       class:open={isOpen && !isCur}
       class:dragging={draggedPath === item.path}
+      class:drop-above={dragOverFile === item.path && dragOverPosition === 'before'}
+      class:drop-below={dragOverFile === item.path && dragOverPosition === 'after'}
       draggable="true"
       role="button"
       tabindex="0"
       ondragstart={(e) => handleDragStart(e, item.path)}
       ondragend={handleDragEnd}
+      ondragover={(e) => handleDragOverFile(e, item.path)}
+      ondragleave={() => { if (dragOverFile === item.path) dragOverFile = null }}
+      ondrop={(e) => handleDropOnFile(e, item.path)}
       onclick={(e) => handleClick(e, item.path)}
       oncontextmenu={(e) => handleContext(e, item.path)}
       onkeydown={(e) => { if (e.key === 'Enter') handleClick(e, item.path) }}
@@ -549,6 +620,14 @@
   }
   .file-item.dragging {
     opacity: 0.4;
+  }
+  /* Insertion indicator while a sibling file is being dragged over
+     this row in "My order" mode. */
+  .file-item.drop-above {
+    box-shadow: inset 0 2px 0 0 var(--accent);
+  }
+  .file-item.drop-below {
+    box-shadow: inset 0 -2px 0 0 var(--accent);
   }
 
   .s-dot {

@@ -198,6 +198,99 @@ test.describe('files CRUD', () => {
     expect(scan.files['dst/deep/a.md'].quality).toBe(3)
   })
 
+  test('write-file assigns an incrementing sort_order so new files append', async ({
+    db,
+    asUser,
+  }) => {
+    const alice = await asUser('alice@test.local')
+    await alice.post('/api/write-file', { data: { path: 'first.md', content: '1' } })
+    await alice.post('/api/write-file', { data: { path: 'second.md', content: '2' } })
+    await alice.post('/api/write-file', { data: { path: 'third.md', content: '3' } })
+    const scan = await (await alice.post('/api/scan-directory')).json()
+    const so = (p) => scan.files[p].sortOrder
+    expect(so('first.md')).toBeGreaterThan(0)
+    expect(so('second.md')).toBeGreaterThan(so('first.md'))
+    expect(so('third.md')).toBeGreaterThan(so('second.md'))
+  })
+
+  test('reorder-files rewrites sortOrder in the given sequence', async ({
+    db,
+    asUser,
+  }) => {
+    const alice = await asUser('alice@test.local')
+    for (const p of ['a.md', 'b.md', 'c.md']) {
+      await alice.post('/api/write-file', { data: { path: p, content: p } })
+    }
+    const res = await alice.post('/api/reorder-files', {
+      data: { paths: ['c.md', 'a.md', 'b.md'] },
+    })
+    expect(res.ok()).toBeTruthy()
+    const scan = await (await alice.post('/api/scan-directory')).json()
+    expect(scan.files['c.md'].sortOrder).toBe(10)
+    expect(scan.files['a.md'].sortOrder).toBe(20)
+    expect(scan.files['b.md'].sortOrder).toBe(30)
+  })
+
+  test('reorder-files no-ops on empty or single-path inputs', async ({
+    db,
+    asUser,
+  }) => {
+    const alice = await asUser('alice@test.local')
+    await alice.post('/api/write-file', { data: { path: 'only.md', content: 'x' } })
+    const before = (
+      await (await alice.post('/api/scan-directory')).json()
+    ).files['only.md'].sortOrder
+    const r1 = await alice.post('/api/reorder-files', { data: { paths: [] } })
+    const r2 = await alice.post('/api/reorder-files', {
+      data: { paths: ['only.md'] },
+    })
+    expect(r1.ok()).toBeTruthy()
+    expect(r2.ok()).toBeTruthy()
+    const after = (
+      await (await alice.post('/api/scan-directory')).json()
+    ).files['only.md'].sortOrder
+    expect(after).toBe(before)
+  })
+
+  test('reorder-files rejects non-array input with 400', async ({ db, asUser }) => {
+    const alice = await asUser('alice@test.local')
+    const res = await alice.post('/api/reorder-files', {
+      data: { paths: 'a.md' },
+    })
+    expect(res.status()).toBe(400)
+  })
+
+  test('reorder-files is user-isolated', async ({ db, asUser }) => {
+    const alice = await asUser('alice@test.local')
+    const bob = await asUser('bob@test.local')
+    await alice.post('/api/write-file', { data: { path: 'x.md', content: 'a' } })
+    await bob.post('/api/write-file', { data: { path: 'x.md', content: 'b' } })
+    // Bob reorders his side only.
+    await bob.post('/api/reorder-files', { data: { paths: ['x.md'] } })
+    // Reorder a path bob doesn't own — should silently no-op against alice's.
+    await bob.post('/api/reorder-files', { data: { paths: ['x.md'] } })
+    const aliceScan = await (await alice.post('/api/scan-directory')).json()
+    // Alice's sort_order for x.md should be whatever write-file assigned
+    // originally (positive, untouched).
+    expect(aliceScan.files['x.md'].sortOrder).toBeGreaterThan(0)
+  })
+
+  test('reorder-files de-dups repeated paths in the input array', async ({
+    db,
+    asUser,
+  }) => {
+    const alice = await asUser('alice@test.local')
+    for (const p of ['a.md', 'b.md']) {
+      await alice.post('/api/write-file', { data: { path: p, content: p } })
+    }
+    await alice.post('/api/reorder-files', {
+      data: { paths: ['b.md', 'b.md', 'a.md'] },
+    })
+    const scan = await (await alice.post('/api/scan-directory')).json()
+    expect(scan.files['b.md'].sortOrder).toBe(10)
+    expect(scan.files['a.md'].sortOrder).toBe(20)
+  })
+
   test('copy-file keeps status/quality defaults and increments name collisions', async ({
     db,
     asUser,

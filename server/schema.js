@@ -48,6 +48,7 @@ export const files = pgTable(
     content: text('content').notNull().default(''),
     status: text('status').notNull().default(''),
     quality: smallint('quality').notNull().default(0),
+    sortOrder: integer('sort_order').notNull().default(0),
     storyId: integer('story_id').references(() => stories.id, { onDelete: 'cascade' }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     modifiedAt: timestamp('modified_at', { withTimezone: true }).defaultNow().notNull(),

@@ -113,14 +113,10 @@
         <span class="sort-label">Sort:</span>
         <button
           class="sort-btn"
-          class:active={project.sortMode === 'name'}
-          onclick={() => (project.sortMode = 'name')}
-        >Name</button>
-        <button
-          class="sort-btn"
-          class:active={project.sortMode === 'created'}
-          onclick={() => (project.sortMode = 'created')}
-        >Date</button>
+          class:active={project.sortMode === 'my'}
+          onclick={() => (project.sortMode = 'my')}
+          title="Your custom order — drag files to rearrange"
+        >My order</button>
         <button
           class="sort-btn"
           class:active={project.sortMode === 'status'}

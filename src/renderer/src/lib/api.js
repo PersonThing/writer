@@ -91,6 +91,10 @@ export async function moveFile(oldPath, newPath) {
   await post('/api/move-file', { oldPath, newPath })
 }
 
+export async function reorderFiles(paths) {
+  await post('/api/reorder-files', { paths })
+}
+
 export async function copyFile(sourcePath) {
   const result = await post('/api/copy-file', { sourcePath })
   return result.path
