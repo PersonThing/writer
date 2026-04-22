@@ -146,6 +146,34 @@ export async function deleteFolder(folderPath) {
   await post('/api/delete-folder', { path: folderPath })
 }
 
+// ── AI Insights ────────────────────────────────────────────────────────────
+
+export async function listModels() {
+  const result = await get('/api/models')
+  return result.data || []
+}
+
+export async function getInsights(storyId) {
+  return get('/api/insights/' + storyId)
+}
+
+export async function analyzeStory(storyId, { model } = {}) {
+  return post('/api/insights/' + storyId + '/analyze', model ? { model } : {})
+}
+
+export async function setStoryPreferredModel(storyId, model) {
+  const res = await fetch('/api/stories/' + storyId + '/preferred-model', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }))
+    throw new Error(err.error || res.statusText)
+  }
+  return res.json()
+}
+
 // ── File upload (external drag-drop into sidebar) ─────────────────────────
 
 export async function uploadFiles(files, targetFolder = '') {

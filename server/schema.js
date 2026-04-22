@@ -7,6 +7,7 @@ import {
   timestamp,
   varchar,
   json,
+  jsonb,
   uniqueIndex,
   index,
 } from 'drizzle-orm/pg-core'
@@ -29,6 +30,9 @@ export const stories = pgTable(
     name: text('name').notNull(),
     slug: text('slug').notNull(),
     storyOrder: integer('story_order').notNull().default(0),
+    // Per-story preferred Claude model for insights. Null falls back
+    // to DEFAULT_INSIGHTS_MODEL on the server.
+    preferredModel: text('preferred_model'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => ({
@@ -36,6 +40,20 @@ export const stories = pgTable(
     userIdx: index('stories_user_idx').on(t.userId),
   }),
 )
+
+// Cached AI-generated insights for a story. Keyed by storyId; we
+// store only the latest analysis along with a hash of the manuscript
+// that produced it so we can show a "stale" indicator and skip
+// redundant LLM calls when the hash matches.
+export const storyInsights = pgTable('story_insights', {
+  storyId: integer('story_id')
+    .primaryKey()
+    .references(() => stories.id, { onDelete: 'cascade' }),
+  data: jsonb('data').notNull(),
+  manuscriptHash: text('manuscript_hash').notNull(),
+  model: text('model').notNull(),
+  generatedAt: timestamp('generated_at', { withTimezone: true }).defaultNow().notNull(),
+})
 
 export const files = pgTable(
   'files',

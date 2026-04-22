@@ -1,10 +1,12 @@
 import express from 'express'
 import path from 'path'
+import crypto from 'crypto'
 import { existsSync } from 'fs'
 import { fileURLToPath } from 'url'
 import multer from 'multer'
 import mammoth from 'mammoth'
 import { and, asc, eq, ilike, like, sql } from 'drizzle-orm'
+import Anthropic from '@anthropic-ai/sdk'
 
 import { db, schema } from './db.js'
 import { sessionMiddleware, requireAuth, mountAuth } from './auth.js'
@@ -550,6 +552,7 @@ app.get('/api/stories', async (req, res) => {
       name: schema.stories.name,
       slug: schema.stories.slug,
       storyOrder: schema.stories.storyOrder,
+      preferredModel: schema.stories.preferredModel,
     })
     .from(schema.stories)
     .where(eq(schema.stories.userId, userId))
@@ -671,6 +674,394 @@ app.post('/api/move-to-story', async (req, res) => {
       return res.status(409).json({ error: 'A file with that name already exists' })
     res.status(500).json({ error: e.message })
   }
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AI INSIGHTS
+// ═══════════════════════════════════════════════════════════════════════════
+
+const DEFAULT_INSIGHTS_MODEL = 'claude-haiku-4-5-20251001'
+const ANTHROPIC_MOCK = process.env.ANTHROPIC_MOCK === '1'
+
+let anthropicClient = null
+function getAnthropic() {
+  if (!anthropicClient) {
+    if (!process.env.ANTHROPIC_API_KEY && !ANTHROPIC_MOCK) {
+      throw new Error('ANTHROPIC_API_KEY is not configured')
+    }
+    anthropicClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  }
+  return anthropicClient
+}
+
+// In-process cache: models list is stable enough to reuse across requests.
+let modelsCache = null
+let modelsCacheAt = 0
+const MODELS_CACHE_TTL = 10 * 60 * 1000
+
+const MOCK_MODELS = [
+  {
+    id: 'claude-haiku-4-5-20251001',
+    displayName: 'Claude Haiku 4.5',
+    createdAt: '2025-10-01T00:00:00Z',
+  },
+  {
+    id: 'claude-sonnet-4-6',
+    displayName: 'Claude Sonnet 4.6',
+    createdAt: '2025-12-01T00:00:00Z',
+  },
+]
+
+app.get('/api/models', async (req, res) => {
+  if (ANTHROPIC_MOCK) return res.json({ data: MOCK_MODELS })
+
+  const now = Date.now()
+  if (modelsCache && now - modelsCacheAt < MODELS_CACHE_TTL) {
+    return res.json({ data: modelsCache })
+  }
+  try {
+    const client = getAnthropic()
+    const resp = await client.models.list({ limit: 100 })
+    const data = (resp?.data || []).map((m) => ({
+      id: m.id,
+      displayName: m.display_name || m.id,
+      createdAt: m.created_at,
+    }))
+    modelsCache = data
+    modelsCacheAt = now
+    res.json({ data })
+  } catch (e) {
+    res.status(502).json({ error: e.message })
+  }
+})
+
+// Read all chapters for a story, concatenated with simple titled
+// separators. Filters out author-facing color annotations so the LLM
+// sees plain prose. `_stories/<slug>/` already tags files with
+// storyId via the /api/write-file helper, so we match on storyId.
+async function readStoryManuscript(userId, storyId) {
+  const rows = await db
+    .select({
+      path: schema.files.path,
+      content: schema.files.content,
+      sortOrder: schema.files.sortOrder,
+    })
+    .from(schema.files)
+    .where(
+      and(
+        eq(schema.files.userId, userId),
+        eq(schema.files.storyId, storyId),
+      ),
+    )
+    .orderBy(asc(schema.files.sortOrder), asc(schema.files.path))
+
+  const chunks = []
+  for (const r of rows) {
+    const name = r.path.split('/').pop().replace(/\.md$/, '')
+    const body = stripColorTokens(r.content || '')
+    chunks.push(`# ${name}\n\n${body}`)
+  }
+  return chunks.join('\n\n---\n\n')
+}
+
+function stripColorTokens(md) {
+  // `[red]…[/red]`, `[bg-red]…[/bg-red]` etc. are author annotations
+  // — drop them so the LLM analyzes the prose, not the markup.
+  return md.replace(
+    /\[(bg-)?(red|green|blue|yellow)\]([\s\S]*?)\[\/(?:bg-)?(?:red|green|blue|yellow)\]/g,
+    '$3',
+  )
+}
+
+function hashManuscript(text) {
+  return crypto.createHash('sha256').update(text).digest('hex')
+}
+
+async function loadStoryForUser(userId, storyId) {
+  const [row] = await db
+    .select({
+      id: schema.stories.id,
+      name: schema.stories.name,
+      slug: schema.stories.slug,
+      preferredModel: schema.stories.preferredModel,
+    })
+    .from(schema.stories)
+    .where(and(eq(schema.stories.userId, userId), eq(schema.stories.id, storyId)))
+  return row || null
+}
+
+app.get('/api/insights/:storyId', async (req, res) => {
+  const userId = req.session.userId
+  const storyId = Number(req.params.storyId)
+  if (!Number.isFinite(storyId))
+    return res.status(400).json({ error: 'invalid storyId' })
+
+  const story = await loadStoryForUser(userId, storyId)
+  if (!story) return res.status(404).json({ error: 'Story not found' })
+
+  const [row] = await db
+    .select()
+    .from(schema.storyInsights)
+    .where(eq(schema.storyInsights.storyId, storyId))
+
+  if (!row) return res.json({ data: null, preferredModel: story.preferredModel })
+
+  const manuscript = await readStoryManuscript(userId, storyId)
+  const currentHash = hashManuscript(manuscript)
+
+  res.json({
+    data: row.data,
+    generatedAt: row.generatedAt,
+    model: row.model,
+    stale: currentHash !== row.manuscriptHash,
+    preferredModel: story.preferredModel,
+  })
+})
+
+const INSIGHTS_SYSTEM_PROMPT = `You are a literary analyst. You will read a manuscript and produce a single JSON object describing its characters, their relationships, and the scenes. Ignore any [red]…[/red] or [bg-*]…[/bg-*] annotations in the text — those are author highlights, not content.
+
+Return JSON only, matching this TypeScript type exactly:
+
+{
+  "characters": Array<{
+    "id": string,           // stable kebab-case slug, unique
+    "name": string,
+    "aliases": string[],
+    "personality": string,  // 2-3 sentences
+    "arc": string,          // trajectory across the manuscript
+    "keyQuotes": string[],  // 2-4 short quotes
+    "sceneIds": string[]    // ids from the scenes array below
+  }>,
+  "relationships": Array<{
+    "from": string,         // character id
+    "to": string,           // character id
+    "label": string,        // e.g. "sibling", "rival", "mentor→student"
+    "strength": 1 | 2 | 3,
+    "summary": string       // 1 sentence
+  }>,
+  "scenes": Array<{
+    "id": string,           // stable kebab-case slug, unique
+    "title": string,
+    "chapterPath": string,  // matches the "# <name>" heading preceding the scene
+    "order": number,        // 1-based, manuscript order
+    "summary": string,
+    "characterIds": string[],
+    "location": string | null
+  }>
+}
+
+For chapterPath: use the bare chapter name you see as "# <name>" — the client will resolve it back to a file path. Use kebab-case ids.`
+
+const MOCK_INSIGHTS = {
+  characters: [
+    {
+      id: 'protagonist',
+      name: 'Protagonist',
+      aliases: [],
+      personality: 'Stoic but curious.',
+      arc: 'Learns to trust others.',
+      keyQuotes: ['I will try.'],
+      sceneIds: ['opening'],
+    },
+  ],
+  relationships: [],
+  scenes: [
+    {
+      id: 'opening',
+      title: 'Opening',
+      chapterPath: 'ch1',
+      order: 1,
+      summary: 'We meet the protagonist.',
+      characterIds: ['protagonist'],
+      location: null,
+    },
+  ],
+}
+
+app.post('/api/insights/:storyId/analyze', async (req, res) => {
+  const userId = req.session.userId
+  const storyId = Number(req.params.storyId)
+  if (!Number.isFinite(storyId))
+    return res.status(400).json({ error: 'invalid storyId' })
+
+  const story = await loadStoryForUser(userId, storyId)
+  if (!story) return res.status(404).json({ error: 'Story not found' })
+
+  // Resolve target model: request body override → story preferredModel → default.
+  // Validated against the live models list to fail fast on typos.
+  const requested =
+    (req.body && typeof req.body.model === 'string' && req.body.model) ||
+    story.preferredModel ||
+    DEFAULT_INSIGHTS_MODEL
+
+  let validModels
+  if (ANTHROPIC_MOCK) {
+    validModels = new Set(MOCK_MODELS.map((m) => m.id))
+  } else {
+    try {
+      const client = getAnthropic()
+      const resp = await client.models.list({ limit: 100 })
+      validModels = new Set((resp?.data || []).map((m) => m.id))
+    } catch (e) {
+      return res.status(502).json({ error: 'Could not reach Anthropic: ' + e.message })
+    }
+  }
+  if (!validModels.has(requested)) {
+    return res
+      .status(400)
+      .json({ error: `Unknown model "${requested}". Pick one from /api/models.` })
+  }
+
+  const manuscript = await readStoryManuscript(userId, storyId)
+  if (!manuscript.trim()) {
+    return res
+      .status(400)
+      .json({ error: 'This story has no chapters yet — add some content first.' })
+  }
+  const currentHash = hashManuscript(manuscript)
+
+  // Cache hit: same manuscript + same model → return existing row.
+  const [existing] = await db
+    .select()
+    .from(schema.storyInsights)
+    .where(eq(schema.storyInsights.storyId, storyId))
+  if (
+    existing &&
+    existing.manuscriptHash === currentHash &&
+    existing.model === requested
+  ) {
+    return res.json({
+      data: existing.data,
+      generatedAt: existing.generatedAt,
+      model: existing.model,
+      stale: false,
+      cached: true,
+    })
+  }
+
+  // Produce JSON from the LLM (or mock).
+  let parsed
+  if (ANTHROPIC_MOCK) {
+    parsed = MOCK_INSIGHTS
+  } else {
+    try {
+      const client = getAnthropic()
+      const resp = await client.messages.create({
+        model: requested,
+        max_tokens: 16000,
+        system: INSIGHTS_SYSTEM_PROMPT,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: manuscript,
+                cache_control: { type: 'ephemeral' },
+              },
+            ],
+          },
+          { role: 'assistant', content: '{' },
+        ],
+      })
+      const text = (resp.content || [])
+        .filter((c) => c.type === 'text')
+        .map((c) => c.text)
+        .join('')
+      const raw = '{' + text
+      try {
+        parsed = JSON.parse(raw)
+      } catch {
+        // Sometimes the model emits fences or trailing prose — try to
+        // extract the first balanced { … } block.
+        const match = raw.match(/\{[\s\S]*\}/)
+        if (!match) throw new Error('LLM did not return JSON')
+        parsed = JSON.parse(match[0])
+      }
+    } catch (e) {
+      return res.status(502).json({ error: 'Analysis failed: ' + e.message })
+    }
+  }
+
+  if (
+    !parsed ||
+    !Array.isArray(parsed.characters) ||
+    !Array.isArray(parsed.relationships) ||
+    !Array.isArray(parsed.scenes)
+  ) {
+    return res
+      .status(502)
+      .json({ error: 'Analysis returned invalid shape. Try again.' })
+  }
+
+  const generatedAt = new Date()
+  await db
+    .insert(schema.storyInsights)
+    .values({
+      storyId,
+      data: parsed,
+      manuscriptHash: currentHash,
+      model: requested,
+      generatedAt,
+    })
+    .onConflictDoUpdate({
+      target: schema.storyInsights.storyId,
+      set: {
+        data: parsed,
+        manuscriptHash: currentHash,
+        model: requested,
+        generatedAt,
+      },
+    })
+
+  res.json({
+    data: parsed,
+    generatedAt,
+    model: requested,
+    stale: false,
+    cached: false,
+  })
+})
+
+// Persist the user's preferred model for a specific story. Validated
+// against the live models list so typos fail fast.
+app.patch('/api/stories/:storyId/preferred-model', async (req, res) => {
+  const userId = req.session.userId
+  const storyId = Number(req.params.storyId)
+  if (!Number.isFinite(storyId))
+    return res.status(400).json({ error: 'invalid storyId' })
+
+  const story = await loadStoryForUser(userId, storyId)
+  if (!story) return res.status(404).json({ error: 'Story not found' })
+
+  const model = req.body?.model
+  if (model !== null && typeof model !== 'string') {
+    return res.status(400).json({ error: 'model must be a string or null' })
+  }
+  if (model) {
+    let validModels
+    if (ANTHROPIC_MOCK) {
+      validModels = new Set(MOCK_MODELS.map((m) => m.id))
+    } else {
+      try {
+        const client = getAnthropic()
+        const resp = await client.models.list({ limit: 100 })
+        validModels = new Set((resp?.data || []).map((m) => m.id))
+      } catch (e) {
+        return res.status(502).json({ error: e.message })
+      }
+    }
+    if (!validModels.has(model)) {
+      return res.status(400).json({ error: `Unknown model "${model}"` })
+    }
+  }
+
+  await db
+    .update(schema.stories)
+    .set({ preferredModel: model || null })
+    .where(and(eq(schema.stories.userId, userId), eq(schema.stories.id, storyId)))
+
+  res.json({ ok: true, preferredModel: model || null })
 })
 
 // ═══════════════════════════════════════════════════════════════════════════

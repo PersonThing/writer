@@ -19,6 +19,7 @@
     "format": "prettier --write \"src/**/*.{js,svelte,css,html}\" \"server/**/*.js\""
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.90.0",
     "@milkdown/crepe": "^7.20.0",
     "@milkdown/kit": "^7.20.0",
     "@milkdown/plugin-history": "^7.20.0",

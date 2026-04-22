@@ -26,6 +26,10 @@ export const ui = $state({
   // "Move to story" flow: path of the file being moved, or null.
   moveToStoryFor: null,
 
+  // AI Insights overlay. When `insightsStoryId` is non-null the
+  // InsightsView is mounted over the editor area.
+  insightsStoryId: null,
+
   // App view
   appReady: false,
   activeTab:
@@ -45,6 +49,13 @@ export const ui = $state({
       ? localStorage.getItem('sidebarCollapsed') === 'true'
       : false,
 })
+
+export function openInsights(storyId) {
+  ui.insightsStoryId = storyId
+}
+export function closeInsights() {
+  ui.insightsStoryId = null
+}
 
 export function toggleSidebar() {
   ui.sidebarCollapsed = !ui.sidebarCollapsed

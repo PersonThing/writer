@@ -13,6 +13,7 @@
   import StatusEditor from './components/writer/StatusEditor.svelte'
   import CleanupPreview from './components/writer/CleanupPreview.svelte'
   import MoveToStoryModal from './components/writer/MoveToStoryModal.svelte'
+  import InsightsView from './components/writer/InsightsView.svelte'
 
   // Shared overlays
   import ContextMenu from './components/ContextMenu.svelte'
@@ -120,6 +121,9 @@
   <CleanupPreview />
   {#if ui.moveToStoryFor}
     <MoveToStoryModal />
+  {/if}
+  {#if ui.insightsStoryId != null}
+    <InsightsView storyId={ui.insightsStoryId} />
   {/if}
 {:else if portfolioMatch}
   {#if portfolioMatch.kind === 'home'}

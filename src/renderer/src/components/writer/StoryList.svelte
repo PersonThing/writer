@@ -6,6 +6,7 @@
     modalPrompt,
     modalConfirm,
     modalAlert,
+    openInsights,
   } from '../../lib/stores/ui.svelte.js'
   import {
     iconPlus,
@@ -37,6 +38,15 @@
   }
 
   onMount(refreshStoryInfo)
+
+  function showInsights(slug) {
+    const info = storyInfo.find((s) => s.slug === slug)
+    if (!info) {
+      modalAlert('Loading story data… try again in a moment.')
+      return
+    }
+    openInsights(info.id)
+  }
 
   async function newStory() {
     const name = await modalPrompt('Story name:')
@@ -162,6 +172,11 @@
           </span>
           <span class="story-name">{storyLabel(slug)}</span>
           <span class="story-actions">
+            <button
+              class="story-action-btn"
+              title="AI Insights"
+              onclick={(e) => { e.stopPropagation(); showInsights(slug) }}
+            >&#9728;</button>
             <button
               class="story-action-btn"
               title="Add chapter"
