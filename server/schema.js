@@ -62,7 +62,8 @@ export const files = pgTable(
 // Persists user-created empty folders so they survive even before any
 // file exists in them. Folders with files are still derived implicitly
 // from files.path prefixes; this table is the union partner that keeps
-// freshly-created empty folders visible.
+// freshly-created empty folders visible. `sortOrder` is the manual
+// drag-order among siblings of the same parent.
 export const folders = pgTable(
   'folders',
   {
@@ -71,6 +72,7 @@ export const folders = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     path: text('path').notNull(),
+    sortOrder: integer('sort_order').notNull().default(0),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => ({

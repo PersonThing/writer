@@ -6,6 +6,7 @@
     hideContextMenu,
     modalConfirm,
     modalAlert,
+    modalPrompt,
   } from '../lib/stores/ui.svelte.js'
   import * as api from '../lib/api.js'
   import { iconPencil, iconTrash, iconPlus } from '../lib/icons.js'
@@ -77,6 +78,24 @@
 
   // ── Folder actions ─────────────────────────────────────────────────────
 
+  async function handleFolderNewSubfolder() {
+    if (!ui.ctxPath) return
+    const parentPath = ui.ctxPath
+    hideContextMenu()
+    const name = await modalPrompt('Subfolder name:')
+    if (!name || !name.trim()) return
+    try {
+      await api.createFolder(name.trim(), parentPath)
+      await project.scanAll()
+      await project.scanStories()
+      window.dispatchEvent(
+        new CustomEvent('expand-folder', { detail: { path: parentPath } }),
+      )
+    } catch (e) {
+      await modalAlert('Could not create subfolder: ' + e.message)
+    }
+  }
+
   function handleFolderRename() {
     if (!ui.ctxPath) return
     const path = ui.ctxPath
@@ -109,6 +128,7 @@
         }
       }
       await project.scanAll()
+      await project.scanStories()
     } catch (e) {
       await modalAlert('Could not delete folder: ' + e.message)
     }
@@ -169,6 +189,9 @@
     style="left: {ui.ctxX}px; top: {ui.ctxY}px"
     onclick={(e) => e.stopPropagation()}
   >
+    <div class="ctx-item" onclick={handleFolderNewSubfolder}>
+      <span class="ctx-icon">{@html iconPlus()}</span> New subfolder
+    </div>
     <div class="ctx-item" onclick={handleFolderRename}>
       <span class="ctx-icon">{@html iconPencil()}</span> Rename folder
     </div>

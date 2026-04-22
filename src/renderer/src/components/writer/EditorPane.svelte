@@ -475,7 +475,19 @@
     outline: none;
     min-height: 100%;
     max-width: 66ch;
-    margin: 0 auto;
+  }
+
+  /* Hide the Code button in the Milkdown selection toolbar.
+     The toolbar renders one button per toolbar item with a .divider
+     between groups; Code is the first item of the "function" group,
+     i.e. the first .toolbar-item immediately following a .divider. */
+  :global(.milkdown-toolbar .divider + .toolbar-item) { display: none; }
+
+  /* Equalize paragraph spacing with soft line breaks — a paragraph
+     boundary produces the same visual gap as <br>. Users can type a
+     double line-break for larger visual separation. */
+  .milkdown-root :global(.ProseMirror p) {
+    margin: 0;
   }
 
   /* Writer color marks (match preview colors from the old renderer). */
