@@ -43,6 +43,36 @@
   let renamingFolder = $state(null)
   let renameFolderValue = $state('')
   let collapsedFolders = $state(new Set())
+  let collapseLoaded = false
+
+  function collapseKeyFor(scope) {
+    return `writer:collapsedFolders:${scope || '(root)'}`
+  }
+
+  // Load once per scopeRoot; persist on every change.
+  $effect(() => {
+    const key = collapseKeyFor(scopeRoot)
+    if (typeof localStorage === 'undefined') return
+    try {
+      const raw = localStorage.getItem(key)
+      const parsed = raw ? JSON.parse(raw) : null
+      collapsedFolders = Array.isArray(parsed) ? new Set(parsed) : new Set()
+    } catch {
+      collapsedFolders = new Set()
+    }
+    collapseLoaded = true
+  })
+
+  $effect(() => {
+    if (!collapseLoaded) return
+    if (typeof localStorage === 'undefined') return
+    const key = collapseKeyFor(scopeRoot)
+    try {
+      localStorage.setItem(key, JSON.stringify([...collapsedFolders]))
+    } catch {
+      // ignore quota / privacy-mode errors
+    }
+  })
 
   const FOLDER_DRAG_TYPE = 'application/x-writer-folder-path'
 
@@ -627,7 +657,7 @@
               onclick={(e) => e.stopPropagation()}
             />
           {:else}
-            <span class="file-name" title={dname} ondblclick={() => startRename(item.path)}>
+            <span class="file-name" title={dname}>
               {dname}
               {#if isDirty}<span class="dirty-mark">&bull;</span>{/if}
             </span>
