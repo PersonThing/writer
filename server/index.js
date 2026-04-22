@@ -850,7 +850,11 @@ Return JSON only, matching this TypeScript type exactly:
   }>
 }
 
-For chapterPath: use the bare chapter name you see as "# <name>" — the client will resolve it back to a file path. Use kebab-case ids.`
+Rules:
+- Include EVERY character who appears, including minor ones (servants, watchmen, messengers, etc.). Do not omit characters just because they speak little.
+- Output exactly one relationship per UNORDERED pair of characters who ever share a scene OR are mentioned together. Do NOT output the same pair twice (A→B and B→A). If two characters appear together even once, include a relationship row for them — use a mild label (e.g. "acquaintance", "brief encounter") and strength 1 if the bond is shallow.
+- For chapterPath: use the bare chapter name you see as "# <name>" — the client will resolve it back to a file path.
+- Use kebab-case ids.`
 
 const MOCK_INSIGHTS = {
   characters: [

@@ -8,6 +8,46 @@
   let hovered = $state(null)
   let selected = $state(null)
 
+  // Enrich the LLM's relationship list with scene-co-occurrence data.
+  // For every pair of characters that share at least one scene and
+  // wasn't already linked by the LLM, we add a synthetic edge labeled
+  // with the scene count. This catches minor-character links the LLM
+  // often omits.
+  let enrichedRelationships = $derived.by(() => {
+    const rels = [...(data?.relationships || [])]
+    const seen = new Set()
+    const pairKey = (a, b) => (a < b ? a + '||' + b : b + '||' + a)
+    for (const r of rels) {
+      if (r.from && r.to && r.from !== r.to) seen.add(pairKey(r.from, r.to))
+    }
+
+    // Count co-occurrences across scenes.
+    const cooccur = new Map() // pairKey -> count
+    for (const s of data?.scenes || []) {
+      const ids = [...new Set(s.characterIds || [])]
+      for (let i = 0; i < ids.length; i++) {
+        for (let j = i + 1; j < ids.length; j++) {
+          const k = pairKey(ids[i], ids[j])
+          cooccur.set(k, (cooccur.get(k) || 0) + 1)
+        }
+      }
+    }
+
+    for (const [key, count] of cooccur) {
+      if (seen.has(key)) continue
+      const [a, b] = key.split('||')
+      rels.push({
+        from: a,
+        to: b,
+        label: count === 1 ? 'shares 1 scene' : 'shares ' + count + ' scenes',
+        strength: Math.min(3, count),
+        summary: 'Appears together in ' + count + ' scene' + (count === 1 ? '' : 's') + '.',
+        derived: true,
+      })
+    }
+    return rels
+  })
+
   function layoutFor(chars, width, height) {
     const map = new Map()
     const n = chars.length
@@ -62,7 +102,7 @@
   // the same two characters so lines and labels don't overlap.
   let parallelInfo = $derived.by(() => {
     const groups = new Map()
-    for (const r of data?.relationships || []) {
+    for (const r of enrichedRelationships) {
       const key = r.from < r.to ? `${r.from}||${r.to}` : `${r.to}||${r.from}`
       if (!groups.has(key)) groups.set(key, [])
       groups.get(key).push(r)
@@ -108,7 +148,7 @@
 
   let degrees = $derived.by(() => {
     const m = new Map()
-    for (const r of data?.relationships || []) {
+    for (const r of enrichedRelationships) {
       m.set(r.from, (m.get(r.from) || 0) + 1)
       m.set(r.to, (m.get(r.to) || 0) + 1)
     }
@@ -124,7 +164,7 @@
 >
   <svg class="graph-svg" width="100%" height="100%">
     <g class="edges">
-      {#each (data?.relationships || []) as rel}
+      {#each enrichedRelationships as rel}
         {@const a = positions.get(rel.from)}
         {@const b = positions.get(rel.to)}
         {#if a && b}
@@ -134,12 +174,14 @@
             stroke-width={rel.strength || 1}
             class="edge"
             class:dim={selected && selected !== rel.from && selected !== rel.to}
+            class:derived={rel.derived}
           />
           {#if rel.label}
             <text
               x={geom.lx}
               y={geom.ly - 4}
               class="edge-label"
+              class:derived={rel.derived}
               text-anchor="middle"
             >{rel.label}</text>
           {/if}
@@ -195,11 +237,21 @@
     transition: opacity 0.15s;
   }
   .edge.dim { opacity: 0.12; }
+  /* Derived (scene-co-occurrence) edges are lighter + dashed so the
+     reader can tell them apart from LLM-authored relationship edges. */
+  .edge.derived {
+    stroke-dasharray: 4 3;
+    opacity: 0.4;
+  }
   .edge-label {
     font-family: var(--font-ui);
     font-size: 10px;
     fill: var(--muted);
     pointer-events: none;
+  }
+  .edge-label.derived {
+    font-style: italic;
+    opacity: 0.75;
   }
 
   .node { cursor: grab; }
