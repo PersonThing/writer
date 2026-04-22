@@ -56,7 +56,7 @@
   }
 
   async function addChapter(storySlug) {
-    const name = await modalPrompt('Chapter name:')
+    const name = await modalPrompt('Section name:')
     if (!name || !name.trim()) return
     await project.addChapter(storySlug, name.trim())
   }
@@ -173,10 +173,10 @@
           <span class="story-name">{storyLabel(slug)}</span>
           <span class="story-actions">
             <button
-              class="story-action-btn"
+              class="story-action-btn ins-btn"
               title="AI Insights"
               onclick={(e) => { e.stopPropagation(); showInsights(slug) }}
-            >&#9728;</button>
+            >AI</button>
             <button
               class="story-action-btn"
               title="Add chapter"
@@ -278,8 +278,13 @@
   }
   .story-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  .story-actions { display: none; align-items: center; gap: 2px; }
-  .story-header:hover .story-actions { display: flex; }
+  .story-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    visibility: hidden;
+  }
+  .story-header:hover .story-actions { visibility: visible; }
   .story-action-btn {
     background: none;
     border: none;
@@ -292,6 +297,15 @@
   }
   .story-action-btn:hover { color: var(--accent); }
   .story-action-btn.del:hover { color: #e55; }
+  .ins-btn {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 1px 5px;
+    border: 1px solid var(--sb-border);
+    border-radius: 4px;
+  }
+  .ins-btn:hover { border-color: var(--accent); }
 
   .story-tree-wrap { padding-bottom: 0.3rem; }
 </style>

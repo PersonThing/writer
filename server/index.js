@@ -959,22 +959,25 @@ app.post('/api/insights/:storyId/analyze', async (req, res) => {
                 text: manuscript,
                 cache_control: { type: 'ephemeral' },
               },
+              {
+                type: 'text',
+                text:
+                  'Return JSON only. Your entire response must be a single JSON object matching the schema in the system prompt. No prose, no markdown fences.',
+              },
             ],
           },
-          { role: 'assistant', content: '{' },
         ],
       })
       const text = (resp.content || [])
         .filter((c) => c.type === 'text')
         .map((c) => c.text)
         .join('')
-      const raw = '{' + text
       try {
-        parsed = JSON.parse(raw)
+        parsed = JSON.parse(text)
       } catch {
         // Sometimes the model emits fences or trailing prose — try to
         // extract the first balanced { … } block.
-        const match = raw.match(/\{[\s\S]*\}/)
+        const match = text.match(/\{[\s\S]*\}/)
         if (!match) throw new Error('LLM did not return JSON')
         parsed = JSON.parse(match[0])
       }

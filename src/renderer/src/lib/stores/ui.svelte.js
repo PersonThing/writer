@@ -48,6 +48,14 @@ export const ui = $state({
     typeof localStorage !== 'undefined'
       ? localStorage.getItem('sidebarCollapsed') === 'true'
       : false,
+
+  // Editor font-size multiplier (1.0 = default, 0.5 – 3.0).
+  editorFontScale: (() => {
+    if (typeof localStorage === 'undefined') return 1
+    const v = parseFloat(localStorage.getItem('editorFontScale') || '1')
+    if (!Number.isFinite(v)) return 1
+    return Math.max(0.5, Math.min(3, v))
+  })(),
 })
 
 export function openInsights(storyId) {
@@ -60,6 +68,14 @@ export function closeInsights() {
 export function toggleSidebar() {
   ui.sidebarCollapsed = !ui.sidebarCollapsed
   localStorage.setItem('sidebarCollapsed', String(ui.sidebarCollapsed))
+}
+
+export function setEditorFontScale(scale) {
+  const clamped = Math.max(0.5, Math.min(3, Number(scale) || 1))
+  ui.editorFontScale = clamped
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('editorFontScale', String(clamped))
+  }
 }
 
 // ── Context menu ─────────────────────────────────────────────────────────

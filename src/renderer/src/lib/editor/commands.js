@@ -15,6 +15,7 @@ import {
   toggleStrongCommand,
   toggleEmphasisCommand,
   wrapInHeadingCommand,
+  turnIntoTextCommand,
   insertHrCommand,
   wrapInBulletListCommand,
   linkSchema,
@@ -83,6 +84,8 @@ export function runFormat(editor, action, payload) {
       return call(editor, wrapInHeadingCommand.key, 2)
     case 'h3':
       return call(editor, wrapInHeadingCommand.key, 3)
+    case 'paragraph':
+      return call(editor, turnIntoTextCommand.key)
     case 'hr':
       return call(editor, insertHrCommand.key)
     case 'bullet':

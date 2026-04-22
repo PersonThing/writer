@@ -1,6 +1,6 @@
 <script>
   import { editor } from '../../lib/stores/editor.svelte.js'
-  import { ui } from '../../lib/stores/ui.svelte.js'
+  import { ui, setEditorFontScale } from '../../lib/stores/ui.svelte.js'
   import { iconLink, iconBroom } from '../../lib/icons.js'
   import EditorPane from './EditorPane.svelte'
 
@@ -73,6 +73,7 @@
     { fmt: 'italic', label: '<i>I</i>', tip: 'Italic (Ctrl+I)' },
     { fmt: 'strikethrough', label: '<s>S</s>', tip: 'Strikethrough (Ctrl+Shift+X)' },
     null,
+    { fmt: 'paragraph', label: 'P', tip: 'Paragraph (normal text)' },
     { fmt: 'h1', label: 'H1', tip: 'Heading 1 (Ctrl+1)' },
     { fmt: 'h2', label: 'H2', tip: 'Heading 2 (Ctrl+2)' },
     { fmt: 'h3', label: 'H3', tip: 'Heading 3 (Ctrl+3)' },
@@ -122,7 +123,7 @@
   })
 </script>
 
-<div class="editor-area">
+<div class="editor-area" style="--editor-font-scale: {ui.editorFontScale}">
   {#if editor.panes.length === 0}
     <div class="no-file">&larr; {ui.activeTab === 'short-stories' ? 'Select a story to begin' : 'Select a poem to read or edit'}</div>
   {:else}
@@ -183,6 +184,30 @@
         {@html iconBroom()} Clean
       </button>
       <div style="flex:1"></div>
+
+      <label class="fmt-scale" data-tip="Editor font size">
+        <span class="fmt-scale-label">A</span>
+        <input
+          type="range"
+          min="0.5"
+          max="3"
+          step="0.05"
+          value={ui.editorFontScale}
+          oninput={(e) => setEditorFontScale(e.target.value)}
+          onkeydown={(e) => e.stopPropagation()}
+          aria-label="Editor font size"
+        />
+        <span class="fmt-scale-label big">A</span>
+        <span class="fmt-scale-value">{Math.round(ui.editorFontScale * 100)}%</span>
+        {#if ui.editorFontScale !== 1}
+          <button
+            class="fmt-scale-reset"
+            onclick={() => setEditorFontScale(1)}
+            data-tip="Reset to 100%"
+            aria-label="Reset font size"
+          >&#8634;</button>
+        {/if}
+      </label>
     </div>
 
     <div class="panes-container" bind:this={panesContainerEl}>
@@ -222,6 +247,47 @@
     flex-direction: column;
     overflow: hidden;
     background: var(--surface);
+  }
+  .fmt-scale {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 0.4rem;
+    color: var(--muted);
+    font-size: 0.72rem;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+  .fmt-scale input[type='range'] {
+    width: 110px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .fmt-scale-label {
+    font-family: var(--font-serif);
+    color: var(--text);
+  }
+  .fmt-scale-label.big {
+    font-size: 1.05rem;
+  }
+  .fmt-scale-value {
+    min-width: 3ch;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .fmt-scale-reset {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.95rem;
+    line-height: 1;
+    padding: 0 4px;
+  }
+  .fmt-scale-reset:hover {
+    color: var(--accent);
+    border-color: var(--border);
   }
   .no-file {
     flex: 1;
@@ -268,11 +334,11 @@
     display: flex;
     align-items: center;
     gap: 2px;
-    flex-wrap: wrap;
     padding: 0.25rem 0.55rem;
     border-bottom: 1px solid var(--border);
     background: var(--bg);
     flex-shrink: 0;
+    overflow-x: auto;
   }
   .fmt-btn {
     font-size: 0.72rem;

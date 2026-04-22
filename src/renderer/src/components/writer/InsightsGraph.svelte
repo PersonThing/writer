@@ -57,20 +57,49 @@
     onSelectCharacter?.(id)
   }
 
-  function edgePath(a, b) {
-    if (!a || !b) return ''
+  // For each (from, to) pair, how many parallel edges exist and which
+  // slot is this edge? Used to fan out multiple relationships between
+  // the same two characters so lines and labels don't overlap.
+  let parallelInfo = $derived.by(() => {
+    const groups = new Map()
+    for (const r of data?.relationships || []) {
+      const key = r.from < r.to ? `${r.from}||${r.to}` : `${r.to}||${r.from}`
+      if (!groups.has(key)) groups.set(key, [])
+      groups.get(key).push(r)
+    }
+    const info = new Map() // relationship reference -> { index, total }
+    for (const [, group] of groups) {
+      group.forEach((r, i) => info.set(r, { index: i, total: group.length }))
+    }
+    return info
+  })
+
+  function curveOffset(rel) {
+    const info = parallelInfo.get(rel) || { index: 0, total: 1 }
+    // Symmetric fan: single edge centered, multiples spread out.
+    const base = 18
+    if (info.total === 1) return base
+    // Alternate sides: first on one side, next on the other, etc.
+    const spread = 22
+    return base + (info.index - (info.total - 1) / 2) * spread
+  }
+
+  function edgeGeometry(a, b, rel) {
     const mx = (a.x + b.x) / 2
     const my = (a.y + b.y) / 2
-    // Gentle curve offset perpendicular to the edge for readability
     const dx = b.x - a.x
     const dy = b.y - a.y
     const len = Math.hypot(dx, dy) || 1
     const nx = -dy / len
     const ny = dx / len
-    const offset = 18
+    const offset = curveOffset(rel)
     const cx = mx + nx * offset
     const cy = my + ny * offset
-    return `M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`
+    // Label sits on the curve midpoint, which is the quadratic's midpoint.
+    const lx = 0.25 * a.x + 0.5 * cx + 0.25 * b.x
+    const ly = 0.25 * a.y + 0.5 * cy + 0.25 * b.y
+    const path = `M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`
+    return { path, lx, ly }
   }
 
   function nodeRadius(degree) {
@@ -99,18 +128,20 @@
         {@const a = positions.get(rel.from)}
         {@const b = positions.get(rel.to)}
         {#if a && b}
-          {@const mx = (a.x + b.x) / 2}
-          {@const my = (a.y + b.y) / 2}
+          {@const geom = edgeGeometry(a, b, rel)}
           <path
-            d={edgePath(a, b)}
+            d={geom.path}
             stroke-width={rel.strength || 1}
             class="edge"
             class:dim={selected && selected !== rel.from && selected !== rel.to}
           />
           {#if rel.label}
-            <text x={mx} y={my - 4} class="edge-label" text-anchor="middle">
-              {rel.label}
-            </text>
+            <text
+              x={geom.lx}
+              y={geom.ly - 4}
+              class="edge-label"
+              text-anchor="middle"
+            >{rel.label}</text>
           {/if}
         {/if}
       {/each}

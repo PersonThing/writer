@@ -469,7 +469,7 @@
   .milkdown-root :global(.ProseMirror) {
     padding: 1.75rem 2rem;
     font-family: var(--font-serif);
-    font-size: 0.95rem;
+    font-size: calc(0.95rem * var(--editor-font-scale, 1));
     line-height: 1.75;
     color: var(--text);
     outline: none;
@@ -485,9 +485,15 @@
 
   /* Equalize paragraph spacing with soft line breaks — a paragraph
      boundary produces the same visual gap as <br>. Users can type a
-     double line-break for larger visual separation. */
-  .milkdown-root :global(.ProseMirror p) {
+     double line-break for larger visual separation. Crepe's reset.css
+     applies `padding: 4px 0` and a hardcoded `font-size: 16px` on
+     .milkdown .ProseMirror p, so we need matching-or-higher
+     specificity to override both (including scaling). */
+  .milkdown-root :global(.milkdown .ProseMirror p) {
     margin: 0;
+    padding: 0;
+    font-size: inherit;
+    line-height: inherit;
   }
 
   /* Writer color marks (match preview colors from the old renderer). */

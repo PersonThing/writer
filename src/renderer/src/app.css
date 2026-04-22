@@ -42,6 +42,27 @@
   --sb-border: #222;
 }
 
+/* Milkdown Crepe ships only the light "nord" theme in the bundle.
+   In dark mode, remap its internal color variables to match our
+   own --surface / --text palette so the editor background flips
+   with the rest of the app. */
+:root.dark .milkdown {
+  --crepe-color-background: var(--surface);
+  --crepe-color-on-background: var(--text);
+  --crepe-color-surface: var(--surface);
+  --crepe-color-surface-low: var(--bg);
+  --crepe-color-on-surface: var(--text);
+  --crepe-color-on-surface-variant: var(--muted);
+  --crepe-color-outline: var(--muted);
+  --crepe-color-hover: var(--sb-hover);
+  --crepe-color-selected: var(--sb-active);
+  --crepe-color-inline-area: var(--bg);
+  --crepe-color-secondary: var(--accent-light);
+  --crepe-color-on-secondary: var(--text);
+  --crepe-color-inverse: var(--text);
+  --crepe-color-on-inverse: var(--surface);
+}
+
 html,
 body {
   height: 100%;
@@ -130,6 +151,26 @@ body {
 :root.dark ::-webkit-scrollbar-thumb {
   background: var(--border);
   border-radius: 3px;
+}
+
+/* Sidebar is always dark — keep its scrollbars dark in light mode too. */
+.sidebar ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.sidebar ::-webkit-scrollbar-track {
+  background: var(--sb-bg);
+}
+.sidebar ::-webkit-scrollbar-thumb {
+  background: var(--sb-border);
+  border-radius: 3px;
+}
+.sidebar ::-webkit-scrollbar-thumb:hover {
+  background: var(--sb-active);
+}
+.sidebar {
+  scrollbar-color: var(--sb-border) var(--sb-bg);
+  scrollbar-width: thin;
 }
 :root.dark ::-webkit-scrollbar-thumb:hover {
   background: #4a4742;
