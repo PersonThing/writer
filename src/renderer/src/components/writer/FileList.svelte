@@ -14,21 +14,29 @@
   )
 </script>
 
-<FolderTree
-  {items}
-  {emptyDirs}
-  scopeRoot=""
-  showBadges={true}
-  canReorder={project.sortMode === 'my'}
-  allowExternalDrops={true}
-  dragType="application/x-writer-poem-path"
-/>
+<div class="file-list-scroll">
+  <FolderTree
+    {items}
+    {emptyDirs}
+    scopeRoot=""
+    showBadges={true}
+    canReorder={project.sortMode === 'my'}
+    allowExternalDrops={true}
+    dragType="application/x-writer-poem-path"
+  />
 
-{#if project.filteredFiles.length === 0 && project.searchQuery}
-  <div class="empty">No poems match.</div>
-{/if}
+  {#if project.filteredFiles.length === 0 && project.searchQuery}
+    <div class="empty">No poems match.</div>
+  {/if}
+</div>
 
 <style>
+  .file-list-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
   .empty {
     padding: 1rem 1.2rem;
     color: #555;

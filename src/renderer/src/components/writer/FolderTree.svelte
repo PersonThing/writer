@@ -31,7 +31,10 @@
   } = $props()
 
   let draggedPath = $state(null)
+  let draggedFolder = $state(null)
   let dragOverFolder = $state(null)
+  let dragOverFolderPosition = $state('reorder') // 'reorder' | 'nest'
+  let dragOverFolderSlot = $state('after') // 'before' | 'after'
   let dragOverFile = $state(null)
   let dragOverPosition = $state('after')
   let externalDragActive = $state(false)
@@ -40,6 +43,8 @@
   let renamingFolder = $state(null)
   let renameFolderValue = $state('')
   let collapsedFolders = $state(new Set())
+
+  const FOLDER_DRAG_TYPE = 'application/x-writer-folder-path'
 
   function hasExternalFiles(e) {
     return Array.from(e.dataTransfer?.types || []).includes('Files')
@@ -73,19 +78,40 @@
     return last.endsWith('.md') ? last.slice(0, -3) : last
   }
 
-  // ContextMenu dispatches this event when the user picks "Rename
-  // folder". The path is fully qualified (includes scopeRoot).
+  // ContextMenu dispatches these events. Paths are fully qualified.
   onMount(() => {
+    function inScope(full) {
+      if (!full) return false
+      if (scopeRoot && !full.startsWith(scopeRoot + '/') && full !== scopeRoot) return false
+      if (!scopeRoot && full.startsWith('_stories/')) return false
+      return true
+    }
     function onStartFolderRename(e) {
       const full = e.detail?.path
-      if (!full) return
-      if (scopeRoot && !full.startsWith(scopeRoot + '/') && full !== scopeRoot) return
-      if (!scopeRoot && full.startsWith('_stories/')) return
+      if (!inScope(full)) return
       startFolderRename(full)
     }
+    function onExpandFolder(e) {
+      const full = e.detail?.path
+      if (!inScope(full)) return
+      const rel = relativeOf(full)
+      if (!rel) return
+      // Uncollapse all ancestors too.
+      const parts = rel.split('/')
+      let acc = ''
+      const next = new Set(collapsedFolders)
+      for (const p of parts) {
+        acc = acc ? acc + '/' + p : p
+        next.delete(acc)
+      }
+      collapsedFolders = next
+    }
     window.addEventListener('start-folder-rename', onStartFolderRename)
-    return () =>
+    window.addEventListener('expand-folder', onExpandFolder)
+    return () => {
       window.removeEventListener('start-folder-rename', onStartFolderRename)
+      window.removeEventListener('expand-folder', onExpandFolder)
+    }
   })
 
   // Build the tree bucket map from items + empty dirs. Keys are
@@ -113,11 +139,30 @@
         if (!folders.has(acc)) folders.set(acc, [])
       }
     }
-    const sorted = [...folders.entries()].sort((a, b) =>
-      a[0].localeCompare(b[0]),
-    )
+    // Sort folders using the persisted sortOrder (falling back to
+    // alphabetical for ties / missing entries). sortOrder is only
+    // meaningful within a parent, but since deeper folders never
+    // compare against shallower ones in the tree UI (each parent
+    // renders its children separately via indentation), flattening
+    // to a global sort here still preserves per-parent ordering.
+    const sorted = [...folders.entries()].sort((a, b) => {
+      const pa = absoluteOf(parentRel(a[0]))
+      const pb = absoluteOf(parentRel(b[0]))
+      if (pa !== pb) return a[0].localeCompare(b[0])
+      const oa =
+        project.folderOrder.get(absoluteOf(a[0])) ?? Number.MAX_SAFE_INTEGER
+      const ob =
+        project.folderOrder.get(absoluteOf(b[0])) ?? Number.MAX_SAFE_INTEGER
+      if (oa !== ob) return oa - ob
+      return a[0].localeCompare(b[0])
+    })
     return { folders: sorted, rootFiles }
   })
+
+  function parentRel(folderRel) {
+    const idx = folderRel.lastIndexOf('/')
+    return idx === -1 ? '' : folderRel.slice(0, idx)
+  }
 
   function handleClick(e, path) {
     if (e.target.closest('.drag-grip')) return
@@ -166,7 +211,27 @@
     dragOverFile = null
   }
 
+  function handleFolderDragStart(e, folderRel) {
+    const abs = absoluteOf(folderRel)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', abs)
+    e.dataTransfer.setData(FOLDER_DRAG_TYPE, abs)
+    // Intentionally do not set `dragType` (the file MIME) — so external
+    // cross-tab drop targets that expect files don't consume a folder drop.
+    e.stopPropagation()
+    requestAnimationFrame(() => {
+      draggedFolder = abs
+    })
+  }
+  function handleFolderDragEnd() {
+    draggedFolder = null
+    dragOverFolder = null
+    dragOverFolderPosition = 'reorder'
+    dragOverFolderSlot = 'after'
+  }
+
   function handleDragOverFile(e, path) {
+    if (draggedFolder) return
     if (!draggedPath || draggedPath === path) return
     if (!canReorder) return
     e.preventDefault()
@@ -219,7 +284,33 @@
     e.preventDefault()
     e.stopPropagation()
     e.dataTransfer.dropEffect = hasExternalFiles(e) ? 'copy' : 'move'
+
+    // Folder-drag-over-folder: distinguish reorder (same parent, split by
+    // mouse-y midpoint) from nest (different parent, drop inside).
+    if (draggedFolder) {
+      if (!canReorder) return
+      const draggedParent = parentOfAbs(draggedFolder)
+      const targetAbs = absoluteOf(folderRel)
+      const targetParent = parentOfAbs(targetAbs)
+      if (draggedFolder === targetAbs) return
+      // Prevent nesting a folder into its own descendant.
+      if (targetAbs.startsWith(draggedFolder + '/')) return
+
+      if (draggedParent === targetParent && folderRel !== '') {
+        const rect = e.currentTarget.getBoundingClientRect()
+        const midY = rect.top + rect.height / 2
+        dragOverFolder = folderRel
+        dragOverFolderPosition = 'reorder'
+        dragOverFolderSlot = e.clientY < midY ? 'before' : 'after'
+      } else {
+        dragOverFolder = folderRel
+        dragOverFolderPosition = 'nest'
+      }
+      return
+    }
+
     dragOverFolder = folderRel
+    dragOverFolderPosition = 'reorder'
   }
 
   async function handleDropOnFolder(e, folderRel) {
@@ -228,6 +319,7 @@
 
     const dstAbs = absoluteOf(folderRel)
 
+    // External file upload from Finder/Explorer.
     if (hasExternalFiles(e) && e.dataTransfer.files?.length) {
       dragOverFolder = null
       externalDragActive = false
@@ -236,6 +328,46 @@
       return
     }
 
+    // Folder drop: reorder within parent, or nest into a different folder.
+    if (draggedFolder) {
+      const slot = dragOverFolderSlot
+      const pos = dragOverFolderPosition
+      const src = draggedFolder
+      draggedFolder = null
+      dragOverFolder = null
+      dragOverFolderPosition = 'reorder'
+      dragOverFolderSlot = 'after'
+      if (!canReorder) return
+      if (src.startsWith(dstAbs + '/') || src === dstAbs) return
+
+      try {
+        if (pos === 'nest') {
+          // Nest src under dstAbs.
+          const srcParent = parentOfAbs(src)
+          if (srcParent === dstAbs) return
+          await project.moveFolderToParent(src, dstAbs)
+        } else {
+          // Reorder siblings in parent dstAbs's parent == src's parent.
+          const targetAbs = dstAbs
+          const parent = parentOfAbs(src)
+          if (parentOfAbs(targetAbs) !== parent) return
+          const siblings = siblingFolderPathsUnder(parent)
+          const srcIdx = siblings.indexOf(src)
+          if (srcIdx === -1) return
+          siblings.splice(srcIdx, 1)
+          let dstIdx = siblings.indexOf(targetAbs)
+          if (dstIdx === -1) return
+          if (slot === 'after') dstIdx += 1
+          siblings.splice(dstIdx, 0, src)
+          await project.reorderFolders(siblings)
+        }
+      } catch (err) {
+        await modalAlert('Move failed: ' + err.message)
+      }
+      return
+    }
+
+    // File drop: existing move-into-folder behavior.
     if (!draggedPath) return
     const currentFolder = folderOf(draggedPath)
     if (currentFolder === folderRel) {
@@ -254,6 +386,26 @@
     })
     draggedPath = null
     dragOverFolder = null
+  }
+
+  function parentOfAbs(abs) {
+    const idx = abs.lastIndexOf('/')
+    return idx === -1 ? '' : abs.slice(0, idx)
+  }
+
+  // All absolute folder paths in the project whose parent matches the
+  // given absolute parent path, ordered by current sortOrder (so reorder
+  // math operates on the same sequence the user sees).
+  function siblingFolderPathsUnder(parentAbs) {
+    const all = [...project.folderOrder.keys()]
+    return all
+      .filter((p) => parentOfAbs(p) === parentAbs)
+      .sort((a, b) => {
+        const oa = project.folderOrder.get(a) ?? Number.MAX_SAFE_INTEGER
+        const ob = project.folderOrder.get(b) ?? Number.MAX_SAFE_INTEGER
+        if (oa !== ob) return oa - ob
+        return a.localeCompare(b)
+      })
   }
 
   function handleListDragOver(e) {
@@ -375,7 +527,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions a11y_no_noninteractive_element_interactions -->
 <div
   class="folder-tree"
-  class:is-dragging={draggedPath || externalDragActive}
+  class:is-dragging={draggedPath || draggedFolder || externalDragActive}
   ondragover={handleListDragOver}
   ondragleave={handleListDragLeave}
   ondrop={handleListDrop}
@@ -383,7 +535,7 @@
   {#if scopeRoot === '' || allowExternalDrops}
     <div
       class="root-drop-zone"
-      class:visible={draggedPath || (externalDragActive && allowExternalDrops)}
+      class:visible={draggedPath || draggedFolder || (externalDragActive && allowExternalDrops)}
       class:drag-over-folder={dragOverFolder === ''}
       ondragover={(e) => handleDragOverFolder(e, '')}
       ondragleave={() => { if (dragOverFolder === '') dragOverFolder = null }}
@@ -396,10 +548,20 @@
     {@const folderName = folderRel.split('/').pop()}
     {@const isCollapsed = collapsedFolders.has(folderRel)}
     {@const depth = folderRel.split('/').length - 1}
+    {@const isDropTarget = dragOverFolder === folderRel}
+    {@const showReorderBefore = isDropTarget && draggedFolder && dragOverFolderPosition === 'reorder' && dragOverFolderSlot === 'before'}
+    {@const showReorderAfter = isDropTarget && draggedFolder && dragOverFolderPosition === 'reorder' && dragOverFolderSlot === 'after'}
+    {@const showNest = isDropTarget && (dragOverFolderPosition === 'nest' || !draggedFolder)}
     <div
       class="folder-header"
-      class:drag-over-folder={dragOverFolder === folderRel}
+      class:drag-over-folder={showNest}
+      class:drop-above={showReorderBefore}
+      class:drop-below={showReorderAfter}
+      class:dragging={draggedFolder === folderAbs}
       style="padding-left: {0.5 + depth * 0.9}rem"
+      draggable="true"
+      ondragstart={(e) => handleFolderDragStart(e, folderRel)}
+      ondragend={handleFolderDragEnd}
       ondragover={(e) => handleDragOverFolder(e, folderRel)}
       ondragleave={() => { if (dragOverFolder === folderRel) dragOverFolder = null }}
       ondrop={(e) => handleDropOnFolder(e, folderRel)}
@@ -586,6 +748,15 @@
     outline: 2px solid var(--accent);
     outline-offset: -2px;
   }
+  .folder-header.drop-above {
+    box-shadow: inset 0 2px 0 var(--accent);
+  }
+  .folder-header.drop-below {
+    box-shadow: inset 0 -2px 0 var(--accent);
+  }
+  .folder-header.dragging { opacity: 0.4; }
+  .folder-header[draggable="true"] { cursor: grab; }
+  .folder-header[draggable="true"]:active { cursor: grabbing; }
   .folder-toggle {
     background: none;
     border: none;

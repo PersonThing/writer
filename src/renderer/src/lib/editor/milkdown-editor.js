@@ -27,6 +27,7 @@ export async function createWriterEditor({ root, defaultValue = '', onChange, on
       [Crepe.Feature.BlockEdit]: false,
       [Crepe.Feature.ImageBlock]: false,
       [Crepe.Feature.Latex]: false,
+      [Crepe.Feature.Placeholder]: false,
     },
   })
 

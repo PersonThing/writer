@@ -24,6 +24,7 @@ class ProjectStore {
   // ── State ────────────────────────────────────────────────────────────────
   files = $state(new Map()) // path -> { status, quality, modified, created }
   dirs = $state(new Set())
+  folderOrder = $state(new Map()) // absolute folder path -> sortOrder
   statusList = $state([...DEFAULT_STATUSES])
   searchQuery = $state('')
   searchMatches = $state(null)
@@ -213,6 +214,12 @@ class ProjectStore {
       newDirs.add(rel)
     }
     this.dirs = newDirs
+    // folderOrder is global across poems + stories — both trees consult it.
+    const newOrder = new Map()
+    for (const [p, so] of Object.entries(result.folderOrder || {})) {
+      newOrder.set(p, so)
+    }
+    this.folderOrder = newOrder
   }
 
   // ── Moves / renames ────────────────────────────────────────────────────
@@ -258,6 +265,32 @@ class ProjectStore {
   async renameFolderOnDisk(oldPath, newPath) {
     await api.renameFolder(oldPath, newPath)
     await this.scanAll()
+  }
+
+  /**
+   * Rewrite the explicit sort order of a group of sibling folders.
+   * All `paths` must share the same parent prefix.
+   */
+  async reorderFolders(paths) {
+    if (!Array.isArray(paths) || paths.length < 2) return
+    // Optimistic local update so the tree doesn't snap back.
+    const next = new Map(this.folderOrder)
+    paths.forEach((p, i) => next.set(p, (i + 1) * 10))
+    this.folderOrder = next
+    try {
+      await api.reorderFolders(paths)
+    } catch (e) {
+      await this.scanAll()
+      await this.scanStories()
+      throw e
+    }
+  }
+
+  async moveFolderToParent(sourcePath, newParent) {
+    const newPath = await api.moveFolder(sourcePath, newParent)
+    await this.scanAll()
+    await this.scanStories()
+    return newPath
   }
 
   // ── Stories ─────────────────────────────────────────────────────────────

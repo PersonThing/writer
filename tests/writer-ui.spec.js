@@ -264,6 +264,47 @@ test.describe('writer UI — folder right-click menu', () => {
     expect(scan.files['doomed/inside.md']).toBeUndefined()
   })
 
+  test('delete works on a folder inside a story (stories tab)', async ({
+    db,
+    page,
+    asUser,
+  }) => {
+    const alice = await asUser('alice@test.local')
+    await alice.post('/api/create-story', { data: { name: 'Saga' } })
+    await alice.post('/api/create-folder', {
+      data: { name: 'act1', path: '_stories/saga' },
+    })
+    await alice.post('/api/write-file', {
+      data: { path: '_stories/saga/act1/scene.md', content: 'bye' },
+    })
+
+    await page.goto('/writer/stories')
+    await page.locator('.test-signin-btn', { hasText: 'alice@test.local' }).click()
+    await page.waitForURL('/writer/stories', { timeout: 5000 })
+
+    await page.locator('.story-header', { hasText: 'Saga' }).click()
+    await expect(
+      page.locator('.folder-name', { hasText: 'act1' }),
+    ).toBeVisible({ timeout: 5000 })
+
+    await page
+      .locator('.folder-header', {
+        has: page.locator('.folder-name', { hasText: 'act1' }),
+      })
+      .click({ button: 'right' })
+    await page.locator('.ctx-menu').getByText(/Delete folder/).click()
+    await expect(page.locator('.modal-message')).toContainText('act1')
+    await page.locator('.modal-actions .btn-primary').click()
+
+    await expect(page.locator('.folder-name', { hasText: 'act1' })).toHaveCount(
+      0,
+      { timeout: 3000 },
+    )
+    const scan = await (await alice.post('/api/scan-directory')).json()
+    expect(scan.dirs['_stories/saga/act1']).toBeUndefined()
+    expect(scan.files['_stories/saga/act1/scene.md']).toBeUndefined()
+  })
+
   test('Delete can be cancelled, folder stays intact', async ({
     db,
     page,

@@ -72,10 +72,12 @@ app.post('/api/scan-directory', async (req, res) => {
   // Union persisted empty folders. Also expand their ancestor prefixes
   // so `createFolder('a/b/c')` reveals `a`, `a/b`, and `a/b/c`.
   const folderRows = await db
-    .select({ path: schema.folders.path })
+    .select({ path: schema.folders.path, sortOrder: schema.folders.sortOrder })
     .from(schema.folders)
     .where(eq(schema.folders.userId, userId))
+  const folderOrder = {}
   for (const r of folderRows) {
+    folderOrder[r.path] = r.sortOrder
     const parts = r.path.split('/')
     for (let i = 1; i <= parts.length; i++) {
       dirSet.add(parts.slice(0, i).join('/'))
@@ -85,7 +87,7 @@ app.post('/api/scan-directory', async (req, res) => {
   const dirs = {}
   for (const d of dirSet) dirs[d] = true
 
-  res.json({ files, dirs })
+  res.json({ files, dirs, folderOrder })
 })
 
 app.post('/api/search', async (req, res) => {
@@ -199,9 +201,14 @@ app.post('/api/create-folder', async (req, res) => {
   if (!fullPath) return res.status(400).json({ error: 'invalid folder path' })
 
   try {
+    // Append to the end of the parent's sibling bucket.
+    const siblings = await siblingFolders(db, userId, cleanParent)
+    const maxSo = siblings.reduce((m, s) => Math.max(m, s.sortOrder || 0), 0)
+    const nextSo = maxSo + 10
+
     await db
       .insert(schema.folders)
-      .values({ userId, path: fullPath })
+      .values({ userId, path: fullPath, sortOrder: nextSo })
       .onConflictDoNothing({
         target: [schema.folders.userId, schema.folders.path],
       })
@@ -210,6 +217,25 @@ app.post('/api/create-folder', async (req, res) => {
     res.status(500).json({ error: e.message })
   }
 })
+
+// List persisted folders whose parent equals the given path. Used to
+// compute the next sort_order slot and to validate cross-parent reorders.
+async function siblingFolders(db, userId, parentPath) {
+  const rows = await db
+    .select({ path: schema.folders.path, sortOrder: schema.folders.sortOrder })
+    .from(schema.folders)
+    .where(eq(schema.folders.userId, userId))
+  return rows.filter((r) => {
+    const idx = r.path.lastIndexOf('/')
+    const parent = idx === -1 ? '' : r.path.slice(0, idx)
+    return parent === parentPath
+  })
+}
+
+function parentOf(p) {
+  const idx = p.lastIndexOf('/')
+  return idx === -1 ? '' : p.slice(0, idx)
+}
 
 app.post('/api/copy-file', async (req, res) => {
   const { sourcePath } = req.body
@@ -297,6 +323,140 @@ app.post('/api/reorder-files', async (req, res) => {
     })
     res.json({ ok: true })
   } catch (e) {
+    res.status(500).json({ error: e.message })
+  }
+})
+
+// Reorder folder siblings. All paths must share the same parent. The
+// server rewrites sort_order as (i+1)*10 within that parent bucket.
+app.post('/api/reorder-folders', async (req, res) => {
+  const { paths } = req.body || {}
+  const userId = req.session.userId
+  if (!Array.isArray(paths)) {
+    return res.status(400).json({ error: 'paths must be an array' })
+  }
+  if (paths.length <= 1) return res.json({ ok: true })
+
+  const seen = new Set()
+  const unique = []
+  for (const p of paths) {
+    if (typeof p !== 'string' || seen.has(p)) continue
+    seen.add(p)
+    unique.push(p)
+  }
+
+  const firstParent = parentOf(unique[0])
+  for (const p of unique) {
+    if (parentOf(p) !== firstParent) {
+      return res
+        .status(400)
+        .json({ error: 'all paths must share the same parent folder' })
+    }
+  }
+
+  try {
+    await db.transaction(async (tx) => {
+      for (let i = 0; i < unique.length; i++) {
+        await tx
+          .update(schema.folders)
+          .set({ sortOrder: (i + 1) * 10 })
+          .where(
+            and(
+              eq(schema.folders.userId, userId),
+              eq(schema.folders.path, unique[i]),
+            ),
+          )
+      }
+    })
+    res.json({ ok: true })
+  } catch (e) {
+    res.status(500).json({ error: e.message })
+  }
+})
+
+// Move a folder (and all its descendants — files + subfolders) to a new
+// parent. `newParent` === '' means root. Rewrites path prefixes with SQL
+// substr, same strategy as rename-folder. Appends to end of target parent.
+app.post('/api/move-folder', async (req, res) => {
+  const { sourcePath, newParent } = req.body || {}
+  const userId = req.session.userId
+  if (typeof sourcePath !== 'string' || !sourcePath) {
+    return res.status(400).json({ error: 'sourcePath is required' })
+  }
+  if (typeof newParent !== 'string') {
+    return res.status(400).json({ error: 'newParent is required' })
+  }
+  const name = sourcePath.split('/').pop()
+  const destPath = newParent ? `${newParent}/${name}` : name
+  if (destPath === sourcePath) return res.json({ ok: true, path: destPath })
+  if (
+    destPath === sourcePath ||
+    destPath.startsWith(sourcePath + '/')
+  ) {
+    return res.status(400).json({ error: 'cannot move a folder into itself' })
+  }
+
+  try {
+    await db.transaction(async (tx) => {
+      // Collision check.
+      const [existing] = await tx
+        .select({ path: schema.folders.path })
+        .from(schema.folders)
+        .where(
+          and(
+            eq(schema.folders.userId, userId),
+            eq(schema.folders.path, destPath),
+          ),
+        )
+      if (existing) {
+        throw new Error(`A folder named "${name}" already exists there`)
+      }
+
+      // Rewrite descendants: folders + files.
+      await tx
+        .update(schema.folders)
+        .set({
+          path: sql`${destPath} || substr(${schema.folders.path}, ${sourcePath.length + 1})`,
+        })
+        .where(
+          and(
+            eq(schema.folders.userId, userId),
+            like(schema.folders.path, `${sourcePath}/%`),
+          ),
+        )
+      await tx
+        .update(schema.files)
+        .set({
+          path: sql`${destPath} || substr(${schema.files.path}, ${sourcePath.length + 1})`,
+        })
+        .where(
+          and(
+            eq(schema.files.userId, userId),
+            like(schema.files.path, `${sourcePath}/%`),
+          ),
+        )
+
+      // Rewrite the folder itself, and give it a sort_order at the tail
+      // of the new parent's bucket.
+      const siblings = await siblingFolders(tx, userId, newParent)
+      const maxSo = siblings.reduce((m, s) => Math.max(m, s.sortOrder || 0), 0)
+      await tx
+        .update(schema.folders)
+        .set({ path: destPath, sortOrder: maxSo + 10 })
+        .where(
+          and(
+            eq(schema.folders.userId, userId),
+            eq(schema.folders.path, sourcePath),
+          ),
+        )
+    })
+    res.json({ ok: true, path: destPath })
+  } catch (e) {
+    if (e.cause?.code === '23505' || e.code === '23505') {
+      return res
+        .status(409)
+        .json({ error: 'A folder with that name already exists there' })
+    }
     res.status(500).json({ error: e.message })
   }
 })
