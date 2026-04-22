@@ -45,6 +45,7 @@ export async function handleFileUploads(files, targetFolder = '') {
   try {
     const results = await api.uploadFiles(accepted, targetFolder)
     await project.scanAll()
+    if (targetFolder.startsWith('_stories/')) await project.scanStories()
     const saved = results.filter((r) => r.saved).length
     const errors = results.filter((r) => r.error && !r.skipped)
     if (saved) showToast(`Uploaded ${saved} file${saved === 1 ? '' : 's'}`)

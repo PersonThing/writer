@@ -1,19 +1,21 @@
 /**
- * Editor store — manages open panes, dirty state, undo/redo.
- * Uses Svelte 5 class pattern: $state fields + getter methods.
+ * Editor store — manages open panes (each backed by a Milkdown instance),
+ * dirty state, and the set of active inline formats (read by the toolbar
+ * to highlight the matching buttons).
+ *
+ * Milkdown owns its own undo/redo history, so there are no per-pane undo
+ * stacks here. Every file opens in the WYSIWYG editor — plot/bible view
+ * types no longer exist.
  */
 import * as api from '../api.js'
 import { project } from './project.svelte.js'
 import { modalConfirm, modalAlert } from './ui.svelte.js'
 
-const MAX_UNDO = 200
 const MAX_PANES = 4
 
 class EditorStore {
-  // ── State ──────────────────────────────────────────────────────────────
   panes = $state([])
   activePaneId = $state(null)
-  viewMode = $state('split') // 'split' | 'edit' | 'preview'
 
   // Drag state for pane reordering (shared across pane components)
   draggedPaneId = $state(null)
@@ -24,7 +26,6 @@ class EditorStore {
   // EditorArea's shared toolbar to highlight the matching buttons.
   activeFormats = $state(new Set())
 
-  // ── Derived (getters) ─────────────────────────────────────────────────
   get activePane() {
     return this.panes.find((p) => p.id === this.activePaneId) || null
   }
@@ -41,9 +42,7 @@ class EditorStore {
     return this.panes.some((p) => p.dirty)
   }
 
-  // ── Pane lifecycle ────────────────────────────────────────────────────
-
-  #createPane(filePath, content = '', viewType = 'markdown') {
+  #createPane(filePath, content = '') {
     return {
       id: crypto.randomUUID(),
       filePath,
@@ -51,10 +50,7 @@ class EditorStore {
       savedContent: content,
       dirty: false,
       pendingRename: null,
-      undoStack: [],
-      redoStack: [],
-      viewType, // 'markdown' | 'plot-board' | 'bible'
-      flex: 1, // relative width when multi-pane
+      flex: 1,
     }
   }
 
@@ -67,7 +63,6 @@ class EditorStore {
   }
 
   async openFile(path, { newPane = false } = {}) {
-    // If file is already open in a pane, just activate it
     const existing = this.panes.find((p) => p.filePath === path)
     if (existing) {
       this.activePaneId = existing.id
@@ -76,32 +71,22 @@ class EditorStore {
 
     const content = await api.readFile(path)
 
-    // Detect special file types
-    const fileName = path.split('/').pop()
-    let viewType = 'markdown'
-    if (fileName === '_plot.md') viewType = 'plot-board'
-    else if (fileName === '_bible.md') viewType = 'bible'
-
     if (newPane && this.panes.length < MAX_PANES) {
-      const pane = this.#createPane(path, content, viewType)
+      const pane = this.#createPane(path, content)
       this.panes = [...this.panes, pane]
       this.activePaneId = pane.id
-      // Split view not supported in multi-pane mode
-      if (this.panes.length > 1 && this.viewMode === 'split')
-        this.viewMode = 'edit'
     } else if (this.panes.length === 0) {
-      const pane = this.#createPane(path, content, viewType)
+      const pane = this.#createPane(path, content)
       this.panes = [pane]
       this.activePaneId = pane.id
     } else {
-      // Replace the active pane
       const active = this.panes.find((p) => p.id === this.activePaneId)
       if (active && active.dirty) {
         const name = project.displayName(active.filePath)
         if (!(await modalConfirm(`Discard unsaved changes to "${name}"?`)))
           return
       }
-      const pane = this.#createPane(path, content, viewType)
+      const pane = this.#createPane(path, content)
       this.panes = this.panes.map((p) =>
         p.id === this.activePaneId ? pane : p,
       )
@@ -143,8 +128,6 @@ class EditorStore {
     this.panes = next
   }
 
-  // ── Content editing ───────────────────────────────────────────────────
-
   updateContent(paneId, content) {
     this.panes = this.panes.map((p) => {
       if (p.id !== paneId) return p
@@ -162,8 +145,6 @@ class EditorStore {
       return { ...p, pendingRename: null }
     })
   }
-
-  // ── Save ──────────────────────────────────────────────────────────────
 
   async savePane(paneId) {
     const pane = this.panes.find((p) => p.id === paneId)
@@ -215,57 +196,7 @@ class EditorStore {
     return true
   }
 
-  // ── Undo / Redo ───────────────────────────────────────────────────────
-
-  pushUndo(paneId, value, selStart, selEnd) {
-    this.panes = this.panes.map((p) => {
-      if (p.id !== paneId) return p
-      const stack = [...p.undoStack, { value, s: selStart, e: selEnd }]
-      if (stack.length > MAX_UNDO) stack.shift()
-      return { ...p, undoStack: stack, redoStack: [] }
-    })
-  }
-
-  doUndo(paneId) {
-    const pane = this.panes.find((p) => p.id === paneId)
-    if (!pane || !pane.undoStack.length) return null
-
-    const snap = pane.undoStack[pane.undoStack.length - 1]
-    this.panes = this.panes.map((p) => {
-      if (p.id !== paneId) return p
-      return {
-        ...p,
-        undoStack: p.undoStack.slice(0, -1),
-        redoStack: [...p.redoStack, { value: p.content, s: 0, e: 0 }],
-        content: snap.value,
-        dirty: snap.value !== p.savedContent,
-      }
-    })
-    return snap
-  }
-
-  doRedo(paneId) {
-    const pane = this.panes.find((p) => p.id === paneId)
-    if (!pane || !pane.redoStack.length) return null
-
-    const snap = pane.redoStack[pane.redoStack.length - 1]
-    this.panes = this.panes.map((p) => {
-      if (p.id !== paneId) return p
-      return {
-        ...p,
-        redoStack: p.redoStack.slice(0, -1),
-        undoStack: [...p.undoStack, { value: p.content, s: 0, e: 0 }],
-        content: snap.value,
-        dirty: snap.value !== p.savedContent,
-      }
-    })
-    return snap
-  }
-
-  // ── New file ──────────────────────────────────────────────────────────
-
   async newFile() {
-    // Find a unique "Untitled" name
     let name = 'Untitled'
     let filename = name + '.md'
     let i = 1
@@ -275,8 +206,7 @@ class EditorStore {
       i++
     }
 
-    const content = ''
-    await api.writeFile(filename, content)
+    await api.writeFile(filename, '')
     await project.scanAll()
 
     const useNewPane = this.panes.length < MAX_PANES

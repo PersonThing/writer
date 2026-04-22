@@ -12,6 +12,7 @@
   import EditorArea from './components/writer/EditorArea.svelte'
   import StatusEditor from './components/writer/StatusEditor.svelte'
   import CleanupPreview from './components/writer/CleanupPreview.svelte'
+  import MoveToStoryModal from './components/writer/MoveToStoryModal.svelte'
 
   // Shared overlays
   import ContextMenu from './components/ContextMenu.svelte'
@@ -117,6 +118,9 @@
   <ContextMenu />
   <StatusEditor />
   <CleanupPreview />
+  {#if ui.moveToStoryFor}
+    <MoveToStoryModal />
+  {/if}
 {:else if portfolioMatch}
   {#if portfolioMatch.kind === 'home'}
     <HomePage />

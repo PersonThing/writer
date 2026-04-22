@@ -23,6 +23,9 @@ export const ui = $state({
   // Modal dialog (confirm / prompt / alert)
   modal: null,
 
+  // "Move to story" flow: path of the file being moved, or null.
+  moveToStoryFor: null,
+
   // App view
   appReady: false,
   activeTab:

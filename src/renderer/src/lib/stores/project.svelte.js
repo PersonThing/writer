@@ -261,8 +261,14 @@ class ProjectStore {
   }
 
   // ── Stories ─────────────────────────────────────────────────────────────
-
-  stories = $state(new Map()) // storySlug -> [fileName, ...]
+  //
+  // Stories are folder trees under `_stories/<slug>/`. Each entry on
+  // `this.stories` is a list of file metadata (path, sortOrder, status,
+  // quality, ...) for files under that story. `storyDirs` collects
+  // folder prefixes under each story so empty sub-folders still render
+  // (in parity with the `folders` table for poems).
+  stories = $state(new Map()) // storySlug -> [ { path, ...meta } ]
+  storyDirs = $state(new Map()) // storySlug -> Set<relPath>
   activeStory = $state(null)
 
   get storyList() {
@@ -273,14 +279,14 @@ class ProjectStore {
     return this.stories.get(storyName) || []
   }
 
-  getStoryChapters(storyName) {
-    const files = this.getStoryFiles(storyName)
-    return files.filter((f) => !f.startsWith('_'))
+  getStoryDirs(storyName) {
+    return this.storyDirs.get(storyName) || new Set()
   }
 
   async scanStories() {
     const result = await api.scanDirectory()
     const storyMap = new Map()
+    const dirMap = new Map()
 
     for (const rel of Object.keys(result.files)) {
       if (!rel.startsWith('_stories/')) continue
@@ -288,22 +294,35 @@ class ProjectStore {
       const slash = rest.indexOf('/')
       if (slash === -1) continue
       const storyName = rest.slice(0, slash)
-      const fileName = rest.slice(slash + 1)
       if (!storyMap.has(storyName)) storyMap.set(storyName, [])
-      storyMap.get(storyName).push(fileName)
+      storyMap.get(storyName).push({ path: rel, ...result.files[rel] })
     }
 
-    for (const [, files] of storyMap) {
-      files.sort((a, b) => {
-        if (a === '_plot.md') return -1
-        if (b === '_plot.md') return 1
-        if (a === '_bible.md') return -1
-        if (b === '_bible.md') return 1
-        return a.localeCompare(b)
-      })
+    for (const rel of Object.keys(result.dirs || {})) {
+      if (!rel.startsWith('_stories/')) continue
+      const rest = rel.slice('_stories/'.length)
+      const slash = rest.indexOf('/')
+      if (slash === -1) continue
+      const storyName = rest.slice(0, slash)
+      const subPath = rest.slice(slash + 1)
+      if (!subPath) continue
+      if (!dirMap.has(storyName)) dirMap.set(storyName, new Set())
+      dirMap.get(storyName).add(rel)
+    }
+
+    // Ensure every story in the `stories` table shows up even when it
+    // has no files yet.
+    try {
+      const all = await api.getStoryMetadata()
+      for (const s of all) {
+        if (!storyMap.has(s.slug)) storyMap.set(s.slug, [])
+      }
+    } catch {
+      // best-effort — leaves behavior equivalent to pre-migration.
     }
 
     this.stories = storyMap
+    this.storyDirs = dirMap
   }
 
   async createStory(name) {
@@ -326,6 +345,12 @@ class ProjectStore {
       : chapterName + '.md'
     const filePath = '_stories/' + storyName + '/' + fileName
     await api.writeFile(filePath, '')
+    await this.scanStories()
+  }
+
+  async moveToStory(sourcePath, storyId) {
+    await api.moveToStory(sourcePath, storyId)
+    await this.scanAll()
     await this.scanStories()
   }
 

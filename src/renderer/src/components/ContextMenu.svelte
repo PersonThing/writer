@@ -65,6 +65,14 @@
     const pane = editor.panes.find((p) => p.filePath === path)
     if (pane) editor.closePane(pane.id)
     await project.scanAll()
+    await project.scanStories()
+  }
+
+  function handleMoveToStory() {
+    if (!ui.ctxPath) return
+    const path = ui.ctxPath
+    hideContextMenu()
+    ui.moveToStoryFor = path
   }
 
   // ── Folder actions ─────────────────────────────────────────────────────
@@ -216,6 +224,11 @@
     <div class="ctx-item" onclick={handleDuplicate}>
       <span class="ctx-icon">{@html iconPlus()}</span> Duplicate
     </div>
+    {#if ui.ctxPath && !ui.ctxPath.startsWith('_stories/')}
+      <div class="ctx-item" onclick={handleMoveToStory}>
+        <span class="ctx-icon">&rarr;</span> Move to story&hellip;
+      </div>
+    {/if}
     <div class="ctx-item ctx-delete" onclick={handleDelete}>
       <span class="ctx-icon">{@html iconTrash()}</span> Delete
     </div>

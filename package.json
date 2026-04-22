@@ -19,6 +19,13 @@
     "format": "prettier --write \"src/**/*.{js,svelte,css,html}\" \"server/**/*.js\""
   },
   "dependencies": {
+    "@milkdown/crepe": "^7.20.0",
+    "@milkdown/kit": "^7.20.0",
+    "@milkdown/plugin-history": "^7.20.0",
+    "@milkdown/plugin-listener": "^7.20.0",
+    "@milkdown/preset-commonmark": "^7.20.0",
+    "@milkdown/preset-gfm": "^7.20.0",
+    "@milkdown/theme-nord": "^7.20.0",
     "connect-pg-simple": "^10.0.0",
     "drizzle-orm": "^0.45.2",
     "express": "^4.21.0",

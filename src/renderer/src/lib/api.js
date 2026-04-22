@@ -83,8 +83,8 @@ export async function renameFile(oldPath, newPath) {
   await post('/api/rename-file', { oldPath, newPath })
 }
 
-export async function createFolder(name) {
-  await post('/api/create-folder', { name })
+export async function createFolder(name, parentPath = '') {
+  await post('/api/create-folder', { name, path: parentPath })
 }
 
 export async function moveFile(oldPath, newPath) {
@@ -122,6 +122,15 @@ export async function saveStatuses(statuses) {
 
 export async function createStory(name) {
   await post('/api/create-story', { name })
+}
+
+export async function getStoryMetadata() {
+  return get('/api/stories')
+}
+
+export async function moveToStory(sourcePath, storyId) {
+  const result = await post('/api/move-to-story', { sourcePath, storyId })
+  return result.path
 }
 
 export async function deleteFolder(folderPath) {

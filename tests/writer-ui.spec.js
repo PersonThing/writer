@@ -328,7 +328,7 @@ test.describe('writer UI — right-click file rename', () => {
   })
 })
 
-test.describe('writer UI — markdown format buttons', () => {
+test.describe('writer UI — WYSIWYG editor', () => {
   async function openFresh(page, asUser, content = 'just one line\n') {
     const alice = await asUser('alice@test.local')
     await alice.post('/api/write-file', { data: { path: 'demo.md', content } })
@@ -336,113 +336,111 @@ test.describe('writer UI — markdown format buttons', () => {
     await page.locator('.test-signin-btn', { hasText: 'alice@test.local' }).click()
     await page.waitForURL('/writer/poetry', { timeout: 5000 })
     await page.locator('.file-item', { hasText: 'demo' }).first().click()
-    const ta = page.locator('.md-textarea').first()
-    await expect(ta).toBeVisible()
-    return { alice, ta }
+    const pm = page.locator('.ProseMirror').first()
+    await expect(pm).toBeVisible()
+    return { alice, pm }
   }
 
-  test('bold with no selection wraps the current line', async ({
-    db,
-    page,
-    asUser,
-  }) => {
-    const { ta } = await openFresh(page, asUser, 'hello world\n')
-    // Move cursor somewhere inside the line.
-    await ta.focus()
-    await ta.evaluate((el) => {
-      el.selectionStart = el.selectionEnd = 5
+  test('WYSIWYG editor mounts with the file content', async ({ db, page, asUser }) => {
+    const { pm } = await openFresh(page, asUser, '# A heading\n\nSome body text.\n')
+    await expect(pm.locator('h1')).toHaveText('A heading')
+    await expect(pm).toContainText('Some body text.')
+  })
+
+  test('bold toolbar button wraps selection as <strong>', async ({ db, page, asUser }) => {
+    const { pm } = await openFresh(page, asUser, 'make me bold\n')
+    await pm.click()
+    // Select the whole paragraph via the browser's selection API.
+    await pm.evaluate((el) => {
+      const range = document.createRange()
+      range.selectNodeContents(el.querySelector('p'))
+      const sel = getSelection()
+      sel.removeAllRanges()
+      sel.addRange(range)
     })
     await page.locator('.fmt-btn[data-tip^="Bold"]').click()
-    await expect(ta).toHaveValue('**hello world**\n')
+    await expect(pm.locator('strong')).toHaveText('make me bold')
   })
 
-  test('bold toggles off when applied twice', async ({ db, page, asUser }) => {
-    const { ta } = await openFresh(page, asUser, 'hi\n')
-    await ta.focus()
-    await ta.evaluate((el) => {
-      el.selectionStart = el.selectionEnd = 1
+  test('red text color swatch wraps selection in .md-color-red', async ({ db, page, asUser }) => {
+    const { pm } = await openFresh(page, asUser, 'paint me red\n')
+    await pm.click()
+    await pm.evaluate((el) => {
+      const range = document.createRange()
+      range.selectNodeContents(el.querySelector('p'))
+      const sel = getSelection()
+      sel.removeAllRanges()
+      sel.addRange(range)
     })
-    const boldBtn = page.locator('.fmt-btn[data-tip^="Bold"]')
-    await boldBtn.click()
-    await expect(ta).toHaveValue('**hi**\n')
-    await boldBtn.click()
-    await expect(ta).toHaveValue('hi\n')
+    await page.locator('.fmt-btn[aria-label="Text color red"]').click()
+    await expect(pm.locator('.md-color-red').first()).toHaveText('paint me red')
   })
 
-  test('italic button shows active state when cursor is inside italics', async ({
-    db,
-    page,
-    asUser,
-  }) => {
-    const { ta } = await openFresh(page, asUser, '*emphasis*\n')
-    await ta.focus()
-    await ta.evaluate((el) => {
-      el.selectionStart = el.selectionEnd = 4
+  test('yellow background swatch wraps selection in .md-bg-yellow', async ({ db, page, asUser }) => {
+    const { pm } = await openFresh(page, asUser, 'highlight me\n')
+    await pm.click()
+    await pm.evaluate((el) => {
+      const range = document.createRange()
+      range.selectNodeContents(el.querySelector('p'))
+      const sel = getSelection()
+      sel.removeAllRanges()
+      sel.addRange(range)
     })
-    // Trigger selectionchange for the active-format detection.
-    await ta.dispatchEvent('keyup')
-
-    const italicBtn = page.locator('.fmt-btn[data-tip^="Italic"]')
-    await expect(italicBtn).toHaveClass(/active/)
+    await page.locator('.fmt-btn[aria-label="Background color yellow"]').click()
+    await expect(pm.locator('.md-bg-yellow').first()).toHaveText('highlight me')
   })
 
-  test('strikethrough on a selection wraps just that selection', async ({
-    db,
-    page,
-    asUser,
-  }) => {
-    const { ta } = await openFresh(page, asUser, 'keep strike me\n')
-    await ta.focus()
-    // Select the word "strike"
-    await ta.evaluate((el) => {
-      el.selectionStart = 5
-      el.selectionEnd = 11
+  test('existing [color] tokens in saved files render as colored spans on open', async ({ db, page, asUser }) => {
+    const { pm } = await openFresh(page, asUser, '[blue]ocean[/blue]\n')
+    await expect(pm.locator('.md-color-blue').first()).toHaveText('ocean')
+  })
+
+  test('existing [bg-green] tokens in saved files render as .md-bg-green spans', async ({ db, page, asUser }) => {
+    const { pm } = await openFresh(page, asUser, '[bg-green]meadow[/bg-green]\n')
+    await expect(pm.locator('.md-bg-green').first()).toHaveText('meadow')
+  })
+
+  test('no preview pane or view-mode toggle remains', async ({ db, page, asUser }) => {
+    await openFresh(page, asUser, 'content\n')
+    await expect(page.locator('.preview-pane')).toHaveCount(0)
+    await expect(page.locator('.view-toggle')).toHaveCount(0)
+    await expect(page.locator('.md-textarea')).toHaveCount(0)
+  })
+
+  test('save round-trips text color markers back to the source file', async ({ db, page, asUser }) => {
+    const alice = await asUser('alice@test.local')
+    await alice.post('/api/write-file', { data: { path: 'rt.md', content: '[red]keep[/red]\n' } })
+    await page.goto('/writer')
+    await page.locator('.test-signin-btn', { hasText: 'alice@test.local' }).click()
+    await page.waitForURL('/writer/poetry', { timeout: 5000 })
+    await page.locator('.file-item', { hasText: 'rt' }).first().click()
+
+    const pm = page.locator('.ProseMirror').first()
+    await expect(pm.locator('.md-color-red').first()).toHaveText('keep')
+
+    // Append a character to the paragraph to mark the pane dirty,
+    // save, then re-read on the backend to ensure bracket syntax
+    // survived round-trip through Milkdown.
+    await pm.click()
+    await pm.evaluate((el) => {
+      const p = el.querySelector('p')
+      const range = document.createRange()
+      range.selectNodeContents(p)
+      range.collapse(false)
+      const sel = getSelection()
+      sel.removeAllRanges()
+      sel.addRange(range)
     })
-    await page.locator('.fmt-btn[data-tip^="Strikethrough"]').click()
-    await expect(ta).toHaveValue('keep ~~strike~~ me\n')
-  })
+    await page.keyboard.type('!')
+    await page.locator('.save-btn', { hasText: 'Save' }).click()
+    await page.waitForTimeout(250)
 
-  test('red color button wraps the current line in [red]…[/red]', async ({
-    db,
-    page,
-    asUser,
-  }) => {
-    const { ta } = await openFresh(page, asUser, 'paint me\n')
-    await ta.focus()
-    await ta.evaluate((el) => {
-      el.selectionStart = el.selectionEnd = 0
-    })
-    await page.locator('.fmt-btn[data-tip="Red text"]').click()
-    await expect(ta).toHaveValue('[red]paint me[/red]\n')
-  })
-
-  test('color button toggles off when applied twice', async ({
-    db,
-    page,
-    asUser,
-  }) => {
-    const { ta } = await openFresh(page, asUser, 'x\n')
-    await ta.focus()
-    await ta.evaluate((el) => {
-      el.selectionStart = el.selectionEnd = 0
-    })
-    const greenBtn = page.locator('.fmt-btn[data-tip="Green text"]')
-    await greenBtn.click()
-    await expect(ta).toHaveValue('[green]x[/green]\n')
-    await greenBtn.click()
-    await expect(ta).toHaveValue('x\n')
-  })
-
-  test('preview renders color spans with the expected class', async ({
-    db,
-    page,
-    asUser,
-  }) => {
-    await openFresh(page, asUser, '[blue]ocean[/blue]\n')
-    // Ensure the preview pane is showing.
-    await page.locator('.vbtn', { hasText: 'Preview' }).click()
-    const span = page.locator('.preview-content .md-color-blue').first()
-    await expect(span).toHaveText('ocean')
+    const res = await alice.post('/api/read-file', { data: { path: 'rt.md' } })
+    const body = await res.json()
+    // The "!" landed inside the mark because the cursor was inside the
+    // colored span when we typed. Either form is a valid round-trip.
+    expect(body.content).toMatch(/\[red\]keep!?\[\/red\]!?/)
+    expect(body.content).toContain('!')
   })
 })
 

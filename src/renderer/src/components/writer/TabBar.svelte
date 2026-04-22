@@ -28,6 +28,24 @@
     const to = tab === 'short-stories' ? '/writer/stories' : '/writer/poetry'
     router.navigate(to)
   }
+
+  // Cross-tab drag: when a poem is being dragged from the poetry tab,
+  // hovering the "Short stories" tab switches to it so the user can
+  // drop onto a specific story row in the sidebar.
+  function isWriterDragPayload(e) {
+    const types = Array.from(e.dataTransfer?.types || [])
+    return (
+      types.includes('application/x-writer-poem-path') ||
+      types.includes('application/x-writer-file-path')
+    )
+  }
+
+  function handleTabDragOver(e, tab) {
+    if (!isWriterDragPayload(e)) return
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (ui.activeTab !== tab) setTab(tab)
+  }
 </script>
 
 <div class="tab-bar">
@@ -40,6 +58,7 @@
     class="tab-btn"
     class:active={ui.activeTab === 'short-stories'}
     onclick={() => setTab('short-stories')}
+    ondragover={(e) => handleTabDragOver(e, 'short-stories')}
   >Short stories</button>
   <div class="tab-spacer"></div>
   <button

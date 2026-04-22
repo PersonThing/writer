@@ -127,14 +127,28 @@ async function nextSortOrder(tx, userId) {
   return Number(row?.m || 0) + 10
 }
 
+// Returns the story_id a path belongs to (by slug prefix under
+// `_stories/`), or null for root-level files.
+async function resolveStoryIdForPath(tx, userId, filePath) {
+  const m = /^_stories\/([^/]+)\//.exec(filePath || '')
+  if (!m) return null
+  const slug = m[1]
+  const [row] = await tx
+    .select({ id: schema.stories.id })
+    .from(schema.stories)
+    .where(and(eq(schema.stories.userId, userId), eq(schema.stories.slug, slug)))
+  return row ? row.id : null
+}
+
 app.post('/api/write-file', async (req, res) => {
   const { path: filePath, content } = req.body
   const userId = req.session.userId
 
   const nextSo = await nextSortOrder(db, userId)
+  const storyId = await resolveStoryIdForPath(db, userId, filePath)
   const [row] = await db
     .insert(schema.files)
-    .values({ userId, path: filePath, content, sortOrder: nextSo })
+    .values({ userId, path: filePath, content, sortOrder: nextSo, storyId })
     .onConflictDoUpdate({
       target: [schema.files.userId, schema.files.path],
       set: { content, modifiedAt: sql`now()` },
@@ -157,9 +171,10 @@ app.post('/api/rename-file', async (req, res) => {
   const { oldPath, newPath } = req.body
   const userId = req.session.userId
   try {
+    const storyId = await resolveStoryIdForPath(db, userId, newPath)
     await db
       .update(schema.files)
-      .set({ path: newPath, modifiedAt: sql`now()` })
+      .set({ path: newPath, storyId, modifiedAt: sql`now()` })
       .where(and(eq(schema.files.userId, userId), eq(schema.files.path, oldPath)))
     res.json({ ok: true })
   } catch (e) {
@@ -290,9 +305,10 @@ app.post('/api/move-file', async (req, res) => {
   const { oldPath, newPath } = req.body
   const userId = req.session.userId
   try {
+    const storyId = await resolveStoryIdForPath(db, userId, newPath)
     await db
       .update(schema.files)
-      .set({ path: newPath, modifiedAt: sql`now()` })
+      .set({ path: newPath, storyId, modifiedAt: sql`now()` })
       .where(and(eq(schema.files.userId, userId), eq(schema.files.path, oldPath)))
     res.json({ ok: true })
   } catch (e) {
@@ -307,19 +323,26 @@ app.post('/api/rename-folder', async (req, res) => {
   const userId = req.session.userId
   try {
     await db.transaction(async (tx) => {
-      // Rewrite any file paths under the old prefix.
-      await tx
-        .update(schema.files)
-        .set({
-          path: sql`${newPath} || substr(${schema.files.path}, ${oldPath.length + 1})`,
-          modifiedAt: sql`now()`,
-        })
+      // Rewrite any file paths under the old prefix, and re-resolve
+      // story_id from the new path prefix so files that moved into or
+      // out of a _stories/<slug>/ branch are correctly re-linked.
+      const rows = await tx
+        .select({ id: schema.files.id, path: schema.files.path })
+        .from(schema.files)
         .where(
           and(
             eq(schema.files.userId, userId),
             like(schema.files.path, `${oldPath}/%`),
           ),
         )
+      for (const r of rows) {
+        const nextPath = newPath + r.path.slice(oldPath.length)
+        const nextStoryId = await resolveStoryIdForPath(tx, userId, nextPath)
+        await tx
+          .update(schema.files)
+          .set({ path: nextPath, storyId: nextStoryId, modifiedAt: sql`now()` })
+          .where(eq(schema.files.id, r.id))
+      }
       // Rewrite any persisted folder entries under the old prefix
       // (covers both the folder itself and its nested descendants).
       await tx
@@ -359,6 +382,21 @@ function slugify(name) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 }
 
+app.get('/api/stories', async (req, res) => {
+  const userId = req.session.userId
+  const rows = await db
+    .select({
+      id: schema.stories.id,
+      name: schema.stories.name,
+      slug: schema.stories.slug,
+      storyOrder: schema.stories.storyOrder,
+    })
+    .from(schema.stories)
+    .where(eq(schema.stories.userId, userId))
+    .orderBy(asc(schema.stories.storyOrder), asc(schema.stories.id))
+  res.json(rows)
+})
+
 app.post('/api/create-story', async (req, res) => {
   const { name } = req.body
   const userId = req.session.userId
@@ -366,21 +404,10 @@ app.post('/api/create-story', async (req, res) => {
 
   const slug = slugify(name)
   try {
-    const [story] = await db
+    await db
       .insert(schema.stories)
       .values({ userId, name: name.trim(), slug })
       .returning()
-
-    const basePath = `_stories/${slug}`
-    const plotContent = `---\nnotes: []\nconnections: []\n---\n\n# Plot Board\n`
-    const bibleContent = `# Story Bible\n\n## Characters\n\n## Setting\n\n## Genre & Tone\n\n## Timeline\n`
-
-    const baseSo = await nextSortOrder(db, userId)
-    await db.insert(schema.files).values([
-      { userId, path: `${basePath}/_plot.md`, content: plotContent, storyId: story.id, sortOrder: baseSo },
-      { userId, path: `${basePath}/_bible.md`, content: bibleContent, storyId: story.id, sortOrder: baseSo + 10 },
-    ])
-
     res.json({ ok: true })
   } catch (e) {
     if (e.cause?.code === '23505' || e.code === '23505')
@@ -432,6 +459,58 @@ app.post('/api/delete-folder', async (req, res) => {
   }
 
   res.json({ ok: true })
+})
+
+// Move a file into a story's folder. Computes the destination path as
+// `_stories/<slug>/<basename>`, resolves collisions with `-2`, `-3`,
+// etc., and atomically updates files.path + files.story_id.
+app.post('/api/move-to-story', async (req, res) => {
+  const { sourcePath, storyId } = req.body || {}
+  const userId = req.session.userId
+  if (!sourcePath || !storyId) {
+    return res.status(400).json({ error: 'sourcePath and storyId are required' })
+  }
+
+  try {
+    const [story] = await db
+      .select({ id: schema.stories.id, slug: schema.stories.slug })
+      .from(schema.stories)
+      .where(and(eq(schema.stories.userId, userId), eq(schema.stories.id, storyId)))
+    if (!story) return res.status(404).json({ error: 'Story not found' })
+
+    const base = sourcePath.split('/').pop()
+    const dotMd = base.endsWith('.md')
+    const stem = dotMd ? base.slice(0, -3) : base
+
+    const prefix = `_stories/${story.slug}/`
+    const existing = await db
+      .select({ path: schema.files.path })
+      .from(schema.files)
+      .where(
+        and(
+          eq(schema.files.userId, userId),
+          like(schema.files.path, `${prefix}${stem}%`),
+        ),
+      )
+    const taken = new Set(existing.map((r) => r.path))
+    let candidate = `${prefix}${stem}.md`
+    let i = 2
+    while (taken.has(candidate)) {
+      candidate = `${prefix}${stem}-${i}.md`
+      i++
+    }
+
+    await db
+      .update(schema.files)
+      .set({ path: candidate, storyId: story.id, modifiedAt: sql`now()` })
+      .where(and(eq(schema.files.userId, userId), eq(schema.files.path, sourcePath)))
+
+    res.json({ ok: true, path: candidate })
+  } catch (e) {
+    if (e.cause?.code === '23505' || e.code === '23505')
+      return res.status(409).json({ error: 'A file with that name already exists' })
+    res.status(500).json({ error: e.message })
+  }
 })
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -547,11 +626,13 @@ app.post('/api/upload-files', upload.array('files'), async (req, res) => {
       }
       const finalPath = await uniqueMarkdownPath(userId, targetFolder, stem)
       const nextSo = await nextSortOrder(db, userId)
+      const storyId = await resolveStoryIdForPath(db, userId, finalPath)
       await db.insert(schema.files).values({
         userId,
         path: finalPath,
         content,
         sortOrder: nextSo,
+        storyId,
       })
       results.push({ original: f.originalname, saved: finalPath })
     } catch (e) {
