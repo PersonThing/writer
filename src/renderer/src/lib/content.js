@@ -190,20 +190,6 @@ export function getCategoriesWithItems() {
 // The homepage and category list pages render from CATALOG (metadata) joined
 // against the markdown catalog (body/lede/etc). If a piece has no thumbnail
 // in CATALOG, fall back to its first body image.
-function firstLineOfBody(body) {
-  for (const raw of body.split('\n')) {
-    const line = raw.trim()
-    // Skip blanks, headings, images, and ::: video / ::: audio directives
-    // — those aren't useful as a description snippet.
-    if (!line) continue
-    if (line.startsWith('#')) continue
-    if (line.startsWith('!')) continue
-    if (line.startsWith(':::')) continue
-    return line.slice(0, 200)
-  }
-  return ''
-}
-
 function enrichPiece(categorySlug, catalogEntry) {
   const routePath = catalogEntry.href || `/${categorySlug}/${catalogEntry.slug}`
   const md = byRoute.get(routePath) || null
@@ -212,10 +198,7 @@ function enrichPiece(categorySlug, catalogEntry) {
     (md?.images && md.images[0]) ||
     (md?.hero) ||
     null
-  const description =
-    catalogEntry.description ||
-    md?.lede ||
-    (md ? firstLineOfBody(md.body) : '')
+  const description = catalogEntry.description || md?.lede || ''
   return {
     id: catalogEntry.slug || catalogEntry.href,
     slug: catalogEntry.slug,
