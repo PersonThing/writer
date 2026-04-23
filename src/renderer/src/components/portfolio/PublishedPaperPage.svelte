@@ -90,25 +90,6 @@
             {/if}
           {/each}
         </div>
-
-        <button
-          class="nav nav-prev"
-          type="button"
-          aria-label="Previous slide"
-          disabled={index === 0}
-          onclick={(e) => { e.stopPropagation(); go(-1) }}
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <button
-          class="nav nav-next"
-          type="button"
-          aria-label="Next slide"
-          disabled={index === total - 1}
-          onclick={(e) => { e.stopPropagation(); go(1) }}
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
       {/if}
     </div>
 
@@ -220,43 +201,6 @@
     opacity: 1;
   }
 
-  .nav {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 3.25rem;
-    height: 3.25rem;
-    border-radius: 50%;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    background: rgba(255, 255, 255, 0.92);
-    color: #111;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.25);
-    transition: background 150ms ease, transform 150ms ease, opacity 150ms ease;
-    z-index: 2;
-  }
-  .nav:hover:not(:disabled) {
-    background: #fff;
-    transform: translateY(-50%) scale(1.05);
-  }
-  .nav:disabled {
-    opacity: 0.3;
-    cursor: default;
-  }
-  .nav svg {
-    width: 1.4rem;
-    height: 1.4rem;
-  }
-  .nav-prev {
-    left: 1rem;
-  }
-  .nav-next {
-    right: 1rem;
-  }
-
   .controls {
     display: flex;
     align-items: center;
@@ -339,12 +283,6 @@
     .paper {
       padding: 2rem 1rem 3rem;
     }
-    .nav {
-      width: 2.5rem;
-      height: 2.5rem;
-    }
-    .nav-prev { left: 0.5rem; }
-    .nav-next { right: 0.5rem; }
     .controls {
       gap: 1rem;
     }

@@ -3,7 +3,7 @@
  * route and, for writer pages, the active editor pane's file path.
  *
  * Portfolio:
- *   /                     → "Shigorika"
+ *   /                     → "Shigorika / Home"
  *   /about                → "Shigorika / About"
  *   /poetry/hannah-banana → "Shigorika / Poetry / Hannah Banana"
  *
@@ -31,7 +31,7 @@ export function computeDocTitle(path, ctx = {}) {
 function portfolioTitle(path) {
   const m = matchPortfolio(path)
   const root = 'Shigorika'
-  if (m.kind === 'home') return root
+  if (m.kind === 'home') return `${root} / Home`
   if (m.kind === 'about') return `${root} / About`
   if (m.kind === 'contact') return `${root} / Contact`
   if (m.kind === 'published-paper') return `${root} / Published Paper`
