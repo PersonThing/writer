@@ -30,16 +30,16 @@ test.describe('portfolio navigation', () => {
     await expect(page.locator('article.category h1')).toContainText(/Fashion Editorial/i)
   })
 
-  test('clicking a piece row navigates to the piece page', async ({ page }) => {
+  test('clicking a piece card navigates to the piece page', async ({ page }) => {
     await page.goto('/fashion-editorial')
-    await page.locator('.piece-row').first().click()
+    await page.locator('.cards .card').first().click()
     await expect(page).toHaveURL(/\/fashion-editorial\/.+/)
     await expect(page.locator('article.piece')).toBeVisible()
   })
 
   test('browser back button returns to previous page', async ({ page }) => {
     await page.goto('/fashion-editorial')
-    await page.locator('.piece-row').first().click()
+    await page.locator('.cards .card').first().click()
     await expect(page).toHaveURL(/\/fashion-editorial\/.+/)
     await page.goBack()
     await expect(page).toHaveURL('/fashion-editorial')

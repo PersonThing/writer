@@ -25,8 +25,9 @@ test.describe('portfolio content rendering', () => {
 
   test('poetry category lists all 7 pieces', async ({ page }) => {
     await page.goto('/poetry')
-    const rows = page.locator('.piece-row')
-    await expect(rows).toHaveCount(7)
+    // CategoryPage renders a grid of `.card` tiles (one per piece).
+    const cards = page.locator('.cards .card')
+    await expect(cards).toHaveCount(7)
   })
 
   test('top nav has wordmark + Work dropdown + About + Contact', async ({ page }) => {
@@ -56,7 +57,9 @@ test.describe('portfolio content rendering', () => {
 
   test('copywriting video page renders a <video> element', async ({ page, request }) => {
     await page.goto('/copywriting/grand-seiko-film')
-    const video = page.locator('article.piece .piece-body video').first()
+    // Copywriting pieces render as a split layout; the vertical video
+    // lives inside `.cw-split-media` rather than the generic piece body.
+    const video = page.locator('.cw-split-media video').first()
     await expect(video).toBeVisible()
     const src = await video.getAttribute('src')
     expect(src).toMatch(/^\/portfolio\/videos\/.+\.mp4$/)
@@ -87,7 +90,7 @@ test.describe('portfolio content rendering', () => {
 
   test('poetry category lists pieces in live-site order', async ({ page }) => {
     await page.goto('/poetry')
-    const titles = await page.locator('.piece-row .meta h3').allTextContents()
+    const titles = await page.locator('.cards .card h3').allTextContents()
     // Top 3 must match prod ordering: On Writing, Hannah Banana, My Dad Socks & Gulzar
     expect(titles[0]).toMatch(/On Writing/i)
     expect(titles[1]).toMatch(/Hannah Banana/i)
