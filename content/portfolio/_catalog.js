@@ -95,7 +95,7 @@ export const CATALOG = {
       {
         slug: 'azzedine-alaia--master-and-maverick',
         title: 'Azzedine Alaia: Master & Maverick',
-        description: 'Obituary',
+        description: 'The death of an iconic designer who refused to play by the rules has left a vacuum in the fashion world',
         publishedIn: 'The Hindu',
         publishedAt: 'November 2017',
         thumbnail: IMG('663ee7_08f7f8e6db7e4d47a29dc73dbf8dfb84~mv2.png'),
