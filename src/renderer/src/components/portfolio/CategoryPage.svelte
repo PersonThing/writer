@@ -32,21 +32,23 @@
       {/if}
     </header>
 
-    <ul class="piece-list">
+    <ul class="cards">
       {#each pieces as piece}
         <li>
-          <Link href={piece.url} class="piece-row">
-            <div class="thumb">
-              {#if piece.thumbnail}
+          <Link href={piece.url} class="card">
+            {#if piece.thumbnail}
+              <div class="card-thumb">
                 <img src={asset(piece.thumbnail)} alt={piece.title} loading="lazy" />
-              {/if}
-            </div>
-            <div class="meta">
-              <h3>{piece.title}</h3>
-              {#if piece.description}
-                <p>{piece.description}</p>
-              {/if}
-            </div>
+              </div>
+            {/if}
+            {#if piece.publishedIn || piece.publishedAt}
+              <p class="card-pub">
+                {#if piece.publishedIn}<span>{piece.publishedIn}</span>{/if}
+                {#if piece.publishedIn && piece.publishedAt}<span class="sep">·</span>{/if}
+                {#if piece.publishedAt}<span>{piece.publishedAt}</span>{/if}
+              </p>
+            {/if}
+            <h3>{piece.title}</h3>
           </Link>
         </li>
       {/each}
@@ -77,66 +79,71 @@
     margin: 0 0 0.8rem;
   }
 
-  .piece-list {
+  .cards {
     list-style: none;
     margin: 0;
     padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+    gap: 2.5rem 2rem;
+  }
+  .cards li {
+    display: flex;
+  }
+  :global(.portfolio-root .card) {
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    margin: -0.5rem;
+    border-radius: 4px;
+    transition: background 200ms ease, transform 200ms ease;
+    width: 100%;
   }
-  .piece-list li {
-    border-top: 1px solid var(--p-border);
+  :global(.portfolio-root .card:hover) {
+    background: rgba(217, 182, 115, 0.02);
+    transform: translateY(-2px);
   }
-  .piece-list li:last-child {
-    border-bottom: 1px solid var(--p-border);
-  }
-
-  :global(.portfolio-root .piece-row) {
-    display: grid;
-    grid-template-columns: 220px 1fr;
-    gap: 2rem;
-    padding: 1.5rem 0;
-    align-items: center;
-    transition: background 0.15s;
-  }
-  :global(.portfolio-root .piece-row:hover) {
-    background: #0a0a0a;
-  }
-
-  .thumb {
-    aspect-ratio: 4 / 3;
+  .card-thumb {
+    aspect-ratio: 16 / 9;
     overflow: hidden;
     background: #111;
+    margin-bottom: 0.5rem;
   }
-  .thumb img {
+  .card-thumb img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
+    transition: transform 400ms ease;
   }
-
-  .meta h3 {
-    font-size: 1.15rem;
-    font-weight: 400;
-    margin: 0 0 0.4rem;
-    color: var(--p-text);
+  :global(.portfolio-root .card:hover) .card-thumb img {
+    transform: scale(1.03);
   }
-  .meta p {
+  .card-pub {
     margin: 0;
-    font-size: 0.88rem;
-    color: var(--p-muted);
-    line-height: 1.55;
+    font-size: 0.7rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--p-accent);
+  }
+  .card-pub .sep {
+    margin: 0 0.4rem;
+    opacity: 0.6;
+  }
+  :global(.portfolio-root .card h3) {
+    font-family: var(--p-font-display);
+    font-size: 1.6rem;
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0;
+    color: var(--p-text);
   }
 
   @media (max-width: 800px) {
     .category {
       padding: 2rem 1.25rem 3rem;
-    }
-    :global(.portfolio-root .piece-row) {
-      grid-template-columns: 120px 1fr;
-      gap: 1rem;
-      padding: 1rem 0;
     }
   }
 </style>

@@ -34,5 +34,3 @@ A statement issued from the authorities reeks of Orwellian doublespeak. We can h
 ![](/portfolio/images/editorial--the-kharab-uprising--04.png)
 
 #Notinmyname achieved quite a few things but most of all, it made us step out of our echo-chamber and kitchen politics into the streets for the ultimate confirmation; that we are not indifferent, or alone. One will stand up for the other. There will be witnesses, there will be versions of stories and vantage points; not one single truth that the nation doesn’t want to know anymore.
-
-Published in mensxp.com on July 5, 2017

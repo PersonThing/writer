@@ -5,9 +5,7 @@ source_path: /about
 images: []
 ---
 
-I am a fashion and lifestyle journalist with 16+ years in leading the editorial and thought leadership of brands and news outlets. I build content teams & operations from the ground up.
-
-I am currently based in New York.
+I am a fashion and lifestyle editor with 16+ years in leading the content and thought leadership of brands and news outlets. I build content teams & operations from the ground up.
 
 Email me at [shigorika@gmail.com](mailto:shigorika@gmail.com)
 

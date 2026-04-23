@@ -32,9 +32,9 @@
   // Also pull any leading `::: video :::` / `![]()` block out of the copy
   // so the media sits full-width above, not inside the quoted copy.
   const split = $derived.by(() => {
-    if (!piece) return { media: '', copy: '', rest: '' }
+    if (!piece) return { media: '', copy: '', credit: '', rest: '' }
     const body = piece.body || ''
-    if (category !== 'copywriting') return { media: '', copy: '', rest: parseMarkdown(body) }
+    if (category !== 'copywriting') return { media: '', copy: '', credit: '', rest: parseMarkdown(body) }
 
     const briefIdx = body.search(/^##\s/m)
     const top = briefIdx === -1 ? body : body.slice(0, briefIdx)
@@ -46,11 +46,21 @@
     // Trim zero-width-space / whitespace-only trailing "paragraphs" left
     // over from the Wix export so the copy block ends tight.
     const copyRaw = mediaMatch ? top.slice(mediaMatch[0].length) : top
-    const copy = copyRaw.replace(/(?:^|\n)[\s\u200B\u200C\u200D\uFEFF\u00A0]+(?=\n|$)/g, '').replace(/\s+$/, '')
+    let copy = copyRaw.replace(/(?:^|\n)[\s\u200B\u200C\u200D\uFEFF\u00A0]+(?=\n|$)/g, '').replace(/\s+$/, '')
+
+    // Peel off a trailing attribution paragraph (e.g. `Excerpted from …`,
+    // `Featured in …`) so it renders as a credit line rather than verse.
+    let credit = ''
+    const creditMatch = copy.match(/\n\n(?<line>(?:Excerpted|Featured|From|Adapted|Originally)\b[^\n]*)\s*$/i)
+    if (creditMatch) {
+      credit = creditMatch.groups.line.trim()
+      copy = copy.slice(0, creditMatch.index).replace(/\s+$/, '')
+    }
 
     return {
       media: parseMarkdown(media),
       copy: parseMarkdown(copy),
+      credit,
       rest: parseMarkdown(rest),
     }
   })
@@ -70,38 +80,58 @@
         title={piece.title}
         {categoryLabel}
       />
+    {:else if category === 'copywriting'}
+      <div class="cw-shell">
+        <div class="cw-shell-head">
+          <div class="breadcrumb">
+            <Link href={`/${category}`}>← {categoryLabel}</Link>
+          </div>
+        </div>
+        <article class="cw-split">
+          <div class="cw-split-stage">
+            {#if split.media}
+              <div class="cw-split-media">{@html split.media}</div>
+            {/if}
+            <div class="cw-split-right">
+              <div class="cw-split-text">
+                <span class="cw-split-eyebrow">{categoryLabel}</span>
+                <h1>{piece.title}</h1>
+                {#if piece.lede}<p class="lede">{piece.lede}</p>{/if}
+                <div class="copy-text">{@html split.copy}</div>
+                {#if split.credit}
+                  <p class="copy-credit">{split.credit}</p>
+                {/if}
+                {#if split.rest}
+                  <div class="cw-split-brief">
+                    <div class="piece-body">{@html split.rest}</div>
+                  </div>
+                {/if}
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
     {:else}
-      <article class="piece" class:piece-copywriting={category === 'copywriting'}>
+      <article class="piece">
         <div class="breadcrumb">
           <Link href={`/${category}`}>← {categoryLabel}</Link>
         </div>
-
         {#if hero}
-          <figure class="hero">
-            <img src={asset(hero)} alt={piece.title} />
-          </figure>
+          <figure class="hero"><img src={asset(hero)} alt={piece.title} /></figure>
         {/if}
-
         <header class="piece-head">
           <h1>{piece.title}</h1>
-          {#if piece.lede}
-            <p class="lede">{piece.lede}</p>
-          {/if}
+          {#if piece.lede}<p class="lede">{piece.lede}</p>{/if}
         </header>
-
-        {#if category === 'copywriting'}
-          {#if split.media}
-            <div class="piece-body">{@html split.media}</div>
-          {/if}
-          <aside class="copy-block">
-            <span class="copy-eyebrow">Copy</span>
-            <div class="copy-text">{@html split.copy}</div>
-          </aside>
-          {#if split.rest}
-            <div class="piece-body">{@html split.rest}</div>
-          {/if}
-        {:else}
-          <div class="piece-body">{@html split.rest}</div>
+        <div class="piece-body">{@html split.rest}</div>
+        {#if piece.publishedIn || piece.publishedAt}
+          <footer class="piece-pub">
+            Published
+            {#if piece.publishedIn}in <span class="piece-pub-venue">{piece.publishedIn}</span>{/if}
+            {#if piece.publishedAt}
+              {#if piece.publishedIn} · {/if}{piece.publishedAt}
+            {/if}
+          </footer>
         {/if}
       </article>
     {/if}
@@ -147,6 +177,18 @@
     color: var(--p-muted);
     font-style: italic;
     margin: 0;
+  }
+  .piece-pub {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--p-border);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--p-muted);
+  }
+  .piece-pub-venue {
+    color: var(--p-accent);
   }
 
   :global(.portfolio-root .piece-body .md-figure) {
@@ -237,28 +279,6 @@
     font-size: 0.92em;
   }
 
-  /* Copywriting pieces: dramatize the verse that forms the actual "copy". */
-  .copy-block {
-    position: relative;
-    margin: 2.5rem 0;
-    padding: 2.5rem 2.5rem 2.5rem 3.25rem;
-    background: linear-gradient(
-      180deg,
-      rgba(217, 182, 115, 0.04),
-      rgba(217, 182, 115, 0) 70%
-    );
-    border-left: 2px solid var(--p-accent);
-  }
-  .copy-eyebrow {
-    position: absolute;
-    top: 1rem;
-    left: 3.25rem;
-    font-family: var(--p-font-body);
-    font-size: 0.7rem;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--p-accent);
-  }
   .copy-text {
     margin-top: 0.75rem;
   }
@@ -277,6 +297,13 @@
      preserve the spacing but keep them invisible. */
   :global(.portfolio-root .copy-text p:empty) {
     min-height: 0.6rem;
+  }
+  .copy-credit {
+    margin: -1.25rem 0 2.5rem 0;
+    font-size: 0.85rem;
+    color: var(--p-muted);
+    font-style: italic;
+    letter-spacing: 0.01em;
   }
 
   /* Creative-direction shell: breadcrumb bar above the piece body. */
@@ -305,4 +332,154 @@
       font-size: 1.75rem;
     }
   }
+
+  /* Copywriting variation shell: shared toggle bar + per-variant shells. */
+  .cw-shell {
+    color: var(--p-text);
+  }
+  .cw-shell-head {
+    max-width: var(--p-content-max, 72rem);
+    margin: 0 auto;
+    padding: 1.5rem var(--p-content-padding, 2rem) 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .cw-shell-head .breadcrumb {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--p-muted);
+  }
+  /* Copywriting piece: 50/50 viewport split with a full-height vertical video. */
+  .cw-split {
+    margin: 0;
+    padding: 0;
+  }
+  .cw-split-stage {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    height: calc(100vh - 140px);
+    max-width: var(--p-content-max);
+    margin: 0 auto;
+    padding: 0 var(--p-content-padding);
+  }
+  .cw-split-media {
+    position: relative;
+    background: #000;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    align-items: stretch;
+  }
+  :global(.cw-split-media .md-video) {
+    height: 100%;
+    width: auto;
+    aspect-ratio: 9 / 16;
+    margin: 0;
+    object-fit: cover;
+    display: block;
+  }
+  .cw-split-right {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 4rem 3rem;
+    height: 100%;
+    overflow-y: auto;
+    position: relative;
+  }
+  .cw-split-right::before {
+    content: '';
+    position: absolute;
+    top: 2rem;
+    bottom: 2rem;
+    left: 0;
+    width: 1px;
+    background: linear-gradient(
+      180deg,
+      transparent,
+      rgba(217, 182, 115, 0.35),
+      transparent
+    );
+  }
+  .cw-split-text {
+    width: 100%;
+    max-width: 44rem;
+  }
+  .cw-split-eyebrow {
+    display: block;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--p-accent);
+    margin-bottom: 1rem;
+  }
+  .cw-split-text h1 {
+    font-family: var(--p-font-display);
+    font-size: clamp(2rem, 3.5vw, 3rem);
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0 0 2.5rem;
+  }
+  .cw-split-text .lede {
+    font-size: 1rem;
+    color: var(--p-muted);
+    font-style: italic;
+    margin: -1.75rem 0 2.5rem;
+  }
+  :global(.cw-split-text .copy-text p) {
+    font-family: var(--p-font-display);
+    font-size: clamp(1.05rem, 1.35vw, 1.4rem);
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.7rem;
+  }
+  /* Reset the global copy-credit negative top margin — split lays the
+     credit directly under the last copy line, no overlap. */
+  :global(.cw-split-text .copy-credit) {
+    margin: 1.5rem 0 0;
+    font-size: 1rem;
+  }
+  .cw-split-brief {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(217, 182, 115, 0.2);
+    color: var(--p-muted);
+  }
+  :global(.cw-split-brief .piece-body h2) {
+    font-size: 0.75rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--p-accent);
+    margin: 0 0 0.9rem;
+  }
+  :global(.cw-split-brief .piece-body p) {
+    font-size: 1.05rem;
+    line-height: 1.65;
+    margin: 0 0 1rem;
+  }
+  @media (max-width: 760px) {
+    .cw-split-stage {
+      grid-template-columns: 1fr;
+      height: auto;
+    }
+    .cw-split-media {
+      height: auto;
+      justify-content: center;
+    }
+    :global(.cw-split-media .md-video) {
+      width: 100%;
+      height: auto;
+      max-height: 80vh;
+    }
+    .cw-split-right {
+      height: auto;
+      overflow: visible;
+    }
+    .cw-split-right::before { display: none; }
+  }
+
 </style>

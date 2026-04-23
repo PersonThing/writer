@@ -35,5 +35,3 @@ Tahiliani concurs “Rohit Bal, Sabyasachi, Anamika or I, none of us have done s
 Burberry or Tom Ford have their own retail stores and are not dependent on the seasonal shows. A young designer does not have the luxury of opening standalone stores. This is where fashion weeks will find new relevance, far from resting on the heels of the old guard but, in fact, championing the new.
 
 Earlier, even prêt-a porter was being done by couture houses but now as designers evolve, so has the format of the fashion show as people recognise it. There is a separate couture week now which has made room for RTW (ready-to-wear collection) designers in the seasonal fashion weeks. They need the logistics, the branding and the infrastructure; this is where the institutional structures come in. What a fashion week does best now is act as the best branding exercise for your label and as Sethi says, “If a fashion week can do that, more power to it.”
-
-Published on April 21, 2016, the hindu business line

@@ -45,5 +45,3 @@ I do not drive, sometimes, because a bestie who wants to see me coupled says, â€
 I do not drive because we deserve clean air.
 
 But most of all, I do not drive because I canâ€™t be arsed.
-
-Published on August 12, 2016, the hindu business line

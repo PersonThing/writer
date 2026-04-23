@@ -99,80 +99,38 @@
   </section>
 
   {#each SECTIONS as s, i}
-    {@const hero = s.pieces[0]}
-    {@const tail = s.pieces.slice(1, 4)}
-    {@const compact = s.pieces.length < 4}
-    {#if hero}
-      <article
-        class="feature"
-        class:alt={i % 2 === 1}
-        id={i === 0 ? 'features' : undefined}
-      >
+    {@const tiles = s.pieces.slice(0, 4)}
+    {#if tiles.length}
+      <article class="feature" id={i === 0 ? 'features' : undefined}>
         <header class="feature-head">
           <h2 class="feature-section-title">{s.label}</h2>
         </header>
 
         <p class="feature-blurb">{s.blurb}</p>
 
-        {#if compact}
-          <!-- Sections with < 4 pieces render all of them equal-sized. -->
-          <div
-            class="feature-grid"
-            class:grid-1={s.pieces.length === 1}
-            class:grid-2={s.pieces.length === 2}
-            class:grid-3={s.pieces.length === 3}
-          >
-            {#each s.pieces as p}
-              <Link href={p.url} class="tail-card">
-                <div class="tail-image">
-                  {#if p.thumbnail}
-                    <img src={asset(p.thumbnail)} alt={p.title} loading="lazy" />
-                  {/if}
-                </div>
-                <div class="tail-meta">
-                  <h4>{p.title}</h4>
-                  {#if p.description}
-                    <p>{teaser(p.description, 110)}</p>
-                  {/if}
-                </div>
-              </Link>
-            {/each}
-          </div>
-        {:else}
-          <Link href={hero.url} class="feature-lead">
-            <div class="feature-image">
-              {#if hero.thumbnail}
-                <img src={asset(hero.thumbnail)} alt={hero.title} loading="lazy" />
-              {/if}
-            </div>
-            <div class="feature-text">
-              <h3 class="feature-title">{hero.title}</h3>
-              {#if hero.description}
-                <p class="feature-dek">{teaser(hero.description, 180)}</p>
-              {/if}
-            </div>
-          </Link>
-
-          {#if tail.length}
-            <div class="feature-tail" class:tail-2={tail.length === 2} class:tail-3={tail.length >= 3}>
-              {#each tail as t}
-                <Link href={t.url} class="tail-card">
-                  <div class="tail-image">
-                    {#if t.thumbnail}
-                      <img src={asset(t.thumbnail)} alt={t.title} loading="lazy" />
-                    {/if}
-                  </div>
-                  <div class="tail-meta">
-                    <h4>{t.title}</h4>
-                    {#if t.description}
-                      <p>{teaser(t.description, 90)}</p>
-                    {/if}
-                  </div>
-                </Link>
-              {/each}
-            </div>
-          {/if}
-        {/if}
+        <div
+          class="feature-grid"
+          class:grid-1={tiles.length === 1}
+          class:grid-2={tiles.length === 2}
+          class:grid-3={tiles.length === 3}
+          class:grid-4={tiles.length === 4}
+        >
+          {#each tiles as p}
+            <Link href={p.url} class="tail-card">
+              <div class="tail-image">
+                {#if p.thumbnail}
+                  <img src={asset(p.thumbnail)} alt={p.title} loading="lazy" />
+                {/if}
+              </div>
+              <div class="tail-meta">
+                <h4>{p.title}</h4>
+                {#if p.description}
+                  <p>{teaser(p.description, 110)}</p>
+                {/if}
+              </div>
+            </Link>
+          {/each}
+        </div>
 
         {#if s.viewMore}
           <div class="feature-foot">
@@ -350,34 +308,6 @@
     padding: 4rem var(--p-content-padding);
     border-bottom: 1px solid var(--p-border);
   }
-  :global(.portfolio-root .feature-lead) {
-    display: grid;
-    grid-template-columns: 1.1fr 1fr;
-    gap: 3.5rem;
-    align-items: center;
-    transition: opacity 0.15s;
-  }
-  :global(.portfolio-root .feature-lead:hover) {
-    opacity: 0.9;
-  }
-  :global(.portfolio-root .feature.alt .feature-lead) {
-    grid-template-columns: 1fr 1.1fr;
-  }
-  .feature.alt .feature-image {
-    order: 2;
-  }
-  .feature-image {
-    overflow: hidden;
-  }
-  .feature-image img {
-    width: 100%;
-    height: auto;
-    display: block;
-    transition: transform 0.5s ease;
-  }
-  .feature-image:hover img {
-    transform: scale(1.02);
-  }
   .feature-head {
     text-align: center;
     margin-bottom: 1.5rem;
@@ -395,23 +325,6 @@
     line-height: 1;
     margin: 0;
     color: var(--p-accent);
-  }
-  .feature-title {
-    font-family: var(--p-font-display);
-    font-size: 2.1rem;
-    line-height: 1.1;
-    letter-spacing: -0.03em;
-    font-weight: 400;
-    margin: 0 0 1rem;
-  }
-  :global(.portfolio-root .feature-title a:hover) {
-    color: var(--p-accent);
-  }
-  .feature-dek {
-    font-size: 1.05rem;
-    line-height: 1.5;
-    color: var(--p-text);
-    margin: 0 0 1rem;
   }
   .feature-blurb {
     font-size: 0.95rem;
@@ -436,19 +349,6 @@
     padding-bottom: 2px;
   }
 
-  .feature-tail {
-    margin-top: 3rem;
-    display: grid;
-    gap: 2rem;
-  }
-  .feature-tail.tail-2 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .feature-tail.tail-3 {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  /* Equal-sized layout for sections with <4 pieces. */
   .feature-grid {
     display: grid;
     gap: 2rem;
@@ -463,8 +363,9 @@
   .feature-grid.grid-3 {
     grid-template-columns: repeat(3, 1fr);
   }
-  /* In compact mode the cards read as primary items, so give the title
-     a touch more presence than the tail variant. */
+  .feature-grid.grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
   :global(.portfolio-root .feature-grid .tail-meta h4) {
     font-size: 1.15rem;
   }
@@ -600,21 +501,11 @@
     .feature {
       padding: 2.5rem var(--p-content-padding);
     }
-    :global(.portfolio-root .feature-lead),
-    :global(.portfolio-root .feature.alt .feature-lead) {
-      grid-template-columns: 1fr;
-      gap: 2rem;
-    }
-    .feature.alt .feature-image {
-      order: unset;
-    }
-    .feature-tail.tail-2,
-    .feature-tail.tail-3,
     .feature-grid.grid-2,
-    .feature-grid.grid-3 {
+    .feature-grid.grid-3,
+    .feature-grid.grid-4 {
       grid-template-columns: 1fr;
       gap: 1.5rem;
-      margin-top: 2rem;
     }
     :global(.portfolio-root .tail-card) {
       flex-direction: row;

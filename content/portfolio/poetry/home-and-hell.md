@@ -19,7 +19,7 @@ the wrong kind of men
 and weathered glass
 
 Blankets of lies make sleepy eyes
-- my town, this is my place
+my town, this is my place
 Lord & master, now awake, of this crumbling space,
 leather sofa torn, nothing left to pawn.
 

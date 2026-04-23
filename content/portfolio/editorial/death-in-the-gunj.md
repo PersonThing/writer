@@ -34,5 +34,3 @@ The father, played deftly by Om Puri, is a mild irritant to the son and almost p
 In this film, Konkana Sen Sharma manages to hold up a mirror to our society that is teaching our boys everyday that it is more important to be loud than right, boorish than empathetic and dominating rather than welcoming. Strength has come to mean how much you can take rather than how much you can give and this strength is strangling our men into putting up a false show of bravado that they themselves often don’t agree with.
 
 ![](/portfolio/images/editorial--death-in-the-gunj--06.png)
-
-Published for mensxp.com on June 16, 2017

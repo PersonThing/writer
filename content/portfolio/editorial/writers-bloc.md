@@ -97,4 +97,4 @@ He needs to be very well spoken and compassionate.
 **Any single girl _gyan_?**
 Always keep the mystery.
 
-_Text: Shigorika Singh · Photographs: Vipin Kardam · FNL, February 2009_
+_Text: Shigorika Singh · Photographs: Vipin Kardam_

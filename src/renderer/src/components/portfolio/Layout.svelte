@@ -11,6 +11,9 @@
   // Auto-hide header: hidden when the user scrolls down past the hero,
   // revealed the moment they scroll up.
   let navHidden = $state(false)
+  // Whether the user has scrolled away from the very top — drives the
+  // nav's translucent backdrop (transparent at top, fades in when scrolled).
+  let navScrolled = $state(false)
 
   const WORK_CATEGORIES = [
     { path: '/copywriting', label: 'Copywriting', hasLanding: false },
@@ -66,6 +69,8 @@
       const dy = y - lastY
       lastY = y
 
+      navScrolled = y > SHOW_TOP
+
       if (y <= SHOW_TOP) { navHidden = false; accumUp = accumDown = 0; return }
       if (workOpen || mobileOpen) { navHidden = false; accumUp = accumDown = 0; return }
 
@@ -91,7 +96,7 @@
 </script>
 
 <div class="portfolio-root">
-  <header class="top-nav" class:top-nav-hidden={navHidden}>
+  <header class="top-nav" class:top-nav-hidden={navHidden} class:top-nav-scrolled={navScrolled}>
     <div class="top-nav-inner">
       <Link href="/" class="wordmark">Shigorika</Link>
 
@@ -120,7 +125,11 @@
           {#if workOpen}
             <div class="dropdown-panel" role="menu">
               {#each WORK_CATEGORIES as { path, label }}
-                <Link href={path} class="dropdown-item">{label}</Link>
+                <Link
+                  href={path}
+                  class="dropdown-item"
+                  onclick={() => { workOpen = false; mobileOpen = false }}
+                >{label}</Link>
               {/each}
             </div>
           {/if}
@@ -191,7 +200,24 @@
     --p-font-body: 'Questrial', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 
     min-height: 100vh;
-    background: var(--p-bg);
+    /* Ambient gold glow: a soft, wide wash that covers most of the
+       viewport from the upper-left, plus a secondary diffuse aura toward
+       the lower-right so the page never goes fully flat black. Sits
+       behind every page so section-specific layouts don't need to
+       re-invent it. */
+    background:
+      radial-gradient(
+        ellipse 140vw 110vh at 20% 10%,
+        rgba(217, 182, 115, 0.11),
+        transparent 75%
+      ),
+      radial-gradient(
+        ellipse 120vw 90vh at 80% 85%,
+        rgba(217, 182, 115, 0.06),
+        transparent 70%
+      ),
+      var(--p-bg);
+    background-attachment: fixed;
     color: var(--p-text);
     font-family: var(--p-font-body);
     font-weight: 400;
@@ -211,11 +237,21 @@
     left: 0;
     right: 0;
     z-index: 50;
-    padding: 1rem 0;
-    background: var(--p-bg);
+    padding: 0.85rem 0;
+    line-height: 1;
+    /* Transparent at the top so the ambient glow shows through; fades in
+       a translucent backdrop (with blur) once the user scrolls. */
+    background: transparent;
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
     transform: translate3d(0, 0, 0);
-    transition: transform 0.28s ease;
+    transition: transform 0.28s ease, background 0.25s ease, backdrop-filter 0.25s ease;
     will-change: transform;
+  }
+  .top-nav-scrolled {
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
   .top-nav-hidden {
     transform: translate3d(0, -100%, 0);
@@ -237,9 +273,10 @@
     font-size: 1.7rem;
     font-weight: 500;
     letter-spacing: -0.02em;
+    line-height: 1;
   }
 
-  nav {
+  .top-nav nav {
     display: flex;
     align-items: center;
     gap: 2.5rem;
@@ -304,19 +341,20 @@
     gap: 4px;
     cursor: pointer;
     padding: 6px;
+    color: var(--p-text);
   }
   .hamburger span {
     width: 24px;
     height: 2px;
-    background: currentColor;
+    background: var(--p-text);
     display: block;
   }
 
   .page-main {
     flex: 1;
-    /* Reserve space under the fixed top nav so the first content
-       block isn't covered. ~64px matches the nav's padding + line-box. */
-    padding-top: 64px;
+    /* Reserve space under the fixed top nav so the first content block
+       isn't covered. Matches wordmark (~27px) + top/bottom padding. */
+    padding-top: 56px;
   }
 
   .site-footer {
@@ -395,7 +433,10 @@
     .hamburger {
       display: inline-flex;
     }
-    nav {
+    /* Scoped to the header's nav specifically — a bare `nav` selector
+       was bleeding onto the footer's social `nav` and stacking the
+       icons vertically mid-page. */
+    .top-nav nav {
       display: none;
       position: absolute;
       top: 100%;
@@ -409,7 +450,7 @@
       padding: 1rem 1.25rem;
       z-index: 40;
     }
-    nav.open {
+    .top-nav nav.open {
       display: flex;
     }
     .dropdown-panel {
@@ -421,11 +462,18 @@
       min-width: 0;
     }
     .site-footer-inner {
+      /* Stack: email block (self-aligned left internally but centered as
+         a block), socials centered under it, copyright centered. */
       grid-template-columns: 1fr;
       justify-items: center;
       text-align: center;
       padding: 0 1.25rem;
       gap: 1.2rem;
+    }
+    .footer-email {
+      /* Center the container, but keep the "Email me at" / address
+         column left-aligned next to the snail. */
+      text-align: left;
     }
     .footer-copy {
       justify-self: center;

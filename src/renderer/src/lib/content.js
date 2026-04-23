@@ -126,6 +126,7 @@ function toEntry(file, raw) {
     slug: frontmatter.slug || withoutLeading || 'home',
     title: frontmatter.title || 'Untitled',
     lede: frontmatter.lede || '',
+    byline: frontmatter.byline || '',
     hero: frontmatter.hero || '',
     order: frontmatter.order ? Number(frontmatter.order) : 999,
     images: Array.isArray(frontmatter.images) ? frontmatter.images : [],
@@ -148,7 +149,19 @@ export function getAllPages() {
 export function getPage(routePath) {
   // Normalize trailing slash
   const norm = routePath !== '/' ? routePath.replace(/\/$/, '') : routePath
-  return byRoute.get(norm) || null
+  const entry = byRoute.get(norm)
+  if (!entry) return null
+  // Merge in the catalog metadata for this piece (thumbnail is unused here,
+  // but publishedIn/publishedAt/description get surfaced by the article page).
+  const section = entry.category && CATALOG[entry.category]
+  const catalogEntry = section?.pieces?.find((p) => p.slug === entry.subSlug)
+  if (!catalogEntry) return entry
+  return {
+    ...entry,
+    description: catalogEntry.description || null,
+    publishedIn: catalogEntry.publishedIn || null,
+    publishedAt: catalogEntry.publishedAt || null,
+  }
 }
 
 export function getCategoryPages(category) {
@@ -211,6 +224,8 @@ function enrichPiece(categorySlug, catalogEntry) {
     thumbnail,
     url: routePath,
     category: categorySlug,
+    publishedIn: catalogEntry.publishedIn || null,
+    publishedAt: catalogEntry.publishedAt || null,
   }
 }
 
